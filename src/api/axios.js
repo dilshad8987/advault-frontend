@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'https://advault-backend-production-fb35.up.railway.app/api',
   headers: { 'Content-Type': 'application/json' }
 });
 
@@ -19,7 +19,7 @@ api.interceptors.response.use(
       original._retry = true;
       try {
         const refresh = localStorage.getItem('refreshToken');
-        const res = await axios.post('http://localhost:5000/api/auth/refresh', { refreshToken: refresh });
+        const res = await axios.post((process.env.REACT_APP_API_URL || 'https://advault-backend-production-fb35.up.railway.app/api') + '/auth/refresh', { refreshToken: refresh });
         localStorage.setItem('accessToken', res.data.accessToken);
         original.headers.Authorization = 'Bearer ' + res.data.accessToken;
         return api(original);
