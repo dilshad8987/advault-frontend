@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Landing from './pages/Landing';
@@ -18,6 +18,53 @@ function PublicRoute({ children }) {
 }
 
 function App() {
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    if (token && refreshToken) {
+      fetch((process.env.REACT_APP_API_URL || 'http://localhost:5000/api') + '/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.accessToken) {
+            localStorage.setItem('accessToken', data.accessToken);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setChecking(false));
+    } else {
+      setChecking(false);
+    }
+  }, []);
+
+  if (checking) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#08080f',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid rgba(108,71,255,.2)',
+          borderTop: '3px solid #6c47ff',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Toaster position="top-right" toastOptions={{
