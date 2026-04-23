@@ -9,7 +9,6 @@ export default function AdCard({ ad }) {
   const brand    = ad.brand_name || ad.brand?.name || 'Unknown Brand';
   const likes    = ad.like || ad.metrics?.likes || 0;
   const comments = ad.comment || ad.metrics?.comments || 0;
-  const shares   = ad.share || ad.metrics?.shares || 0;
   const ctr      = ad.ctr ? (ad.ctr * 100).toFixed(2) + '%' : '0%';
   const cover    = ad.video_info?.cover || ad.imageUrl || '';
   const isVideo  = !!ad.video_info || ad.isVideo;

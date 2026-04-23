@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '../components/Navbar';
 import AdCard from '../components/AdCard';
 import AliExpressCard from '../components/AliExpressCard';
@@ -27,11 +27,7 @@ export default function Dashboard() {
 
   const ALI_CAT_MAP = { trending: '15', highsell: '200003655' };
 
-  useEffect(() => {
-    if (aliTab !== 'search') fetchAds();
-  }, [tab, country, period, orderBy, aliTab]);
-
-  const fetchAds = async () => {
+  const fetchAds = useCallback(async () => {
     setLoading(true);
     setAds([]);
     try {
@@ -57,7 +53,11 @@ export default function Dashboard() {
       setAds([]);
     }
     setLoading(false);
-  };
+  }, [tab, country, period, orderBy, aliTab]);
+
+  useEffect(() => {
+    if (aliTab !== 'search') fetchAds();
+  }, [fetchAds]);
 
   const searchAliExpress = async () => {
     if (!aliSearchInput.trim()) return;
