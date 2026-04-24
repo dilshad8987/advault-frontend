@@ -40,20 +40,21 @@ export default function Dashboard() {
 
         // Debug — response structure log karo
         const d = res.data;
-        const debugStr = `Keys: ${Object.keys(d).join(', ')} | data keys: ${d.data ? Object.keys(d.data).join(', ') : 'no data'}`;
+        const d2 = d?.data?.data;
+        const debugStr = `L1: ${Object.keys(d).join(',')} | L2: ${d.data ? Object.keys(d.data).join(',') : '-'} | L3: ${d2 ? Object.keys(d2).join(',') : '-'} | L3 type: ${d2 ? typeof d2 : '-'}`;
         setDebugInfo(debugStr);
-        console.log('TikTok API Response:', JSON.stringify(d).substring(0, 500));
+        console.log('TikTok full response:', JSON.stringify(d).substring(0, 800));
 
-        // Sabhi possible paths try karo
+        // Confirmed structure: d.data.data = {materials?, list?} or Array
+        const L3 = d?.data?.data;
         const raw =
-          d?.data?.data?.materials ||
+          L3?.materials ||
+          L3?.list ||
+          (Array.isArray(L3) ? L3 : null) ||
           d?.data?.materials ||
-          d?.materials ||
-          d?.data?.data?.list ||
           d?.data?.list ||
-          d?.list ||
-          d?.data?.data ||
           (Array.isArray(d?.data) ? d.data : null) ||
+          d?.materials ||
           [];
 
         setAds(Array.isArray(raw) ? raw : []);
