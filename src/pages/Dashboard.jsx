@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [period, setPeriod] = useState('30');
   const [orderBy, setOrderBy] = useState('impression');
   const [aliSearchInput, setAliSearchInput] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const countries = ['US','DE','GB','FR','IT','ES','NL','PL','AT','BE','SE','NO','DK','FI'];
@@ -30,15 +31,31 @@ export default function Dashboard() {
   const fetchAds = useCallback(async () => {
     setLoading(true);
     setAds([]);
+    setDebugInfo('');
     try {
       if (tab === 'tiktok') {
         const res = await api.get('/ads/tiktok', {
           params: { country, period, order: orderBy }
         });
-        const raw = res.data?.data?.data?.materials
-                 || res.data?.data?.materials
-                 || res.data?.materials
-                 || [];
+
+        // Debug — response structure log karo
+        const d = res.data;
+        const debugStr = `Keys: ${Object.keys(d).join(', ')} | data keys: ${d.data ? Object.keys(d.data).join(', ') : 'no data'}`;
+        setDebugInfo(debugStr);
+        console.log('TikTok API Response:', JSON.stringify(d).substring(0, 500));
+
+        // Sabhi possible paths try karo
+        const raw =
+          d?.data?.data?.materials ||
+          d?.data?.materials ||
+          d?.materials ||
+          d?.data?.data?.list ||
+          d?.data?.list ||
+          d?.list ||
+          d?.data?.data ||
+          (Array.isArray(d?.data) ? d.data : null) ||
+          [];
+
         setAds(Array.isArray(raw) ? raw : []);
       } else if (tab === 'aliexpress') {
         const catId = ALI_CAT_MAP[aliTab] || '15';
@@ -50,6 +67,7 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error(err);
+      setDebugInfo('Error: ' + err.message);
       setAds([]);
     }
     setLoading(false);
@@ -151,6 +169,13 @@ export default function Dashboard() {
                 <button style={styles.aliSearchBtn} onClick={searchAliExpress}>🔍 Search</button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* DEBUG INFO — production mein hatana */}
+        {debugInfo && tab === 'tiktok' && (
+          <div style={{ background: '#161625', border: '1px solid rgba(255,165,0,.3)', borderRadius: '8px', padding: '.75rem 1rem', marginBottom: '1rem', fontSize: '.75rem', color: '#ffaa44', wordBreak: 'break-all' }}>
+            🔍 Debug: {debugInfo}
           </div>
         )}
 
