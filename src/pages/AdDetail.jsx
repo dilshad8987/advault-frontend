@@ -277,8 +277,11 @@ export default function AdDetail() {
             <div style={S.card}>
               <h3 style={S.cardTitle}>📋 Ad Details</h3>
               <div style={S.grid}>
+                <div style={S.detailItem}>
+                  <span style={S.detailKey}>Status</span>
+                  <span style={{ ...S.detailVal, color: isActive ? '#4ade80' : '#f87171' }}>{isActive ? '● Active' : '● Ended'}</span>
+                </div>
                 {[
-                  ['Status',       <span style={{ color: isActive ? '#4ade80' : '#f87171' }}>{isActive ? '● Active' : '● Ended'}</span>],
                   ['Start Date',   formatDate(startDate)],
                   ['End Date',     endDate ? formatDate(endDate) : 'Still Running'],
                   ['Days Running', runningDays !== null ? `${runningDays} days` : '—'],
@@ -401,4 +404,15 @@ const S = {
   runKey:     { fontSize:'.75rem', color:'#8888aa', fontWeight:600, flexShrink:0 },
   runVal:     { fontSize:'.82rem', color:'#f0f0f8', fontWeight:600, textAlign:'right' },
   tabBar:     { display:'flex', gap:'.4rem', marginBottom:'1.5rem', padding:'.5rem', background:'#0f0f1a', borderRadius:'12px', border:'1px solid rgba(255,255,255,.06)', flexWrap:'wrap' },
-  card:       { backgr
+  card:       { background:'#0d0d1a', border:'1px solid rgba(255,255,255,.07)', borderRadius:'14px', padding:'1.4rem' },
+  cardTitle:  { fontSize:'.95rem', fontWeight:700, marginBottom:'1rem', color:'#f0f0f8' },
+  grid:       { display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:'.7rem' },
+  detailItem: { background:'#161625', borderRadius:'10px', padding:'.75rem', display:'flex', flexDirection:'column', gap:'.3rem' },
+  detailKey:  { fontSize:'.65rem', color:'#8888aa', textTransform:'uppercase', letterSpacing:'.05em', fontWeight:600 },
+  detailVal:  { fontSize:'.85rem', color:'#f0f0f8', fontWeight:600 },
+  chip:       { background:'#161625', border:'1px solid rgba(255,255,255,.08)', borderRadius:'6px', padding:'.25rem .6rem', fontSize:'.75rem', color:'#d0d0e8' },
+  transcriptBox: { background:'#161625', borderRadius:'10px', padding:'1.25rem', fontSize:'.88rem', lineHeight:1.7, color:'#d0d0e8', whiteSpace:'pre-wrap', marginBottom:'1rem' },
+  copyBtn:    { padding:'.5rem 1.2rem', border:'1px solid', borderRadius:'8px', cursor:'pointer', fontWeight:600, fontSize:'.82rem', transition:'all .2s' },
+  brandGrid:  { display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:'1rem' },
+  empty:      { display:'flex', flexDirection:'column', alignItems:'center', padding:'2rem', gap:'.5rem' },
+};
