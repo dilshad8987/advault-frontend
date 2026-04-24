@@ -137,13 +137,8 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-
-            {aliTab === 'trending' && (
-              <p style={styles.aliDesc}>🔥 Abhi sabse zyada bikne wale products worldwide</p>
-            )}
-            {aliTab === 'highsell' && (
-              <p style={styles.aliDesc}>📈 High volume sellers — proven winning products</p>
-            )}
+            {aliTab === 'trending' && <p style={styles.aliDesc}>🔥 Abhi sabse zyada bikne wale products worldwide</p>}
+            {aliTab === 'highsell' && <p style={styles.aliDesc}>📈 High volume sellers — proven winning products</p>}
             {aliTab === 'search' && (
               <div style={styles.aliSearchBar}>
                 <input
@@ -153,9 +148,7 @@ export default function Dashboard() {
                   onChange={e => setAliSearchInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && searchAliExpress()}
                 />
-                <button style={styles.aliSearchBtn} onClick={searchAliExpress}>
-                  🔍 Search
-                </button>
+                <button style={styles.aliSearchBtn} onClick={searchAliExpress}>🔍 Search</button>
               </div>
             )}
           </div>
@@ -200,23 +193,23 @@ const styles = {
   h1: { fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, letterSpacing: '-.02em' },
   sub: { color: '#8888aa', marginTop: '.4rem', fontSize: '.9rem' },
   mainTabs: { display: 'flex', gap: '.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' },
-  mainTab: { padding: '.6rem 1.4rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer' },
+  mainTab: { padding: '.6rem 1.4rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all .2s' },
   mainTabActive: { background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: '1px solid #6c47ff', boxShadow: '0 0 16px rgba(108,71,255,.35)' },
-  filterBar: { display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', padding: '1.25rem', background: '#0f0f1a', borderRadius: '12px', border: '1px solid rgba(255,255,255,.08)', marginBottom: '1.75rem' },
+  filterBar: { display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', padding: '1.25rem', background: '#0f0f1a', borderRadius: '12px', border: '1px solid rgba(255,255,255,.07)', marginBottom: '1.5rem' },
   filterGroup: { display: 'flex', flexDirection: 'column', gap: '.4rem' },
   label: { fontSize: '.72rem', color: '#8888aa', fontWeight: 700, textTransform: 'uppercase' },
-  select: { padding: '.5rem .9rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.85rem', outline: 'none', cursor: 'pointer' },
-  refreshBtn: { padding: '.55rem 1.2rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '.85rem', cursor: 'pointer', alignSelf: 'flex-end' },
+  select: { padding: '.5rem .9rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.85rem', cursor: 'pointer', outline: 'none' },
+  refreshBtn: { padding: '.55rem 1.2rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem' },
   aliSection: { marginBottom: '1.5rem' },
   aliTabs: { display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' },
-  aliTab: { padding: '.5rem 1.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer' },
+  aliTab: { padding: '.5rem 1.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer' },
   aliTabActive: { background: '#161625', color: '#fff', border: '1px solid rgba(108,71,255,.5)', boxShadow: '0 0 12px rgba(108,71,255,.2)' },
   aliDesc: { color: '#8888aa', fontSize: '.85rem', marginBottom: '.5rem' },
   aliSearchBar: { display: 'flex', gap: '.75rem', flexWrap: 'wrap' },
-  aliInput: { flex: 1, minWidth: '200px', padding: '.75rem 1rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.9rem', outline: 'none' },
+  aliInput: { flex: 1, minWidth: '200px', padding: '.75rem 1rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.88rem', outline: 'none' },
   aliSearchBtn: { padding: '.75rem 1.5rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' },
   count: { color: '#8888aa', fontSize: '.83rem', marginBottom: '1rem' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap: '1.25rem' },
   center: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '.5rem' },
-  spinner: { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' }
+  spinner: { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
 };
