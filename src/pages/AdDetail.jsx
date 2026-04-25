@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
@@ -134,7 +134,241 @@ const SC = {
   analysisBtn: { padding:'.3rem .7rem', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:'6px', color:'#8b6bff', fontSize:'.68rem', fontWeight:700, cursor:'pointer' },
 };
 
-// ── Circular Progress Ring ──────────────────────────────────────────────────────
+// ── Video Player Component ─────────────────────────────────────────────────────
+function VideoPlayer({ videoUrl, cover, title, adId }) {
+  const videoRef     = useRef(null);
+  const progressRef  = useRef(null);
+  const [playing,    setPlaying]    = useState(false);
+  const [progress,   setProgress]   = useState(0);
+  const [duration,   setDuration]   = useState(0);
+  const [currentTime,setCurrentTime]= useState(0);
+  const [volume,     setVolume]     = useState(1);
+  const [muted,      setMuted]      = useState(false);
+  const [downloading,setDownloading]= useState(false);
+  const [dlProgress, setDlProgress] = useState(0);
+  const [showControls, setShowControls] = useState(true);
+  const hideTimer = useRef(null);
+
+  const fmtTime = (s) => {
+    if (!s || isNaN(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) { v.play(); setPlaying(true); }
+    else          { v.pause(); setPlaying(false); }
+    showCtrl();
+  };
+
+  const showCtrl = () => {
+    setShowControls(true);
+    clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setPlaying(p => { if (p) setShowControls(false); return p; }), 3000);
+  };
+
+  const onTimeUpdate = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    setCurrentTime(v.currentTime);
+    setProgress(v.duration ? (v.currentTime / v.duration) * 100 : 0);
+  };
+
+  const onLoaded = () => {
+    const v = videoRef.current;
+    if (v) setDuration(v.duration);
+  };
+
+  const seek = (e) => {
+    const v = videoRef.current;
+    const bar = progressRef.current;
+    if (!v || !bar) return;
+    const rect = bar.getBoundingClientRect();
+    const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    v.currentTime = pct * v.duration;
+    showCtrl();
+  };
+
+  const changeVolume = (e) => {
+    const vol = parseFloat(e.target.value);
+    setVolume(vol);
+    if (videoRef.current) videoRef.current.volume = vol;
+    setMuted(vol === 0);
+  };
+
+  const toggleMute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !muted;
+    setMuted(!muted);
+    showCtrl();
+  };
+
+  const downloadVideo = async () => {
+    if (!videoUrl) return toast.error('Video URL nahi mili');
+    setDownloading(true);
+    setDlProgress(0);
+    try {
+      // Backend proxy se download
+      const token = localStorage.getItem('token');
+      const filename = `advault-ad-${adId || Date.now()}.mp4`;
+      const backendUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000') +
+        `/api/ads/video/download?url=${encodeURIComponent(videoUrl)}&filename=${filename}`;
+
+      const response = await fetch(backendUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error('Download fail hua');
+
+      const total  = parseInt(response.headers.get('content-length') || '0');
+      const reader = response.body.getReader();
+      const chunks = [];
+      let received = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        if (total) setDlProgress(Math.round((received / total) * 100));
+      }
+
+      const blob = new Blob(chunks, { type: 'video/mp4' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Video download ho gayi! 🎉');
+    } catch (err) {
+      console.error(err);
+      // Fallback: direct link
+      const a    = document.createElement('a');
+      a.href     = videoUrl;
+      a.target   = '_blank';
+      a.download = `advault-ad-${adId || Date.now()}.mp4`;
+      a.click();
+      toast.success('Download shuru ho gaya!');
+    }
+    setDownloading(false);
+    setDlProgress(0);
+  };
+
+  if (!videoUrl) {
+    return (
+      <div style={VP.wrap}>
+        {cover
+          ? <img src={cover} alt={title} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          : <div style={VP.noVideo}>🎵<p style={{ color:'#8888aa', fontSize:'.8rem', marginTop:'.5rem' }}>Video nahi mili</p></div>
+        }
+      </div>
+    );
+  }
+
+  return (
+    <div style={VP.wrap} onMouseMove={showCtrl} onClick={togglePlay}>
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        poster={cover}
+        style={VP.video}
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoaded}
+        onEnded={() => { setPlaying(false); setShowControls(true); }}
+        playsInline
+        preload="metadata"
+      />
+
+      {/* Big play button overlay */}
+      {!playing && (
+        <div style={VP.playOverlay}>
+          <div style={VP.playCircle}>▶</div>
+        </div>
+      )}
+
+      {/* Controls bar */}
+      <div style={{ ...VP.controls, opacity: showControls ? 1 : 0, transition: 'opacity .3s' }}
+           onClick={e => e.stopPropagation()}>
+
+        {/* Progress bar */}
+        <div ref={progressRef} style={VP.progressTrack} onClick={seek}>
+          <div style={{ ...VP.progressFill, width: progress + '%' }} />
+          <div style={{ ...VP.progressThumb, left: progress + '%' }} />
+        </div>
+
+        {/* Bottom row */}
+        <div style={VP.ctrlRow}>
+          {/* Play/Pause */}
+          <button style={VP.ctrlBtn} onClick={togglePlay}>
+            {playing ? '⏸' : '▶'}
+          </button>
+
+          {/* Time */}
+          <span style={VP.timeText}>{fmtTime(currentTime)} / {fmtTime(duration)}</span>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Volume */}
+          <button style={VP.ctrlBtn} onClick={toggleMute}>
+            {muted || volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊'}
+          </button>
+          <input
+            type="range" min="0" max="1" step="0.05"
+            value={muted ? 0 : volume}
+            onChange={changeVolume}
+            onClick={e => e.stopPropagation()}
+            style={VP.volSlider}
+          />
+
+          {/* Download */}
+          <button
+            style={{ ...VP.dlBtn, ...(downloading ? VP.dlBtnActive : {}) }}
+            onClick={e => { e.stopPropagation(); downloadVideo(); }}
+            disabled={downloading}
+            title="Video download karo"
+          >
+            {downloading
+              ? dlProgress > 0 ? `${dlProgress}%` : '⏳'
+              : '⬇ Download'
+            }
+          </button>
+        </div>
+      </div>
+
+      {/* Download progress bar */}
+      {downloading && dlProgress > 0 && (
+        <div style={VP.dlProgressWrap}>
+          <div style={{ ...VP.dlProgressBar, width: dlProgress + '%' }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const VP = {
+  wrap:         { borderRadius:'16px', overflow:'hidden', background:'#0f0f1a', position:'relative', aspectRatio:'9/16', maxHeight:'480px', cursor:'pointer', userSelect:'none' },
+  video:        { width:'100%', height:'100%', objectFit:'cover', display:'block' },
+  noVideo:      { display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', fontSize:'3rem', background:'#161625' },
+  playOverlay:  { position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,.3)', backdropFilter:'blur(1px)' },
+  playCircle:   { width:'60px', height:'60px', borderRadius:'50%', background:'rgba(108,71,255,.85)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem', color:'#fff', boxShadow:'0 0 30px rgba(108,71,255,.5)' },
+  controls:     { position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(transparent, rgba(0,0,0,.85))', padding:'.5rem .75rem .75rem' },
+  progressTrack:{ height:'4px', background:'rgba(255,255,255,.2)', borderRadius:'2px', cursor:'pointer', position:'relative', marginBottom:'.6rem' },
+  progressFill: { height:'100%', background:'linear-gradient(90deg,#6c47ff,#8b6bff)', borderRadius:'2px', pointerEvents:'none' },
+  progressThumb:{ position:'absolute', top:'50%', transform:'translate(-50%,-50%)', width:'12px', height:'12px', borderRadius:'50%', background:'#fff', boxShadow:'0 0 6px rgba(108,71,255,.8)', pointerEvents:'none' },
+  ctrlRow:      { display:'flex', alignItems:'center', gap:'.4rem' },
+  ctrlBtn:      { background:'none', border:'none', color:'#fff', cursor:'pointer', fontSize:'1rem', padding:'.1rem .2rem', lineHeight:1 },
+  timeText:     { fontSize:'.7rem', color:'rgba(255,255,255,.8)', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap' },
+  volSlider:    { width:'60px', cursor:'pointer', accentColor:'#6c47ff', background:'transparent' },
+  dlBtn:        { padding:'.3rem .7rem', background:'linear-gradient(135deg,#6c47ff,#8b6bff)', border:'none', borderRadius:'6px', color:'#fff', fontSize:'.72rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', transition:'all .2s' },
+  dlBtnActive:  { background:'rgba(108,71,255,.4)', cursor:'not-allowed' },
+  dlProgressWrap:{ position:'absolute', bottom:0, left:0, right:0, height:'3px', background:'rgba(255,255,255,.1)' },
+  dlProgressBar: { height:'100%', background:'#4ade80', transition:'width .3s', borderRadius:'2px' },
+};
 function CircleRing({ active, total }) {
   const pct    = total > 0 ? Math.min((active / total) * 100, 100) : 0;
   const r      = 42;
@@ -421,13 +655,15 @@ export default function AdDetail() {
         <div className="hero-grid" style={S.hero}>
 
           {/* Media */}
+          {/* Media — Video Player */}
           <div className="media-wrap" style={S.mediaWrap}>
-            {cover
-              ? <img src={cover} alt={title} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-              : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', fontSize:'3rem', background:'#161625' }}>🎵</div>
-            }
+            <VideoPlayer
+              videoUrl={videoUrl}
+              cover={cover}
+              title={title}
+              adId={adId}
+            />
             {isActive && <span style={S.activeBadge}>● STILL ACTIVE</span>}
-            {isVideo  && <span style={S.videoBadge}>▶ Video</span>}
             {impression > 0 && impression < 1000 && (
               <span style={S.lowImpBadge}>⚠️ Low Impression</span>
             )}
@@ -647,7 +883,7 @@ const S = {
   pillOutline:{ padding:'.45rem 1.1rem', borderRadius:'20px', border:'1px solid rgba(255,255,255,.12)', background:'transparent', color:'#8888aa', fontWeight:600, fontSize:'.8rem', cursor:'pointer', textDecoration:'none', transition:'all .2s', display:'inline-block' },
   page:       { padding:'1.5rem clamp(1rem,4vw,2rem) 3rem', maxWidth:'1100px', margin:'0 auto' },
   hero:       { display:'grid', gridTemplateColumns:'minmax(0,320px) 1fr', gap:'2rem', marginBottom:'2rem', alignItems:'start' },
-  mediaWrap:  { borderRadius:'16px', overflow:'hidden', background:'#0f0f1a', position:'relative', aspectRatio:'9/16', maxHeight:'480px' },
+  mediaWrap:  { borderRadius:'16px', overflow:'hidden', background:'#0f0f1a', position:'relative' },
   activeBadge:{ position:'absolute', top:'10px', left:'10px', background:'rgba(74,222,128,.15)', border:'1px solid rgba(74,222,128,.3)', color:'#4ade80', borderRadius:'20px', padding:'.25rem .75rem', fontSize:'.7rem', fontWeight:700 },
   videoBadge: { position:'absolute', bottom:'10px', right:'10px', background:'rgba(0,0,0,.75)', color:'#fff', borderRadius:'6px', padding:'.25rem .65rem', fontSize:'.7rem' },
   lowImpBadge:{ position:'absolute', top:'10px', right:'10px', background:'rgba(251,146,60,.15)', border:'1px solid rgba(251,146,60,.3)', color:'#fb923c', borderRadius:'20px', padding:'.25rem .65rem', fontSize:'.65rem', fontWeight:700 },
