@@ -125,8 +125,31 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
   const [dlProgress,   setDlProgress]   = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [videoError,   setVideoError]   = useState(false);
+  const [realVideoUrl, setRealVideoUrl] = useState('');
+  const [urlLoading,   setUrlLoading]   = useState(false);
 
-  const proxyUrl = makeProxyUrl(videoUrl);
+  // Step 1: Fetch real playable URL from scraper API
+  useEffect(() => {
+    if (!videoUrl || !adId) return;
+    setUrlLoading(true);
+    setVideoError(false);
+    api.get('/ads/video/url', { params: { video_id: adId } })
+      .then(res => {
+        if (res.data?.play_url) {
+          setRealVideoUrl(res.data.play_url);
+        } else {
+          // Fallback to proxy with original URL
+          setRealVideoUrl(makeProxyUrl(videoUrl));
+        }
+      })
+      .catch(() => {
+        // Fallback to proxy with original URL
+        setRealVideoUrl(makeProxyUrl(videoUrl));
+      })
+      .finally(() => setUrlLoading(false));
+  }, [adId, videoUrl]); // eslint-disable-line
+
+  const proxyUrl = realVideoUrl || makeProxyUrl(videoUrl);
 
   const fmtTime = (s) => {
     if (!s || isNaN(s)) return '0:00';
@@ -204,6 +227,19 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
     }
     setDownloading(false); setDlProgress(0);
   };
+
+  // Loading state — fetching real URL
+  if (urlLoading) {
+    return (
+      <div style={{...VP.wrap, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'1rem'}}>
+        {cover && <img src={cover} alt={title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'blur(3px)',opacity:.4}} />}
+        <div style={{position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:'.75rem'}}>
+          <div style={{width:'40px',height:'40px',border:'3px solid rgba(108,71,255,.2)',borderTop:'3px solid #6c47ff',borderRadius:'50%',animation:'spin 1s linear infinite'}}></div>
+          <span style={{color:'rgba(255,255,255,.8)',fontSize:'.78rem',fontWeight:600}}>Video load ho rahi hai...</span>
+        </div>
+      </div>
+    );
+  }
 
   // No video URL ya error — cover image + fallback button
   if (!videoUrl || videoError) {
