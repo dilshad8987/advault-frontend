@@ -62,6 +62,121 @@ function MiniAdCard({ ad, onClick }) {
   );
 }
 
+// ── Circular Progress Ring ──────────────────────────────────────────────────────
+function CircleRing({ active, total }) {
+  const pct    = total > 0 ? Math.min((active / total) * 100, 100) : 0;
+  const r      = 42;
+  const circ   = 2 * Math.PI * r;
+  const dash   = (pct / 100) * circ;
+  return (
+    <svg width="108" height="108" viewBox="0 0 108 108">
+      <circle cx="54" cy="54" r={r} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="8" />
+      <circle
+        cx="54" cy="54" r={r} fill="none"
+        stroke="#6c47ff" strokeWidth="8"
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ}`}
+        strokeDashoffset={circ * 0.25}
+        style={{ transition: 'stroke-dasharray 1s ease' }}
+      />
+      <text x="54" y="48" textAnchor="middle" fill="#f0f0f8" fontSize="18" fontWeight="800">{active}</text>
+      <text x="54" y="64" textAnchor="middle" fill="#8888aa" fontSize="10">/ {total}</text>
+      <text x="54" y="76" textAnchor="middle" fill="#8888aa" fontSize="9">Active Ads</text>
+    </svg>
+  );
+}
+
+// ── Page Details Card ──────────────────────────────────────────────────────────
+function PageDetailsCard({ pageDetails, pageLoading, brand, impression }) {
+  const formatNum = (n) => {
+    if (!n) return '—';
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000)    return (n / 1000).toFixed(1) + 'K';
+    return n.toLocaleString();
+  };
+  const formatDate = (ts) => {
+    if (!ts) return '—';
+    return new Date(ts * 1000).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  const lowImpression = impression !== null && impression !== undefined && impression < 1000;
+
+  return (
+    <div style={PD.wrap}>
+      {/* Header */}
+      <div style={PD.header}>
+        <span style={PD.headerIcon}>🏢</span>
+        <span style={PD.headerTitle}>Page Details</span>
+        <a href={`https://www.tiktok.com/search?q=${encodeURIComponent(brand)}`}
+          target="_blank" rel="noreferrer" style={PD.pageLink}>↗ Page</a>
+      </div>
+
+      {pageLoading ? (
+        <div style={{ display:'flex', alignItems:'center', gap:'.6rem', padding:'1rem 0' }}>
+          <div style={{ width:'20px', height:'20px', border:'2px solid rgba(108,71,255,.2)', borderTop:'2px solid #6c47ff', borderRadius:'50%', animation:'spin 1s linear infinite' }}></div>
+          <span style={{ color:'#8888aa', fontSize:'.8rem' }}>Loading page info...</span>
+        </div>
+      ) : pageDetails ? (
+        <>
+          {/* Ring + Stats */}
+          <div style={PD.ringRow}>
+            <CircleRing active={pageDetails.activeAds} total={pageDetails.totalAds} />
+            <div style={PD.statsCol}>
+              {[
+                ['📅 Created On',   formatDate(pageDetails.createdOn)],
+                ['📢 Active Ads',   pageDetails.activeAds],
+                ['📦 Total Ads',    pageDetails.totalAds >= 1000 ? (pageDetails.totalAds / 1000).toFixed(1) + 'k' : pageDetails.totalAds],
+                ['👁 Reach',        formatNum(pageDetails.totalReach)],
+                ['💰 Total Spend',  pageDetails.totalSpend ? `$${pageDetails.totalSpend.toLocaleString()}` : '—'],
+              ].map(([k, v]) => (
+                <div key={k} style={PD.statRow}>
+                  <span style={PD.statKey}>{k}</span>
+                  <span style={PD.statVal}>{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Low Impression Warning */}
+          {lowImpression && (
+            <div style={PD.lowWarn}>
+              <span style={{ fontSize:'.85rem' }}>⚠️</span>
+              <div>
+                <div style={{ fontWeight:700, fontSize:'.78rem', color:'#fb923c' }}>Low Impression Count</div>
+                <div style={{ fontSize:'.7rem', color:'#8888aa', marginTop:'.15rem' }}>
+                  Is ad ke impressions abhi kam hain ({impression.toLocaleString()}). Performance track karte raho.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Duplicates row */}
+          <div style={PD.dupRow}>
+            <span style={PD.statKey}>🔁 Duplicates</span>
+            <span style={{ ...PD.statVal, color:'#8888aa' }}>—</span>
+          </div>
+        </>
+      ) : (
+        <div style={{ padding:'1rem 0', color:'#8888aa', fontSize:'.8rem' }}>Page data available nahi hai</div>
+      )}
+    </div>
+  );
+}
+
+const PD = {
+  wrap:       { background:'#0d0d1a', border:'1px solid rgba(255,255,255,.07)', borderRadius:'14px', padding:'1.2rem', display:'flex', flexDirection:'column', gap:'.85rem' },
+  header:     { display:'flex', alignItems:'center', gap:'.5rem' },
+  headerIcon: { fontSize:'1rem' },
+  headerTitle:{ fontWeight:700, fontSize:'.9rem', color:'#f0f0f8', flex:1 },
+  pageLink:   { fontSize:'.75rem', color:'#6c47ff', textDecoration:'none', fontWeight:600, border:'1px solid rgba(108,71,255,.3)', padding:'.2rem .6rem', borderRadius:'6px' },
+  ringRow:    { display:'flex', gap:'1rem', alignItems:'center', flexWrap:'wrap' },
+  statsCol:   { flex:1, minWidth:'140px', display:'flex', flexDirection:'column', gap:'.5rem' },
+  statRow:    { display:'flex', justifyContent:'space-between', alignItems:'center', gap:'.5rem' },
+  statKey:    { fontSize:'.73rem', color:'#8888aa', fontWeight:600, flexShrink:0 },
+  statVal:    { fontSize:'.78rem', color:'#f0f0f8', fontWeight:700, textAlign:'right' },
+  lowWarn:    { display:'flex', gap:'.6rem', alignItems:'flex-start', background:'rgba(251,146,60,.07)', border:'1px solid rgba(251,146,60,.2)', borderRadius:'10px', padding:'.75rem' },
+  dupRow:     { display:'flex', justifyContent:'space-between', borderTop:'1px solid rgba(255,255,255,.05)', paddingTop:'.7rem' },
+};
+
 export default function AdDetail() {
   const { adId } = useParams();
   const location = useLocation();
@@ -69,6 +184,8 @@ export default function AdDetail() {
 
   const [detail, setDetail]             = useState(null);
   const [brandAds, setBrandAds]         = useState([]);
+  const [pageDetails, setPageDetails]   = useState(null);
+  const [pageLoading, setPageLoading]   = useState(false);
   const [loading, setLoading]           = useState(true);
   const [brandLoading, setBrandLoading] = useState(false);
   const [saved, setSaved]               = useState(false);
@@ -86,12 +203,47 @@ export default function AdDetail() {
       const data = res.data?.data?.data || res.data?.data || res.data || {};
       setDetail(data);
       const advertiserId = data.advertiser_id || data.brand_id || passedAd?.advertiser_id;
-      if (advertiserId) fetchBrandAds(advertiserId);
+      if (advertiserId) {
+        fetchBrandAds(advertiserId);
+        fetchPageDetails(advertiserId);
+      }
     } catch (err) {
       console.error('Detail fetch error:', err);
-      if (passedAd) setDetail(passedAd);
+      if (passedAd) {
+        setDetail(passedAd);
+        const advertiserId = passedAd?.advertiser_id || passedAd?.brand_id;
+        if (advertiserId) fetchPageDetails(advertiserId);
+      }
     }
     setLoading(false);
+  };
+
+  const fetchPageDetails = async (advertiserId) => {
+    setPageLoading(true);
+    try {
+      const res = await api.get(`/ads/advertiser/${advertiserId}`);
+      const allAds = res.data?.data || [];
+      const activeAds = allAds.filter(a => {
+        const end = a.last_shown_date || a.end_date;
+        return !end || new Date(end * 1000) > new Date();
+      });
+      const totalReach  = allAds.reduce((s, a) => s + (a.impression || a.reach || 0), 0);
+      const totalSpend  = allAds.reduce((s, a) => s + (a.cost || a.spend || 0), 0);
+      const firstAd     = allAds.reduce((min, a) => {
+        const d = a.first_shown_date || a.start_date || Infinity;
+        return d < min ? d : min;
+      }, Infinity);
+      setPageDetails({
+        totalAds:   allAds.length,
+        activeAds:  activeAds.length,
+        totalReach,
+        totalSpend,
+        createdOn:  firstAd !== Infinity ? firstAd : null,
+      });
+    } catch (err) {
+      console.error('Page details error:', err);
+    }
+    setPageLoading(false);
   };
 
   const fetchBrandAds = async (advertiserId) => {
@@ -204,6 +356,9 @@ export default function AdDetail() {
             }
             {isActive && <span style={S.activeBadge}>● STILL ACTIVE</span>}
             {isVideo  && <span style={S.videoBadge}>▶ Video</span>}
+            {impression > 0 && impression < 1000 && (
+              <span style={S.lowImpBadge}>⚠️ Low Impression</span>
+            )}
           </div>
 
           {/* Info */}
@@ -261,6 +416,16 @@ export default function AdDetail() {
               <StatBox icon="👁"  label="Reach"       value={impression ? impression.toLocaleString() : '—'} />
             </div>
           </div>
+        </div>
+
+        {/* ── PAGE DETAILS ── */}
+        <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr)', gap:'1.25rem', marginBottom:'1.75rem' }}>
+          <PageDetailsCard
+            pageDetails={pageDetails}
+            pageLoading={pageLoading}
+            brand={brand}
+            impression={impression}
+          />
         </div>
 
         {/* ── TABS ── */}
@@ -396,6 +561,7 @@ const S = {
   mediaWrap:  { borderRadius:'16px', overflow:'hidden', background:'#0f0f1a', position:'relative', aspectRatio:'9/16', maxHeight:'480px' },
   activeBadge:{ position:'absolute', top:'10px', left:'10px', background:'rgba(74,222,128,.15)', border:'1px solid rgba(74,222,128,.3)', color:'#4ade80', borderRadius:'20px', padding:'.25rem .75rem', fontSize:'.7rem', fontWeight:700 },
   videoBadge: { position:'absolute', bottom:'10px', right:'10px', background:'rgba(0,0,0,.75)', color:'#fff', borderRadius:'6px', padding:'.25rem .65rem', fontSize:'.7rem' },
+  lowImpBadge:{ position:'absolute', top:'10px', right:'10px', background:'rgba(251,146,60,.15)', border:'1px solid rgba(251,146,60,.3)', color:'#fb923c', borderRadius:'20px', padding:'.25rem .65rem', fontSize:'.65rem', fontWeight:700 },
   tagPurple:  { background:'rgba(108,71,255,.2)', color:'#8b6bff', border:'1px solid rgba(108,71,255,.3)', borderRadius:'20px', padding:'.2rem .75rem', fontSize:'.72rem', fontWeight:700 },
   tagGray:    { background:'rgba(255,255,255,.06)', color:'#8888aa', borderRadius:'20px', padding:'.2rem .75rem', fontSize:'.72rem' },
   tagGreen:   { background:'rgba(74,222,128,.1)', color:'#4ade80', border:'1px solid rgba(74,222,128,.25)', borderRadius:'20px', padding:'.2rem .75rem', fontSize:'.72rem', fontWeight:700 },
