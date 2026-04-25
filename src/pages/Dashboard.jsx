@@ -13,7 +13,6 @@ export default function Dashboard() {
   const [period, setPeriod] = useState('30');
   const [orderBy, setOrderBy] = useState('impression');
   const [aliSearchInput, setAliSearchInput] = useState('');
-  const [debugInfo, setDebugInfo] = useState('');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const countries = ['US','DE','GB','FR','IT','ES','NL','PL','AT','BE','SE','NO','DK','FI'];
@@ -31,32 +30,28 @@ export default function Dashboard() {
   const fetchAds = useCallback(async () => {
     setLoading(true);
     setAds([]);
-    setDebugInfo('');
     try {
       if (tab === 'tiktok') {
         const res = await api.get('/ads/tiktok', {
           params: { country, period, order: orderBy }
         });
 
-        // Debug — response structure log karo
+        // Response chain:
+        // res.data = { success, data }
+        // res.data.data = { data: apiResponse, fromCache }
+        // res.data.data.data = { code, msg, processed_time, data }
+        // res.data.data.data.data = { materials: [...ads] }
         const d = res.data;
-        const d2 = d?.data?.data;
-        const debugStr = `L1: ${Object.keys(d).join(',')} | L2: ${d.data ? Object.keys(d.data).join(',') : '-'} | L3: ${d2 ? Object.keys(d2).join(',') : '-'} | L3 type: ${d2 ? typeof d2 : '-'}`;
-        setDebugInfo(debugStr);
-        console.log('TikTok full response:', JSON.stringify(d).substring(0, 800));
+        const L3 = d?.data?.data;           // { code, msg, data }
+        const L4 = L3?.data;               // { materials: [...] } or array
 
-        // Structure: d.data.data = {code, msg, processed_time, data}
-        // d.data.data.data = ads array
-        const L3 = d?.data?.data;
-        const L4 = L3?.data;
-        const debugStr2 = `L4 type: ${typeof L4} | isArray: ${Array.isArray(L4)} | L4 keys: ${L4 && typeof L4 === 'object' ? Object.keys(L4).join(',') : String(L4)?.substring(0,50)}`;
-        setDebugInfo(prev => prev + ' | ' + debugStr2);
         const raw =
-          (Array.isArray(L4) ? L4 : null) ||
           L4?.materials ||
           L4?.list ||
           L4?.ad_list ||
-          (Array.isArray(L3?.data) ? L3.data : null) ||
+          (Array.isArray(L4) ? L4 : null) ||
+          L3?.materials ||
+          (Array.isArray(L3) ? L3 : null) ||
           [];
 
         setAds(Array.isArray(raw) ? raw : []);
@@ -70,7 +65,6 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error(err);
-      setDebugInfo('Error: ' + err.message);
       setAds([]);
     }
     setLoading(false);
@@ -172,13 +166,6 @@ export default function Dashboard() {
                 <button style={styles.aliSearchBtn} onClick={searchAliExpress}>🔍 Search</button>
               </div>
             )}
-          </div>
-        )}
-
-        {/* DEBUG INFO — production mein hatana */}
-        {debugInfo && tab === 'tiktok' && (
-          <div style={{ background: '#161625', border: '1px solid rgba(255,165,0,.3)', borderRadius: '8px', padding: '.75rem 1rem', marginBottom: '1rem', fontSize: '.75rem', color: '#ffaa44', wordBreak: 'break-all' }}>
-            🔍 Debug: {debugInfo}
           </div>
         )}
 
