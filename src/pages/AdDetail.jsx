@@ -445,8 +445,6 @@ export default function AdDetail() {
   const [saved,       setSaved]       = useState(false);
   const [activeTab,   setActiveTab]   = useState('overview');
   const [copied,      setCopied]      = useState(false);
-  const [aiTranscript,   setAiTranscript]   = useState('');
-  const [aiLoading,      setAiLoading]      = useState(false);
 
   const passedAd = location.state?.ad || null;
 
@@ -507,53 +505,9 @@ export default function AdDetail() {
   };
 
   const copyTranscript = () => {
-    const text = aiTranscript || transcript;
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(transcript);
     setCopied(true); toast.success('Copy ho gaya!');
     setTimeout(()=>setCopied(false),2000);
-  };
-
-  const generateAiTranscript = async () => {
-    setAiLoading(true);
-    try {
-      const ad = detail || passedAd || {};
-      const prompt = `You are an expert TikTok ad copywriter. Based on this ad data, generate a compelling ad transcript/script in the same language as the ad title.
-
-Ad Title: ${ad.ad_title || ad.title || 'Unknown'}
-Brand: ${ad.brand_name || 'Unknown Brand'}
-Objective: ${ad.objective_key || 'video_view'}
-Industry: ${ad.industry_key || 'general'}
-CTR: ${ad.ctr ? (ad.ctr*100).toFixed(2)+'%' : 'unknown'}
-Likes: ${ad.like || 0}
-
-Generate a 3-part script:
-1. HOOK (0-3 sec): Attention grabbing opening
-2. BODY (3-20 sec): Product benefits, problem-solution
-3. CTA (last 3 sec): Strong call to action
-
-Format it clearly with timestamps. Keep it natural and conversational.`;
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      const data = await response.json();
-      const text = data?.content?.[0]?.text || '';
-      if (text) {
-        setAiTranscript(text);
-        toast.success('AI transcript ready! 🤖');
-      } else {
-        toast.error('AI transcript generate nahi hua');
-      }
-    } catch(err) {
-      toast.error('AI transcript fail: ' + err.message);
-    }
-    setAiLoading(false);
   };
 
   const ad          = detail||passedAd||{};
@@ -724,11 +678,9 @@ Format it clearly with timestamps. Keep it natural and conversational.`;
 
         {/* TRANSCRIPT TAB */}
         {activeTab==='transcript' && (
-          <div style={{animation:'fadeIn .3s ease', display:'flex', flexDirection:'column', gap:'1.25rem'}}>
-
-            {/* Original Transcript */}
+          <div style={{animation:'fadeIn .3s ease'}}>
             <div style={S.card}>
-              <h3 style={S.cardTitle}>📝 Ad Caption / Transcript</h3>
+              <h3 style={S.cardTitle}>📝 Ad Transcript / Caption</h3>
               {transcript ? (
                 <>
                   <div style={S.transcriptBox}>{transcript}</div>
@@ -740,55 +692,6 @@ Format it clearly with timestamps. Keep it natural and conversational.`;
                 <div style={S.empty}>
                   <p style={{fontSize:'2rem',margin:0}}>📭</p>
                   <p style={{color:'#8888aa',margin:0}}>Is ad ka transcript available nahi hai</p>
-                </div>
-              )}
-            </div>
-
-            {/* AI Transcript Generator */}
-            <div style={S.card}>
-              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem', flexWrap:'wrap', gap:'.75rem'}}>
-                <div>
-                  <h3 style={{...S.cardTitle, margin:0}}>🤖 AI Transcript Generator</h3>
-                  <p style={{fontSize:'.75rem', color:'#8888aa', margin:'.3rem 0 0'}}>Is ad ke liye AI se winning script generate karo</p>
-                </div>
-                <button
-                  style={{...S.aiGenBtn, ...(aiLoading ? S.aiGenBtnLoading : {})}}
-                  onClick={generateAiTranscript}
-                  disabled={aiLoading}
-                >
-                  {aiLoading ? (
-                    <>
-                      <div style={S.btnSpinner}></div>
-                      Generating...
-                    </>
-                  ) : '✨ Generate Script'}
-                </button>
-              </div>
-
-              {aiTranscript ? (
-                <>
-                  <div style={{...S.transcriptBox, background:'rgba(108,71,255,.05)', borderLeft:'3px solid rgba(108,71,255,.4)', whiteSpace:'pre-wrap'}}>
-                    {aiTranscript}
-                  </div>
-                  <div style={{display:'flex', gap:'.6rem', marginTop:'.75rem'}}>
-                    <button style={{...S.copyBtn, background:copied?'rgba(74,222,128,.15)':'rgba(108,71,255,.2)', color:copied?'#4ade80':'#8b6bff', borderColor:copied?'rgba(74,222,128,.3)':'rgba(108,71,255,.3)', flex:1}} onClick={copyTranscript}>
-                      {copied?'✅ Copied!':'📋 Copy Script'}
-                    </button>
-                    <button style={{...S.copyBtn, flex:'none', background:'transparent', color:'#8888aa', borderColor:'rgba(255,255,255,.1)'}} onClick={generateAiTranscript} disabled={aiLoading}>
-                      🔄 Regenerate
-                    </button>
-                  </div>
-                </>
-              ) : !aiLoading && (
-                <div style={{textAlign:'center', padding:'1.5rem 0', color:'#8888aa', fontSize:'.85rem'}}>
-                  Generate button dabao — AI is ad ka winning script likhega 🚀
-                </div>
-              )}
-
-              {aiLoading && (
-                <div style={{display:'flex', alignItems:'center', gap:'.75rem', padding:'1rem', background:'rgba(108,71,255,.05)', borderRadius:'10px'}}>
-                  <div style={S.spinner}></div>
-                  <span style={{color:'#8888aa', fontSize:'.85rem'}}>AI script likh raha hai...</span>
                 </div>
               )}
             </div>
@@ -861,9 +764,6 @@ const S = {
   copyBtn:    {padding:'.5rem 1.2rem',border:'1px solid',borderRadius:'8px',cursor:'pointer',fontWeight:600,fontSize:'.82rem',transition:'all .2s'},
   empty:      {display:'flex',flexDirection:'column',alignItems:'center',padding:'2rem',gap:'.5rem'},
   videoBadge: {position:'absolute',bottom:'10px',right:'10px',background:'rgba(0,0,0,.75)',color:'#fff',borderRadius:'6px',padding:'.25rem .65rem',fontSize:'.7rem'},
-  aiGenBtn:    {display:'flex',alignItems:'center',gap:'.5rem',padding:'.55rem 1.3rem',background:'linear-gradient(135deg,#6c47ff,#8b6bff)',border:'none',borderRadius:'8px',color:'#fff',fontWeight:700,fontSize:'.85rem',cursor:'pointer',whiteSpace:'nowrap'},
-  aiGenBtnLoading:{background:'rgba(108,71,255,.4)',cursor:'not-allowed'},
-  btnSpinner:  {width:'14px',height:'14px',border:'2px solid rgba(255,255,255,.3)',borderTop:'2px solid #fff',borderRadius:'50%',animation:'spin 1s linear infinite'},
 };
 
 const SS = {
