@@ -45,16 +45,16 @@ export default function Dashboard() {
         setDebugInfo(debugStr);
         console.log('TikTok full response:', JSON.stringify(d).substring(0, 800));
 
-        // Confirmed structure: d.data.data = {materials?, list?} or Array
-        const L3 = d?.data?.data;
+        // Confirmed structure: d.data.data.data = actual ads
+        // d -> data -> data -> {code, msg, processed_time, data} -> data = ads array
+        const L4 = d?.data?.data?.data;
         const raw =
-          L3?.materials ||
-          L3?.list ||
-          (Array.isArray(L3) ? L3 : null) ||
+          (Array.isArray(L4) ? L4 : null) ||
+          L4?.materials ||
+          L4?.list ||
+          d?.data?.data?.materials ||
+          d?.data?.data?.list ||
           d?.data?.materials ||
-          d?.data?.list ||
-          (Array.isArray(d?.data) ? d.data : null) ||
-          d?.materials ||
           [];
 
         setAds(Array.isArray(raw) ? raw : []);
