@@ -135,6 +135,14 @@ const SC = {
 };
 
 // ── Video Player Component ─────────────────────────────────────────────────────
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+function makeProxyUrl(rawUrl) {
+  if (!rawUrl) return '';
+  const token = localStorage.getItem('token') || '';
+  return API_BASE + '/api/ads/video/stream?url=' + encodeURIComponent(rawUrl) + '&token=' + encodeURIComponent(token);
+}
+
 function VideoPlayer({ videoUrl, cover, title, adId }) {
   const videoRef     = useRef(null);
   const progressRef  = useRef(null);
@@ -147,7 +155,10 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
   const [downloading,setDownloading]= useState(false);
   const [dlProgress, setDlProgress] = useState(0);
   const [showControls, setShowControls] = useState(true);
+  const [videoError,  setVideoError]  = useState(false);
   const hideTimer = useRef(null);
+
+  const proxyUrl = makeProxyUrl(videoUrl);
 
   const fmtTime = (s) => {
     if (!s || isNaN(s)) return '0:00';
@@ -259,13 +270,21 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
     setDlProgress(0);
   };
 
-  if (!videoUrl) {
+  if (!videoUrl || videoError) {
     return (
       <div style={VP.wrap}>
         {cover
-          ? <img src={cover} alt={title} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          ? <img src={cover} alt={title} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
           : <div style={VP.noVideo}>🎵<p style={{ color:'#8888aa', fontSize:'.8rem', marginTop:'.5rem' }}>Video nahi mili</p></div>
         }
+        {videoError && (
+          <div style={{ position:'absolute', bottom:'12px', left:0, right:0, display:'flex', justifyContent:'center' }}>
+            <a href={videoUrl} target="_blank" rel="noreferrer"
+              style={{ background:'rgba(108,71,255,.9)', color:'#fff', padding:'.45rem 1.2rem', borderRadius:'8px', fontSize:'.78rem', fontWeight:700, textDecoration:'none' }}>
+              ▶ TikTok pe dekho
+            </a>
+          </div>
+        )}
       </div>
     );
   }
@@ -274,14 +293,16 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
     <div style={VP.wrap} onMouseMove={showCtrl} onClick={togglePlay}>
       <video
         ref={videoRef}
-        src={videoUrl}
+        src={proxyUrl}
         poster={cover}
         style={VP.video}
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoaded}
         onEnded={() => { setPlaying(false); setShowControls(true); }}
+        onError={() => setVideoError(true)}
         playsInline
         preload="metadata"
+        crossOrigin="anonymous"
       />
 
       {/* Big play button overlay */}
