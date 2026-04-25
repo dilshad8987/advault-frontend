@@ -36,6 +36,311 @@ function TabBtn({ active, onClick, children }) {
   );
 }
 
+// ── AI Score Ring ──────────────────────────────────────────────────────────────
+function ScoreRing({ score }) {
+  const r    = 52;
+  const circ = 2 * Math.PI * r;
+  const dash = (score / 100) * circ;
+  const color = score >= 75 ? '#4ade80' : score >= 50 ? '#facc15' : '#f87171';
+  const label = score >= 75 ? 'WINNING' : score >= 50 ? 'AVERAGE' : 'WEAK';
+  const labelColor = score >= 75 ? '#4ade80' : score >= 50 ? '#facc15' : '#f87171';
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'.5rem' }}>
+      <svg width="130" height="130" viewBox="0 0 130 130">
+        <circle cx="65" cy="65" r={r} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="10"/>
+        <circle cx="65" cy="65" r={r} fill="none" stroke={color} strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${circ}`}
+          strokeDashoffset={circ * 0.25}
+          style={{ transition:'stroke-dasharray 1.5s cubic-bezier(.4,0,.2,1)', filter:`drop-shadow(0 0 8px ${color}66)` }}
+        />
+        <text x="65" y="60" textAnchor="middle" fill="#f0f0f8" fontSize="28" fontWeight="900">{score}</text>
+        <text x="65" y="76" textAnchor="middle" fill="#8888aa" fontSize="11">/100</text>
+      </svg>
+      <span style={{ fontSize:'.78rem', fontWeight:800, color:labelColor, letterSpacing:'.1em',
+        background:`${labelColor}18`, border:`1px solid ${labelColor}44`, borderRadius:'20px',
+        padding:'.25rem .9rem' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ── Score Bar ─────────────────────────────────────────────────────────────────
+function ScoreBar({ label, value, max = 100, color = '#6c47ff' }) {
+  const pct = Math.min((value / max) * 100, 100);
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'.3rem' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <span style={{ fontSize:'.75rem', color:'#d0d0e8', fontWeight:600 }}>{label}</span>
+        <span style={{ fontSize:'.75rem', color, fontWeight:800 }}>{value}/{max}</span>
+      </div>
+      <div style={{ height:'6px', background:'rgba(255,255,255,.06)', borderRadius:'3px', overflow:'hidden' }}>
+        <div style={{ width: pct+'%', height:'100%', background:`linear-gradient(90deg,${color}99,${color})`,
+          borderRadius:'3px', transition:'width 1s ease', boxShadow:`0 0 8px ${color}66` }} />
+      </div>
+    </div>
+  );
+}
+
+// ── AI Analysis Tab Component ─────────────────────────────────────────────────
+function AIAnalysisTab({ ad, adId }) {
+  const [analysis,   setAnalysis]   = useState(null);
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState('');
+  const [streaming,  setStreaming]  = useState(false);
+  const [streamText, setStreamText] = useState('');
+
+  const runAnalysis = async () => {
+    setLoading(true); setError(''); setAnalysis(null); setStreamText('');
+
+    const likes      = ad.like || ad.metrics?.likes || 0;
+    const comments   = ad.comment || ad.metrics?.comments || 0;
+    const ctr        = ad.ctr ? (ad.ctr * 100).toFixed(2) : 0;
+    const impression = ad.impression || ad.reach || 0;
+    const cost       = ad.cost || ad.spend || 0;
+    const title      = ad.ad_title || ad.title || '';
+    const objective  = ad.objective_key?.replace('campaign_objective_','') || ad.objective || '';
+    const industry   = ad.industry_key?.replace('label_','') || '';
+    const startDate  = ad.first_shown_date || ad.start_date;
+    const endDate    = ad.last_shown_date || ad.end_date;
+    const runDays    = startDate ? Math.floor((Date.now()/1000 - startDate)/86400) : 0;
+    const isActive   = !endDate || new Date(endDate*1000) > new Date();
+    const countries  = ad.country_code ? (Array.isArray(ad.country_code) ? ad.country_code : [ad.country_code]) : [];
+
+    const prompt = `You are an expert TikTok advertising analyst. Analyze this ad and return ONLY valid JSON — no markdown, no explanation outside JSON.
+
+AD DATA:
+- Title: "${title}"
+- Objective: ${objective || 'unknown'}
+- Industry: ${industry || 'unknown'}
+- Likes: ${likes}
+- Comments: ${comments}
+- CTR: ${ctr}%
+- Impressions/Reach: ${impression}
+- Spend: $${cost}
+- Days Running: ${runDays}
+- Still Active: ${isActive}
+- Countries: ${countries.join(', ') || 'unknown'}
+
+Return this exact JSON structure:
+{
+  "overall_score": <0-100 integer>,
+  "verdict": "<one of: WINNING | AVERAGE | WEAK | VIRAL>",
+  "scores": {
+    "hook_strength": <0-25>,
+    "engagement_rate": <0-25>,
+    "spend_efficiency": <0-25>,
+    "longevity": <0-25>
+  },
+  "hook_analysis": "<2 sentences about the ad hook and opening>",
+  "target_audience": "<describe the likely target audience in 1-2 sentences>",
+  "cta_analysis": "<analyze the call to action strength>",
+  "winning_elements": ["<element 1>", "<element 2>", "<element 3>"],
+  "weak_points": ["<weak point 1>", "<weak point 2>"],
+  "recommendations": ["<action 1>", "<action 2>", "<action 3>"],
+  "competitor_threat": "<LOW | MEDIUM | HIGH>",
+  "scaling_potential": "<LOW | MEDIUM | HIGH>",
+  "best_for": "<which type of business/product this ad style works best for>"
+}`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content?.map(i => i.text || '').join('') || '';
+
+      // Parse JSON
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      setAnalysis(parsed);
+    } catch(err) {
+      setError('Analysis fail hua. Dobara try karo.');
+    }
+    setLoading(false);
+  };
+
+  if (!analysis && !loading) {
+    return (
+      <div style={AI.emptyWrap}>
+        <div style={AI.emptyIcon}>🤖</div>
+        <h3 style={AI.emptyTitle}>AI Ad Score & Analysis</h3>
+        <p style={AI.emptyDesc}>
+          Claude AI is ad ko analyze karega aur score dega — hook strength,
+          engagement quality, spend efficiency, aur improvement tips.
+        </p>
+        {error && <div style={AI.errorBox}>⚠️ {error}</div>}
+        <button onClick={runAnalysis} style={AI.analyzeBtn}>
+          ✨ AI Analysis Shuru Karo
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={AI.loadingWrap}>
+        <div style={AI.loadingOrb}></div>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ color:'#f0f0f8', fontWeight:700, fontSize:'1rem', marginBottom:'.4rem' }}>
+            AI Analysis chal rahi hai...
+          </div>
+          <div style={{ color:'#8888aa', fontSize:'.82rem' }}>
+            Ad data process ho raha hai
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!analysis) return null;
+
+  const threatColor = { LOW:'#4ade80', MEDIUM:'#facc15', HIGH:'#f87171' };
+  const scaleColor  = { LOW:'#f87171', MEDIUM:'#facc15', HIGH:'#4ade80' };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'1.25rem', animation:'fadeIn .4s ease' }}>
+
+      {/* Score + Breakdown */}
+      <div style={AI.card}>
+        <div style={AI.cardHeader}>
+          <span style={AI.cardIcon}>🎯</span>
+          <h3 style={AI.cardTitle}>Ad Score</h3>
+          <button onClick={runAnalysis} style={AI.rerunBtn}>🔄 Rerun</button>
+        </div>
+        <div style={AI.scoreLayout}>
+          <ScoreRing score={analysis.overall_score} />
+          <div style={{ flex:1, display:'flex', flexDirection:'column', gap:'.85rem', minWidth:'180px' }}>
+            <ScoreBar label="🪝 Hook Strength"      value={analysis.scores?.hook_strength}      max={25} color="#6c47ff" />
+            <ScoreBar label="💬 Engagement Rate"    value={analysis.scores?.engagement_rate}    max={25} color="#8b6bff" />
+            <ScoreBar label="💰 Spend Efficiency"   value={analysis.scores?.spend_efficiency}   max={25} color="#a78bfa" />
+            <ScoreBar label="⏱ Longevity Score"    value={analysis.scores?.longevity}          max={25} color="#c4b5fd" />
+          </div>
+        </div>
+
+        {/* Threat + Scale badges */}
+        <div style={{ display:'flex', gap:'.75rem', flexWrap:'wrap', marginTop:'1rem' }}>
+          <div style={AI.metaBadge}>
+            <span style={{ color:'#8888aa', fontSize:'.7rem', fontWeight:600 }}>⚔️ COMPETITOR THREAT</span>
+            <span style={{ color: threatColor[analysis.competitor_threat]||'#8888aa', fontWeight:800, fontSize:'.85rem' }}>
+              {analysis.competitor_threat || '—'}
+            </span>
+          </div>
+          <div style={AI.metaBadge}>
+            <span style={{ color:'#8888aa', fontSize:'.7rem', fontWeight:600 }}>🚀 SCALING POTENTIAL</span>
+            <span style={{ color: scaleColor[analysis.scaling_potential]||'#8888aa', fontWeight:800, fontSize:'.85rem' }}>
+              {analysis.scaling_potential || '—'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Creative Analysis */}
+      <div style={AI.card}>
+        <div style={AI.cardHeader}>
+          <span style={AI.cardIcon}>🎬</span>
+          <h3 style={AI.cardTitle}>Creative Analysis</h3>
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+          {[
+            ['🪝 Hook Analysis',    analysis.hook_analysis],
+            ['🎯 Target Audience',  analysis.target_audience],
+            ['📢 CTA Strength',     analysis.cta_analysis],
+            ['🏆 Best For',         analysis.best_for],
+          ].map(([label, text]) => text && (
+            <div key={label} style={AI.analysisItem}>
+              <div style={AI.analysisLabel}>{label}</div>
+              <div style={AI.analysisText}>{text}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Winning Elements + Weak Points */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(240px,100%),1fr))', gap:'1rem' }}>
+        <div style={AI.card}>
+          <div style={AI.cardHeader}>
+            <span style={AI.cardIcon}>✅</span>
+            <h3 style={AI.cardTitle}>Winning Elements</h3>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:'.5rem' }}>
+            {(analysis.winning_elements||[]).map((item, i) => (
+              <div key={i} style={AI.winItem}>
+                <span style={{ color:'#4ade80', fontSize:'.85rem' }}>✓</span>
+                <span style={{ fontSize:'.82rem', color:'#d0d0e8' }}>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={AI.card}>
+          <div style={AI.cardHeader}>
+            <span style={AI.cardIcon}>⚠️</span>
+            <h3 style={AI.cardTitle}>Weak Points</h3>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:'.5rem' }}>
+            {(analysis.weak_points||[]).map((item, i) => (
+              <div key={i} style={AI.winItem}>
+                <span style={{ color:'#f87171', fontSize:'.85rem' }}>✗</span>
+                <span style={{ fontSize:'.82rem', color:'#d0d0e8' }}>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Recommendations */}
+      <div style={AI.card}>
+        <div style={AI.cardHeader}>
+          <span style={AI.cardIcon}>💡</span>
+          <h3 style={AI.cardTitle}>AI Recommendations</h3>
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:'.6rem' }}>
+          {(analysis.recommendations||[]).map((rec, i) => (
+            <div key={i} style={AI.recItem}>
+              <div style={AI.recNum}>{i + 1}</div>
+              <span style={{ fontSize:'.83rem', color:'#d0d0e8', lineHeight:1.5 }}>{rec}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+const AI = {
+  emptyWrap:    { display:'flex', flexDirection:'column', alignItems:'center', gap:'1rem', padding:'3rem 1rem', textAlign:'center' },
+  emptyIcon:    { fontSize:'3.5rem', filter:'drop-shadow(0 0 20px rgba(108,71,255,.4))' },
+  emptyTitle:   { fontSize:'1.2rem', fontWeight:800, color:'#f0f0f8', margin:0 },
+  emptyDesc:    { fontSize:'.85rem', color:'#8888aa', maxWidth:'380px', lineHeight:1.6, margin:0 },
+  errorBox:     { background:'rgba(248,113,113,.1)', border:'1px solid rgba(248,113,113,.3)', borderRadius:'8px', padding:'.6rem 1rem', fontSize:'.8rem', color:'#f87171' },
+  analyzeBtn:   { padding:'.75rem 2rem', background:'linear-gradient(135deg,#6c47ff,#8b6bff)', border:'none', borderRadius:'12px', color:'#fff', fontWeight:800, fontSize:'.9rem', cursor:'pointer', boxShadow:'0 0 24px rgba(108,71,255,.4)', transition:'all .2s' },
+  loadingWrap:  { display:'flex', flexDirection:'column', alignItems:'center', gap:'1.5rem', padding:'3rem 1rem' },
+  loadingOrb:   { width:'60px', height:'60px', borderRadius:'50%', background:'linear-gradient(135deg,#6c47ff,#8b6bff)', animation:'pulse 1.5s ease-in-out infinite', boxShadow:'0 0 30px rgba(108,71,255,.5)' },
+  card:         { background:'#0d0d1a', border:'1px solid rgba(255,255,255,.07)', borderRadius:'14px', padding:'1.25rem' },
+  cardHeader:   { display:'flex', alignItems:'center', gap:'.5rem', marginBottom:'1rem' },
+  cardIcon:     { fontSize:'1.1rem' },
+  cardTitle:    { fontSize:'.95rem', fontWeight:700, color:'#f0f0f8', flex:1, margin:0 },
+  rerunBtn:     { padding:'.25rem .7rem', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:'6px', color:'#8b6bff', fontSize:'.72rem', fontWeight:700, cursor:'pointer' },
+  scoreLayout:  { display:'flex', gap:'1.5rem', alignItems:'center', flexWrap:'wrap' },
+  metaBadge:    { flex:1, minWidth:'150px', background:'#161625', borderRadius:'10px', padding:'.75rem 1rem', display:'flex', flexDirection:'column', gap:'.25rem' },
+  analysisItem: { background:'#161625', borderRadius:'10px', padding:'.85rem' },
+  analysisLabel:{ fontSize:'.72rem', color:'#8888aa', fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em', marginBottom:'.4rem' },
+  analysisText: { fontSize:'.83rem', color:'#d0d0e8', lineHeight:1.6 },
+  winItem:      { display:'flex', gap:'.6rem', alignItems:'flex-start', padding:'.4rem 0', borderBottom:'1px solid rgba(255,255,255,.04)' },
+  recItem:      { display:'flex', gap:'.75rem', alignItems:'flex-start', padding:'.5rem 0', borderBottom:'1px solid rgba(255,255,255,.04)' },
+  recNum:       { width:'22px', height:'22px', borderRadius:'50%', background:'linear-gradient(135deg,#6c47ff,#8b6bff)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'.7rem', fontWeight:800, color:'#fff', flexShrink:0, marginTop:'.1rem' },
+};
+
 function ShopAdCard({ ad, onClick }) {
   const cover     = ad.video_info?.cover || ad.imageUrl || '';
   const title     = ad.ad_title || ad.title || 'No Title';
@@ -102,7 +407,6 @@ const SC = {
   analysisBtn: {padding:'.3rem .7rem',background:'rgba(108,71,255,.15)',border:'1px solid rgba(108,71,255,.3)',borderRadius:'6px',color:'#8b6bff',fontSize:'.68rem',fontWeight:700,cursor:'pointer'},
 };
 
-// ── Video Player ───────────────────────────────────────────────────────────────
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function makeProxyUrl(rawUrl) {
@@ -128,191 +432,126 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
   const [realVideoUrl, setRealVideoUrl] = useState('');
   const [urlLoading,   setUrlLoading]   = useState(false);
 
-  // Step 1: Fetch real playable URL from scraper API
   useEffect(() => {
     if (!videoUrl || !adId) return;
-    setUrlLoading(true);
-    setVideoError(false);
+    setUrlLoading(true); setVideoError(false);
     api.get('/ads/video/url', { params: { video_id: adId } })
-      .then(res => {
-        if (res.data?.play_url) {
-          setRealVideoUrl(res.data.play_url);
-        } else {
-          // Fallback to proxy with original URL
-          setRealVideoUrl(makeProxyUrl(videoUrl));
-        }
-      })
-      .catch(() => {
-        // Fallback to proxy with original URL
-        setRealVideoUrl(makeProxyUrl(videoUrl));
-      })
+      .then(res => setRealVideoUrl(res.data?.play_url ? res.data.play_url : makeProxyUrl(videoUrl)))
+      .catch(() => setRealVideoUrl(makeProxyUrl(videoUrl)))
       .finally(() => setUrlLoading(false));
   }, [adId, videoUrl]); // eslint-disable-line
 
   const proxyUrl = realVideoUrl || makeProxyUrl(videoUrl);
-
-  const fmtTime = (s) => {
-    if (!s || isNaN(s)) return '0:00';
-    return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
-  };
+  const fmtTime  = (s) => !s||isNaN(s)?'0:00':`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 
   const showCtrl = () => {
-    setShowControls(true);
-    clearTimeout(hideTimer.current);
+    setShowControls(true); clearTimeout(hideTimer.current);
     hideTimer.current = setTimeout(() => setPlaying(p => { if(p) setShowControls(false); return p; }), 3000);
   };
-
   const togglePlay = () => {
     const v = videoRef.current; if (!v) return;
-    if (v.paused) { v.play(); setPlaying(true); }
-    else          { v.pause(); setPlaying(false); }
+    if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
     showCtrl();
   };
-
   const onTimeUpdate = () => {
     const v = videoRef.current; if (!v) return;
     setCurrentTime(v.currentTime);
     setProgress(v.duration ? (v.currentTime/v.duration)*100 : 0);
   };
-
   const onLoaded = () => { if (videoRef.current) setDuration(videoRef.current.duration); };
-
   const seek = (e) => {
-    const v = videoRef.current; const bar = progressRef.current;
-    if (!v || !bar) return;
+    const v = videoRef.current; const bar = progressRef.current; if (!v||!bar) return;
     const pct = Math.max(0, Math.min(1, (e.clientX - bar.getBoundingClientRect().left) / bar.offsetWidth));
-    v.currentTime = pct * v.duration;
-    showCtrl();
+    v.currentTime = pct * v.duration; showCtrl();
   };
-
   const changeVolume = (e) => {
-    const vol = parseFloat(e.target.value);
-    setVolume(vol); setMuted(vol===0);
+    const vol = parseFloat(e.target.value); setVolume(vol); setMuted(vol===0);
     if (videoRef.current) videoRef.current.volume = vol;
   };
-
   const toggleMute = () => {
     const v = videoRef.current; if (!v) return;
     v.muted = !muted; setMuted(!muted); showCtrl();
   };
-
   const downloadVideo = async () => {
     if (!videoUrl) return toast.error('Video URL nahi mili');
     setDownloading(true); setDlProgress(0);
     try {
-      const token    = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('accessToken');
       const filename = `advault-ad-${adId||Date.now()}.mp4`;
-      const url      = `${API_BASE}/api/ads/video/download?url=${encodeURIComponent(videoUrl)}&filename=${filename}`;
+      const url = `${API_BASE}/api/ads/video/download?url=${encodeURIComponent(videoUrl)}&filename=${filename}`;
       const response = await fetch(url, { headers:{ Authorization:`Bearer ${token}` } });
-      if (!response.ok) throw new Error('Download fail');
-      const total  = parseInt(response.headers.get('content-length')||'0');
-      const reader = response.body.getReader();
-      const chunks = []; let received = 0;
+      if (!response.ok) throw new Error('fail');
+      const total = parseInt(response.headers.get('content-length')||'0');
+      const reader = response.body.getReader(); const chunks = []; let received = 0;
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        const { done, value } = await reader.read(); if (done) break;
         chunks.push(value); received += value.length;
         if (total) setDlProgress(Math.round((received/total)*100));
       }
-      const blob = new Blob(chunks, {type:'video/mp4'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-      URL.revokeObjectURL(a.href);
+      const blob = new Blob(chunks,{type:'video/mp4'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = filename; a.click(); URL.revokeObjectURL(a.href);
       toast.success('Video download ho gayi! 🎉');
-    } catch(err) {
-      const a = document.createElement('a');
-      a.href = videoUrl; a.target = '_blank';
+    } catch { 
+      const a = document.createElement('a'); a.href = videoUrl; a.target = '_blank';
       a.download = `advault-ad-${adId||Date.now()}.mp4`; a.click();
       toast.success('Download shuru ho gaya!');
     }
     setDownloading(false); setDlProgress(0);
   };
 
-  // Loading state — fetching real URL
-  if (urlLoading) {
-    return (
-      <div style={{...VP.wrap, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'1rem'}}>
-        {cover && <img src={cover} alt={title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'blur(3px)',opacity:.4}} />}
-        <div style={{position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:'.75rem'}}>
-          <div style={{width:'40px',height:'40px',border:'3px solid rgba(108,71,255,.2)',borderTop:'3px solid #6c47ff',borderRadius:'50%',animation:'spin 1s linear infinite'}}></div>
-          <span style={{color:'rgba(255,255,255,.8)',fontSize:'.78rem',fontWeight:600}}>Video load ho rahi hai...</span>
-        </div>
+  if (urlLoading) return (
+    <div style={{...VP.wrap,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'1rem'}}>
+      {cover && <img src={cover} alt={title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'blur(3px)',opacity:.4}} />}
+      <div style={{position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:'.75rem'}}>
+        <div style={{width:'40px',height:'40px',border:'3px solid rgba(108,71,255,.2)',borderTop:'3px solid #6c47ff',borderRadius:'50%',animation:'spin 1s linear infinite'}}></div>
+        <span style={{color:'rgba(255,255,255,.8)',fontSize:'.78rem',fontWeight:600}}>Video load ho rahi hai...</span>
       </div>
-    );
-  }
+    </div>
+  );
 
-  // No video URL ya error — cover image + fallback button
-  if (!videoUrl || videoError) {
-    return (
-      <div style={VP.wrap}>
-        {cover
-          ? <img src={cover} alt={title} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />
-          : <div style={VP.noVideo}>🎵<p style={{color:'#8888aa',fontSize:'.8rem',marginTop:'.5rem'}}>Video nahi mili</p></div>
-        }
-        {videoError && videoUrl && (
-          <div style={{position:'absolute',bottom:'12px',left:0,right:0,display:'flex',justifyContent:'center',gap:'.6rem'}}>
-            <a href={videoUrl} target="_blank" rel="noreferrer"
-              style={{background:'rgba(108,71,255,.92)',color:'#fff',padding:'.45rem 1.2rem',borderRadius:'8px',fontSize:'.78rem',fontWeight:700,textDecoration:'none'}}>
-              ▶ TikTok pe dekho
-            </a>
-          </div>
-        )}
-      </div>
-    );
-  }
+  if (!videoUrl || videoError) return (
+    <div style={VP.wrap}>
+      {cover ? <img src={cover} alt={title} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />
+             : <div style={VP.noVideo}>🎵<p style={{color:'#8888aa',fontSize:'.8rem',marginTop:'.5rem'}}>Video nahi mili</p></div>}
+      {videoError && videoUrl && (
+        <div style={{position:'absolute',bottom:'12px',left:0,right:0,display:'flex',justifyContent:'center'}}>
+          <a href={videoUrl} target="_blank" rel="noreferrer"
+            style={{background:'rgba(108,71,255,.92)',color:'#fff',padding:'.45rem 1.2rem',borderRadius:'8px',fontSize:'.78rem',fontWeight:700,textDecoration:'none'}}>
+            ▶ TikTok pe dekho
+          </a>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div style={VP.wrap} onMouseMove={showCtrl} onClick={togglePlay}>
-      <video
-        ref={videoRef}
-        src={proxyUrl}
-        poster={cover}
-        style={VP.video}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoaded}
+      <video ref={videoRef} src={proxyUrl} poster={cover} style={VP.video}
+        onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoaded}
         onEnded={() => { setPlaying(false); setShowControls(true); }}
-        onError={() => setVideoError(true)}
-        playsInline
-        preload="metadata"
-        crossOrigin="anonymous"
-      />
-
-      {!playing && (
-        <div style={VP.playOverlay}>
-          <div style={VP.playCircle}>▶</div>
-        </div>
-      )}
-
-      <div style={{...VP.controls, opacity:showControls?1:0, transition:'opacity .3s'}}
-           onClick={e => e.stopPropagation()}>
+        onError={() => setVideoError(true)} playsInline preload="metadata" crossOrigin="anonymous" />
+      {!playing && <div style={VP.playOverlay}><div style={VP.playCircle}>▶</div></div>}
+      <div style={{...VP.controls,opacity:showControls?1:0,transition:'opacity .3s'}} onClick={e=>e.stopPropagation()}>
         <div ref={progressRef} style={VP.progressTrack} onClick={seek}>
-          <div style={{...VP.progressFill, width:progress+'%'}} />
-          <div style={{...VP.progressThumb, left:progress+'%'}} />
+          <div style={{...VP.progressFill,width:progress+'%'}} />
+          <div style={{...VP.progressThumb,left:progress+'%'}} />
         </div>
         <div style={VP.ctrlRow}>
           <button style={VP.ctrlBtn} onClick={togglePlay}>{playing?'⏸':'▶'}</button>
           <span style={VP.timeText}>{fmtTime(currentTime)} / {fmtTime(duration)}</span>
           <div style={{flex:1}} />
-          <button style={VP.ctrlBtn} onClick={toggleMute}>
-            {muted||volume===0?'🔇':volume<0.5?'🔉':'🔊'}
-          </button>
-          <input type="range" min="0" max="1" step="0.05"
-            value={muted?0:volume} onChange={changeVolume}
-            onClick={e=>e.stopPropagation()} style={VP.volSlider} />
-          <button
-            style={{...VP.dlBtn,...(downloading?VP.dlBtnActive:{})}}
-            onClick={e=>{e.stopPropagation();downloadVideo();}}
-            disabled={downloading} title="Video download karo"
-          >
-            {downloading ? (dlProgress>0?`${dlProgress}%`:'⏳') : '⬇ Download'}
+          <button style={VP.ctrlBtn} onClick={toggleMute}>{muted||volume===0?'🔇':volume<0.5?'🔉':'🔊'}</button>
+          <input type="range" min="0" max="1" step="0.05" value={muted?0:volume}
+            onChange={changeVolume} onClick={e=>e.stopPropagation()} style={VP.volSlider} />
+          <button style={{...VP.dlBtn,...(downloading?VP.dlBtnActive:{})}}
+            onClick={e=>{e.stopPropagation();downloadVideo();}} disabled={downloading}>
+            {downloading?(dlProgress>0?`${dlProgress}%`:'⏳'):'⬇ Download'}
           </button>
         </div>
       </div>
-
       {downloading && dlProgress > 0 && (
-        <div style={VP.dlProgressWrap}>
-          <div style={{...VP.dlProgressBar, width:dlProgress+'%'}} />
-        </div>
+        <div style={VP.dlProgressWrap}><div style={{...VP.dlProgressBar,width:dlProgress+'%'}} /></div>
       )}
     </div>
   );
@@ -338,11 +577,9 @@ const VP = {
   dlProgressBar: {height:'100%',background:'#4ade80',transition:'width .3s',borderRadius:'2px'},
 };
 
-// ── CircleRing ─────────────────────────────────────────────────────────────────
 function CircleRing({ active, total }) {
-  const pct  = total > 0 ? Math.min((active/total)*100,100) : 0;
-  const r    = 42; const circ = 2*Math.PI*r;
-  const dash = (pct/100)*circ;
+  const pct = total > 0 ? Math.min((active/total)*100,100) : 0;
+  const r = 42; const circ = 2*Math.PI*r; const dash = (pct/100)*circ;
   return (
     <svg width="108" height="108" viewBox="0 0 108 108">
       <circle cx="54" cy="54" r={r} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="8"/>
@@ -356,15 +593,14 @@ function CircleRing({ active, total }) {
   );
 }
 
-// ── PageDetailsCard ────────────────────────────────────────────────────────────
 function PageDetailsCard({ pageDetails, pageLoading, brand, impression }) {
-  const fmtNum  = (n) => !n ? '—' : n>=1e6 ? (n/1e6).toFixed(1)+'M' : n>=1000 ? (n/1000).toFixed(1)+'K' : n.toLocaleString();
-  const fmtDate = (ts) => ts ? new Date(ts*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+  const fmtNum  = (n) => !n?'—':n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':n.toLocaleString();
+  const fmtDate = (ts) => ts?new Date(ts*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
   const lowImp  = impression != null && impression < 1000;
   return (
     <div style={PD.wrap}>
       <div style={PD.header}>
-        <span style={PD.headerIcon}>🏢</span>
+        <span>🏢</span>
         <span style={PD.headerTitle}>Page Details</span>
         <a href={`https://www.tiktok.com/search?q=${encodeURIComponent(brand)}`} target="_blank" rel="noreferrer" style={PD.pageLink}>↗ Page</a>
       </div>
@@ -379,12 +615,12 @@ function PageDetailsCard({ pageDetails, pageLoading, brand, impression }) {
             <CircleRing active={pageDetails.activeAds} total={pageDetails.totalAds} />
             <div style={PD.statsCol}>
               {[
-                ['📅 Created On',  fmtDate(pageDetails.createdOn)],
-                ['📢 Active Ads',  pageDetails.activeAds],
-                ['📦 Total Ads',   pageDetails.totalAds>=1000?(pageDetails.totalAds/1000).toFixed(1)+'k':pageDetails.totalAds],
-                ['👁 Reach',       fmtNum(pageDetails.totalReach)],
-                ['💰 Total Spend', pageDetails.totalSpend?`$${pageDetails.totalSpend.toLocaleString()}`:'—'],
-              ].map(([k,v]) => (
+                ['📅 Created On', fmtDate(pageDetails.createdOn)],
+                ['📢 Active Ads', pageDetails.activeAds],
+                ['📦 Total Ads',  pageDetails.totalAds>=1000?(pageDetails.totalAds/1000).toFixed(1)+'k':pageDetails.totalAds],
+                ['👁 Reach',      fmtNum(pageDetails.totalReach)],
+                ['💰 Total Spend',pageDetails.totalSpend?`$${pageDetails.totalSpend.toLocaleString()}`:'—'],
+              ].map(([k,v])=>(
                 <div key={k} style={PD.statRow}>
                   <span style={PD.statKey}>{k}</span>
                   <span style={PD.statVal}>{v}</span>
@@ -394,12 +630,10 @@ function PageDetailsCard({ pageDetails, pageLoading, brand, impression }) {
           </div>
           {lowImp && (
             <div style={PD.lowWarn}>
-              <span style={{fontSize:'.85rem'}}>⚠️</span>
+              <span>⚠️</span>
               <div>
                 <div style={{fontWeight:700,fontSize:'.78rem',color:'#fb923c'}}>Low Impression Count</div>
-                <div style={{fontSize:'.7rem',color:'#8888aa',marginTop:'.15rem'}}>
-                  Is ad ke impressions abhi kam hain ({impression.toLocaleString()}). Performance track karte raho.
-                </div>
+                <div style={{fontSize:'.7rem',color:'#8888aa',marginTop:'.15rem'}}>Is ad ke impressions abhi kam hain ({impression.toLocaleString()}).</div>
               </div>
             </div>
           )}
@@ -418,7 +652,6 @@ function PageDetailsCard({ pageDetails, pageLoading, brand, impression }) {
 const PD = {
   wrap:       {background:'#0d0d1a',border:'1px solid rgba(255,255,255,.07)',borderRadius:'14px',padding:'1.2rem',display:'flex',flexDirection:'column',gap:'.85rem'},
   header:     {display:'flex',alignItems:'center',gap:'.5rem'},
-  headerIcon: {fontSize:'1rem'},
   headerTitle:{fontWeight:700,fontSize:'.9rem',color:'#f0f0f8',flex:1},
   pageLink:   {fontSize:'.75rem',color:'#6c47ff',textDecoration:'none',fontWeight:600,border:'1px solid rgba(108,71,255,.3)',padding:'.2rem .6rem',borderRadius:'6px'},
   ringRow:    {display:'flex',gap:'1rem',alignItems:'center',flexWrap:'wrap'},
@@ -430,21 +663,20 @@ const PD = {
   dupRow:     {display:'flex',justifyContent:'space-between',borderTop:'1px solid rgba(255,255,255,.05)',paddingTop:'.7rem'},
 };
 
-// ── Main Component ─────────────────────────────────────────────────────────────
 export default function AdDetail() {
   const { adId }   = useParams();
   const location   = useLocation();
   const navigate   = useNavigate();
 
-  const [detail,      setDetail]      = useState(null);
-  const [brandAds,    setBrandAds]    = useState([]);
-  const [pageDetails, setPageDetails] = useState(null);
-  const [pageLoading, setPageLoading] = useState(false);
-  const [loading,     setLoading]     = useState(true);
-  const [brandLoading,setBrandLoading]= useState(false);
-  const [saved,       setSaved]       = useState(false);
-  const [activeTab,   setActiveTab]   = useState('overview');
-  const [copied,      setCopied]      = useState(false);
+  const [detail,       setDetail]       = useState(null);
+  const [brandAds,     setBrandAds]     = useState([]);
+  const [pageDetails,  setPageDetails]  = useState(null);
+  const [pageLoading,  setPageLoading]  = useState(false);
+  const [loading,      setLoading]      = useState(true);
+  const [brandLoading, setBrandLoading] = useState(false);
+  const [saved,        setSaved]        = useState(false);
+  const [activeTab,    setActiveTab]    = useState('overview');
+  const [copied,       setCopied]       = useState(false);
 
   const passedAd = location.state?.ad || null;
 
@@ -458,7 +690,7 @@ export default function AdDetail() {
       setDetail(data);
       const advId = data.advertiser_id || data.brand_id || passedAd?.advertiser_id;
       if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
-    } catch (err) {
+    } catch {
       if (passedAd) {
         setDetail(passedAd);
         const advId = passedAd?.advertiser_id || passedAd?.brand_id;
@@ -474,10 +706,9 @@ export default function AdDetail() {
       const res    = await api.get(`/ads/advertiser/${advId}`);
       const allAds = res.data?.data || [];
       const active = allAds.filter(a => { const e=a.last_shown_date||a.end_date; return !e||new Date(e*1000)>new Date(); });
-      const first  = allAds.reduce((m,a) => { const d=a.first_shown_date||a.start_date||Infinity; return d<m?d:m; }, Infinity);
+      const first  = allAds.reduce((m,a)=>{ const d=a.first_shown_date||a.start_date||Infinity; return d<m?d:m; }, Infinity);
       setPageDetails({
-        totalAds:  allAds.length,
-        activeAds: active.length,
+        totalAds:  allAds.length, activeAds: active.length,
         totalReach:allAds.reduce((s,a)=>s+(a.impression||a.reach||0),0),
         totalSpend:allAds.reduce((s,a)=>s+(a.cost||a.spend||0),0),
         createdOn: first!==Infinity?first:null,
@@ -543,6 +774,7 @@ export default function AdDetail() {
       <style>{`
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:.8} }
         .shop-ad-card:hover { border-color:rgba(108,71,255,.4)!important; transform:translateY(-3px); box-shadow:0 8px 24px rgba(108,71,255,.12); }
         .action-btn:hover { opacity:.85; transform:translateY(-1px); }
         @media(max-width:640px){
@@ -559,25 +791,18 @@ export default function AdDetail() {
             {saved?'✅ Saved':'💾 Save Ad'}
           </button>
           <a href={ad.tiktok_url||`https://www.tiktok.com/search?q=${encodeURIComponent(title)}`}
-            target="_blank" rel="noreferrer" className="action-btn" style={S.pillOutline}>
-            🔗 TikTok
-          </a>
+            target="_blank" rel="noreferrer" className="action-btn" style={S.pillOutline}>🔗 TikTok</a>
         </div>
       </div>
 
       <div style={S.page}>
-
         {/* HERO */}
         <div className="hero-grid" style={S.hero}>
-
-          {/* Video Player */}
           <div className="media-wrap" style={S.mediaWrap}>
             <VideoPlayer videoUrl={videoUrl} cover={cover} title={title} adId={adId} />
             {isActive && <span style={S.activeBadge}>● STILL ACTIVE</span>}
             {impression>0 && impression<1000 && <span style={S.lowImpBadge}>⚠️ Low Impression</span>}
           </div>
-
-          {/* Info */}
           <div style={{display:'flex',flexDirection:'column',gap:'1rem',animation:'fadeIn .4s ease'}}>
             <div style={{display:'flex',alignItems:'center',gap:'.75rem'}}>
               <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'linear-gradient(135deg,#6c47ff,#ff4f87)',flexShrink:0}}></div>
@@ -593,15 +818,9 @@ export default function AdDetail() {
               {isActive  && <span style={S.tagGreen}>● Active</span>}
             </div>
             <div style={S.runBox}>
-              <div style={S.runRow}>
-                <span style={S.runKey}>📅 Running Time</span>
-                <span style={S.runVal}>{fmtDate(startDate)} → {endDate?fmtDate(endDate):'Today'}</span>
-              </div>
+              <div style={S.runRow}><span style={S.runKey}>📅 Running Time</span><span style={S.runVal}>{fmtDate(startDate)} → {endDate?fmtDate(endDate):'Today'}</span></div>
               {runningDays!==null && <div style={S.runRow}><span style={S.runKey}>⏱ Days Running</span><span style={S.runVal}>{runningDays} days</span></div>}
-              <div style={S.runRow}>
-                <span style={S.runKey}>🌍 Countries</span>
-                <span style={S.runVal}>{countries.length>0?countries.slice(0,6).map(c=>`${countryFlag(c)} ${c}`).join('  '):'—'}</span>
-              </div>
+              <div style={S.runRow}><span style={S.runKey}>🌍 Countries</span><span style={S.runVal}>{countries.length>0?countries.slice(0,6).map(c=>`${countryFlag(c)} ${c}`).join('  '):'—'}</span></div>
               <div style={S.runRow}><span style={S.runKey}>💰 Spend</span><span style={S.runVal}>{cost?`$${cost}`:'—'}</span></div>
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:'.6rem'}}>
@@ -618,9 +837,10 @@ export default function AdDetail() {
           <PageDetailsCard pageDetails={pageDetails} pageLoading={pageLoading} brand={brand} impression={impression} />
         </div>
 
-        {/* TABS */}
+        {/* TABS — ab 3 tabs */}
         <div style={S.tabBar}>
           <TabBtn active={activeTab==='overview'}   onClick={()=>setActiveTab('overview')}>📋 Overview</TabBtn>
+          <TabBtn active={activeTab==='ai'}         onClick={()=>setActiveTab('ai')}>🤖 AI Analysis</TabBtn>
           <TabBtn active={activeTab==='transcript'} onClick={()=>setActiveTab('transcript')}>📝 Transcript</TabBtn>
         </div>
 
@@ -676,6 +896,13 @@ export default function AdDetail() {
           </div>
         )}
 
+        {/* AI ANALYSIS TAB */}
+        {activeTab==='ai' && (
+          <div style={{animation:'fadeIn .3s ease'}}>
+            <AIAnalysisTab ad={ad} adId={adId} />
+          </div>
+        )}
+
         {/* TRANSCRIPT TAB */}
         {activeTab==='transcript' && (
           <div style={{animation:'fadeIn .3s ease'}}>
@@ -704,10 +931,7 @@ export default function AdDetail() {
         <div style={SS.shopHeader}>
           <div style={SS.brandRow}>
             <div style={SS.brandAvatar}>{brand.charAt(0).toUpperCase()}</div>
-            <div>
-              <div style={SS.brandName}>{brand}</div>
-              <div style={SS.brandSub}>🎵 TikTok Advertiser</div>
-            </div>
+            <div><div style={SS.brandName}>{brand}</div><div style={SS.brandSub}>🎵 TikTok Advertiser</div></div>
           </div>
           <div style={SS.titleCol}>
             <h2 style={SS.shopTitle}>Ads from this shop</h2>
