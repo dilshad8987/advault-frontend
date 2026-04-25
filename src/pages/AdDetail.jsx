@@ -38,29 +38,101 @@ function TabBtn({ active, onClick, children }) {
   );
 }
 
-function MiniAdCard({ ad, onClick }) {
-  const cover = ad.video_info?.cover || ad.imageUrl || '';
-  const title = ad.ad_title || ad.title || 'No Title';
+function ShopAdCard({ ad, onClick }) {
+  const cover      = ad.video_info?.cover || ad.imageUrl || '';
+  const title      = ad.ad_title || ad.title || 'No Title';
+  const startDate  = ad.first_shown_date || ad.start_date;
+  const endDate    = ad.last_shown_date  || ad.end_date;
+  const isActive   = !endDate || new Date(endDate * 1000) > new Date();
+  const runDays    = startDate ? Math.floor((Date.now() / 1000 - startDate) / 86400) : null;
+  const likes      = ad.like || ad.metrics?.likes || 0;
+  const countries  = ad.country_code
+    ? (Array.isArray(ad.country_code) ? ad.country_code : [ad.country_code])
+    : [];
+  const lowImp     = (ad.impression || ad.reach || 0) > 0 && (ad.impression || ad.reach || 0) < 1000;
+
+  const formatDateShort = (ts) => {
+    if (!ts) return '—';
+    return new Date(ts * 1000).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
+  };
+
   return (
-    <div onClick={onClick} style={{
-      background: '#0f0f1a', border: '1px solid rgba(255,255,255,.07)',
-      borderRadius: '10px', overflow: 'hidden', cursor: 'pointer',
-    }}>
-      <div style={{ height: '110px', background: '#161625', overflow: 'hidden' }}>
+    <div
+      onClick={onClick}
+      className="shop-ad-card"
+      style={SC.card}
+    >
+      {/* Thumbnail */}
+      <div style={SC.thumb}>
         {cover
-          ? <img src={cover} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '2rem' }}>🎵</div>
+          ? <img src={cover} alt={title} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+          : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', fontSize:'2rem', background:'#161625' }}>🎵</div>
         }
+        {/* Status badge */}
+        <span style={{ ...SC.badge, ...(isActive ? SC.badgeGreen : SC.badgeGray) }}>
+          {isActive ? '● Active' : '● Ended'}
+        </span>
+        {lowImp && <span style={SC.badgeLow}>⚠️ Low</span>}
       </div>
-      <div style={{ padding: '.6rem' }}>
-        <p style={{ fontSize: '.7rem', color: '#d0d0e8', fontWeight: 600, margin: 0,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {title}
-        </p>
+
+      {/* Body */}
+      <div style={SC.body}>
+        {/* Running dates */}
+        <div style={SC.dateRow}>
+          <span style={SC.dateChip}>{formatDateShort(startDate)}</span>
+          <span style={{ color:'#555', fontSize:'.6rem' }}>→</span>
+          <span style={SC.dateChip}>{endDate ? formatDateShort(endDate) : 'Today'}</span>
+          {runDays !== null && <span style={SC.daysBadge}>{runDays}d</span>}
+        </div>
+
+        {/* Title */}
+        <p style={SC.title}>{title}</p>
+
+        {/* Countries */}
+        {countries.length > 0 && (
+          <div style={SC.countriesRow}>
+            {countries.slice(0,4).map(c => (
+              <span key={c} style={SC.flag}>
+                {c.toUpperCase().replace(/./g, ch => String.fromCodePoint(127397 + ch.charCodeAt(0)))}
+              </span>
+            ))}
+            {countries.length > 4 && <span style={{ color:'#8888aa', fontSize:'.65rem' }}>+{countries.length - 4}</span>}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={SC.footer}>
+          <span style={SC.likes}>❤️ {likes > 999 ? (likes/1000).toFixed(1)+'k' : likes}</span>
+          <button
+            onClick={onClick}
+            style={SC.analysisBtn}
+          >
+            🔍 Ad Analysis
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
+const SC = {
+  card:        { background:'#0f0f1a', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', overflow:'hidden', cursor:'pointer', transition:'all .2s', display:'flex', flexDirection:'column' },
+  thumb:       { height:'140px', background:'#161625', overflow:'hidden', position:'relative', flexShrink:0 },
+  badge:       { position:'absolute', top:'7px', left:'7px', borderRadius:'20px', padding:'.2rem .6rem', fontSize:'.63rem', fontWeight:700, border:'1px solid' },
+  badgeGreen:  { background:'rgba(74,222,128,.12)', color:'#4ade80', borderColor:'rgba(74,222,128,.3)' },
+  badgeGray:   { background:'rgba(255,255,255,.06)', color:'#8888aa', borderColor:'rgba(255,255,255,.1)' },
+  badgeLow:    { position:'absolute', top:'7px', right:'7px', background:'rgba(251,146,60,.12)', border:'1px solid rgba(251,146,60,.3)', color:'#fb923c', borderRadius:'20px', padding:'.2rem .5rem', fontSize:'.6rem', fontWeight:700 },
+  body:        { padding:'.75rem', display:'flex', flexDirection:'column', gap:'.5rem', flex:1 },
+  dateRow:     { display:'flex', alignItems:'center', gap:'.3rem', flexWrap:'wrap' },
+  dateChip:    { background:'#161625', borderRadius:'5px', padding:'.15rem .45rem', fontSize:'.62rem', color:'#8888aa', fontWeight:600 },
+  daysBadge:   { marginLeft:'auto', background:'rgba(108,71,255,.15)', color:'#8b6bff', borderRadius:'5px', padding:'.15rem .45rem', fontSize:'.62rem', fontWeight:700 },
+  title:       { fontSize:'.75rem', fontWeight:600, color:'#d0d0e8', margin:0, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', lineHeight:1.4 },
+  countriesRow:{ display:'flex', gap:'.25rem', flexWrap:'wrap', alignItems:'center' },
+  flag:        { fontSize:'1rem' },
+  footer:      { display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:'auto', paddingTop:'.4rem', borderTop:'1px solid rgba(255,255,255,.05)' },
+  likes:       { fontSize:'.72rem', color:'#8888aa', fontWeight:600 },
+  analysisBtn: { padding:'.3rem .7rem', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:'6px', color:'#8b6bff', fontSize:'.68rem', fontWeight:700, cursor:'pointer' },
+};
 
 // ── Circular Progress Ring ──────────────────────────────────────────────────────
 function CircleRing({ active, total }) {
@@ -317,7 +389,7 @@ export default function AdDetail() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-        .mini-card:hover { border-color: rgba(108,71,255,.4) !important; transform: translateY(-2px); transition: all .2s; }
+        .shop-ad-card:hover { border-color: rgba(108,71,255,.4) !important; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(108,71,255,.12); }
         .action-btn:hover { opacity: .85; transform: translateY(-1px); }
         @media (max-width: 640px) {
           .hero-grid { grid-template-columns: 1fr !important; }
@@ -432,7 +504,6 @@ export default function AdDetail() {
         <div style={S.tabBar}>
           <TabBtn active={activeTab==='overview'}   onClick={() => setActiveTab('overview')}>📋 Overview</TabBtn>
           <TabBtn active={activeTab==='transcript'} onClick={() => setActiveTab('transcript')}>📝 Transcript</TabBtn>
-          <TabBtn active={activeTab==='brand'}      onClick={() => setActiveTab('brand')}>🏢 Brand Ads</TabBtn>
         </div>
 
         {/* ── OVERVIEW TAB ── */}
@@ -514,36 +585,54 @@ export default function AdDetail() {
           </div>
         )}
 
-        {/* ── BRAND ADS TAB ── */}
-        {activeTab === 'brand' && (
-          <div style={{ animation:'fadeIn .3s ease' }}>
-            <div style={S.card}>
-              <h3 style={S.cardTitle}>🏢 {brand} ke aur ads</h3>
-              {brandLoading ? (
-                <div style={{ display:'flex', alignItems:'center', gap:'.75rem', padding:'1.5rem 0' }}>
-                  <div style={S.spinner}></div>
-                  <span style={{ color:'#8888aa' }}>Load ho rahe hain...</span>
-                </div>
-              ) : brandAds.length > 0 ? (
-                <div style={S.brandGrid}>
-                  {brandAds.map((a, i) => (
-                    <MiniAdCard
-                      key={a.id || a.ad_id || i}
-                      ad={a}
-                      onClick={() => navigate(`/ad/${a.id || a.ad_id}`, { state: { ad: a } })}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div style={S.empty}>
-                  <p style={{ fontSize:'2rem', margin:0 }}>🔍</p>
-                  <p style={{ color:'#8888aa', margin:0 }}>Is brand ke aur ads nahi mile</p>
-                </div>
-              )}
+        {/* ── BRAND ADS TAB (removed, now shown as dedicated section below) ── */}
+
+      </div>
+
+      {/* ══ ADS FROM THIS SHOP ══════════════════════════════════════════════════ */}
+      <div style={SS.shopSection}>
+        <div style={SS.shopHeader}>
+          {/* Brand avatar + name */}
+          <div style={SS.brandRow}>
+            <div style={SS.brandAvatar}>
+              {brand.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style={SS.brandName}>{brand}</div>
+              <div style={SS.brandSub}>🎵 TikTok Advertiser</div>
             </div>
           </div>
-        )}
 
+          {/* Title + count */}
+          <div style={SS.titleCol}>
+            <h2 style={SS.shopTitle}>Ads from this shop</h2>
+            {!brandLoading && brandAds.length > 0 && (
+              <span style={SS.countBadge}>{brandAds.length} ads</span>
+            )}
+          </div>
+        </div>
+
+        {brandLoading ? (
+          <div style={SS.loadingRow}>
+            <div style={S.spinner}></div>
+            <span style={{ color:'#8888aa', fontSize:'.85rem' }}>Shop ke ads load ho rahe hain...</span>
+          </div>
+        ) : brandAds.length > 0 ? (
+          <div style={SS.grid}>
+            {brandAds.map((a, i) => (
+              <ShopAdCard
+                key={a.id || a.ad_id || i}
+                ad={a}
+                onClick={() => navigate(`/ad/${a.id || a.ad_id}`, { state: { ad: a } })}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={S.empty}>
+            <p style={{ fontSize:'2.5rem', margin:0 }}>🏪</p>
+            <p style={{ color:'#8888aa', margin:0, fontSize:'.88rem' }}>Is brand ke aur ads nahi mile</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -581,4 +670,18 @@ const S = {
   copyBtn:    { padding:'.5rem 1.2rem', border:'1px solid', borderRadius:'8px', cursor:'pointer', fontWeight:600, fontSize:'.82rem', transition:'all .2s' },
   brandGrid:  { display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:'1rem' },
   empty:      { display:'flex', flexDirection:'column', alignItems:'center', padding:'2rem', gap:'.5rem' },
+};
+
+const SS = {
+  shopSection:  { background:'#06060e', borderTop:'1px solid rgba(255,255,255,.06)', padding:'2.5rem clamp(1rem,4vw,2rem) 4rem' },
+  shopHeader:   { maxWidth:'1100px', margin:'0 auto 1.75rem', display:'flex', flexDirection:'column', gap:'1rem' },
+  brandRow:     { display:'flex', alignItems:'center', gap:'.75rem' },
+  brandAvatar:  { width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg,#6c47ff,#ff4f87)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.1rem', fontWeight:800, color:'#fff', flexShrink:0 },
+  brandName:    { fontWeight:700, fontSize:'.95rem', color:'#f0f0f8' },
+  brandSub:     { fontSize:'.72rem', color:'#8888aa', marginTop:'.1rem' },
+  titleCol:     { display:'flex', alignItems:'center', gap:'.75rem', flexWrap:'wrap' },
+  shopTitle:    { fontSize:'clamp(1.1rem,3vw,1.4rem)', fontWeight:900, color:'#f0f0f8', margin:0, letterSpacing:'-.01em' },
+  countBadge:   { background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', color:'#8b6bff', borderRadius:'20px', padding:'.2rem .75rem', fontSize:'.75rem', fontWeight:700 },
+  loadingRow:   { display:'flex', alignItems:'center', gap:'1rem', padding:'2rem 0', maxWidth:'1100px', margin:'0 auto' },
+  grid:         { maxWidth:'1100px', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(200px,100%),1fr))', gap:'1.1rem' },
 };
