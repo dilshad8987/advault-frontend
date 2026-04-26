@@ -4,14 +4,18 @@ import AdCard from '../components/AdCard';
 import AliExpressCard from '../components/AliExpressCard';
 import api from '../api/axios';
 
+// Cache key helper
+const cacheKey = (tab, country, period, orderBy, aliTab) =>
+  `dashboard_cache_${tab}_${country}_${period}_${orderBy}_${aliTab}`;
+
 export default function Dashboard() {
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('tiktok');
-  const [aliTab, setAliTab] = useState('trending');
-  const [country, setCountry] = useState('US');
-  const [period, setPeriod] = useState('30');
-  const [orderBy, setOrderBy] = useState('impression');
+  const [tab, setTab] = useState(() => sessionStorage.getItem('dash_tab') || 'tiktok');
+  const [aliTab, setAliTab] = useState(() => sessionStorage.getItem('dash_aliTab') || 'trending');
+  const [country, setCountry] = useState(() => sessionStorage.getItem('dash_country') || 'US');
+  const [period, setPeriod] = useState(() => sessionStorage.getItem('dash_period') || '30');
+  const [orderBy, setOrderBy] = useState(() => sessionStorage.getItem('dash_orderBy') || 'impression');
   const [aliSearchInput, setAliSearchInput] = useState('');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -27,7 +31,27 @@ export default function Dashboard() {
 
   const ALI_CAT_MAP = { trending: '15', highsell: '200003655' };
 
+  // Filter change hone pe sessionStorage mein save karo
+  useEffect(() => { sessionStorage.setItem('dash_tab', tab); }, [tab]);
+  useEffect(() => { sessionStorage.setItem('dash_aliTab', aliTab); }, [aliTab]);
+  useEffect(() => { sessionStorage.setItem('dash_country', country); }, [country]);
+  useEffect(() => { sessionStorage.setItem('dash_period', period); }, [period]);
+  useEffect(() => { sessionStorage.setItem('dash_orderBy', orderBy); }, [orderBy]);
+
   const fetchAds = useCallback(async () => {
+    const key = cacheKey(tab, country, period, orderBy, aliTab);
+
+    // Cache check karo — agar data hai toh seedha dikhao, load nahi
+    const cached = sessionStorage.getItem(key);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setAds(parsed);
+        setLoading(false);
+        return;
+      } catch {}
+    }
+
     setLoading(true);
     setAds([]);
     try {
@@ -36,14 +60,9 @@ export default function Dashboard() {
           params: { country, period, order: orderBy }
         });
 
-        // Response chain:
-        // res.data = { success, data }
-        // res.data.data = { data: apiResponse, fromCache }
-        // res.data.data.data = { code, msg, processed_time, data }
-        // res.data.data.data.data = { materials: [...ads] }
         const d = res.data;
-        const L3 = d?.data?.data;           // { code, msg, data }
-        const L4 = L3?.data;               // { materials: [...] } or array
+        const L3 = d?.data?.data;
+        const L4 = L3?.data;
 
         const raw =
           L4?.materials ||
@@ -54,14 +73,22 @@ export default function Dashboard() {
           (Array.isArray(L3) ? L3 : null) ||
           [];
 
-        setAds(Array.isArray(raw) ? raw : []);
+        const result = Array.isArray(raw) ? raw : [];
+        setAds(result);
+        // Cache mein save karo (5 minute valid)
+        sessionStorage.setItem(key, JSON.stringify(result));
+        sessionStorage.setItem(key + '_time', Date.now().toString());
+
       } else if (tab === 'aliexpress') {
         const catId = ALI_CAT_MAP[aliTab] || '15';
         const res = await api.get('/ads/aliexpress', {
           params: { catId, page: 1, currency: 'USD' }
         });
         const raw = res.data?.data?.data || res.data?.data || [];
-        setAds(Array.isArray(raw) ? raw : []);
+        const result = Array.isArray(raw) ? raw : [];
+        setAds(result);
+        sessionStorage.setItem(key, JSON.stringify(result));
+        sessionStorage.setItem(key + '_time', Date.now().toString());
       }
     } catch (err) {
       console.error(err);
@@ -72,7 +99,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (aliTab !== 'search') fetchAds();
-  }, [fetchAds]);
+    else setLoading(false);
+  }, [fetchAds, aliTab]);
 
   const searchAliExpress = async () => {
     if (!aliSearchInput.trim()) return;
