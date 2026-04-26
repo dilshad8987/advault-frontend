@@ -396,9 +396,10 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
   const [urlLoading,   setUrlLoading]   = useState(false);
 
   useEffect(() => {
-    if (!videoUrl || !adId) return;
+    if (!adId) return;
     setUrlLoading(true); setVideoError(false);
-    api.get('/ads/video/url', { params: { video_id: adId } })
+    // vid_url = actual CDN URL from ad data, video_id = material_id for API lookup
+    api.get('/ads/video/url', { params: { video_id: adId, vid_url: videoUrl || '' } })
       .then(res => {
         if (res.data?.play_url) {
           setRealVideoUrl(res.data.play_url);
