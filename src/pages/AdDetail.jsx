@@ -646,7 +646,7 @@ export default function AdDetail() {
   const [brandAds,     setBrandAds]     = useState([]);
   const [pageDetails,  setPageDetails]  = useState(null);
   const [pageLoading,  setPageLoading]  = useState(false);
-  const [loading,      setLoading]      = useState(true);
+  const [loading,      setLoading]      = useState(!location.state?.ad);
   const [brandLoading, setBrandLoading] = useState(false);
   const [saved,        setSaved]        = useState(false);
   const [activeTab,    setActiveTab]    = useState('overview');
@@ -654,7 +654,18 @@ export default function AdDetail() {
 
   const passedAd = location.state?.ad || null;
 
-  useEffect(() => { fetchDetail(); }, [adId]); // eslint-disable-line
+  useEffect(() => {
+    if (passedAd) {
+      // Ad data already hai — seedha dikhao, koi load nahi
+      setDetail(passedAd);
+      const advId = passedAd?.advertiser_id || passedAd?.brand_id;
+      if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
+      setLoading(false);
+    } else {
+      // Direct URL se aaye — API se fetch karo
+      fetchDetail();
+    }
+  }, [adId]); // eslint-disable-line
 
   const fetchDetail = async () => {
     setLoading(true);
