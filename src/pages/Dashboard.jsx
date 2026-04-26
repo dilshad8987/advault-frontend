@@ -134,7 +134,6 @@ export default function Dashboard() {
                 {orders.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
             </div>
-            <button style={styles.refreshBtn} onClick={fetchAds}>🔄 Refresh</button>
           </div>
         )}
 
@@ -184,7 +183,7 @@ export default function Dashboard() {
           <div style={styles.center}>
             <p style={{ fontSize: '2.5rem' }}>📭</p>
             <p style={{ color: '#8888aa', marginTop: '.5rem' }}>Kuch nahi mila</p>
-            <button style={styles.refreshBtn} onClick={fetchAds}>Dobara try karo</button>
+            <button style={styles.retryBtn} onClick={fetchAds}>Dobara try karo</button>
           </div>
         ) : (
           <>
@@ -214,7 +213,7 @@ const styles = {
   filterGroup: { display: 'flex', flexDirection: 'column', gap: '.4rem' },
   label: { fontSize: '.72rem', color: '#8888aa', fontWeight: 700, textTransform: 'uppercase' },
   select: { padding: '.5rem .9rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.85rem', cursor: 'pointer', outline: 'none' },
-  refreshBtn: { padding: '.55rem 1.2rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem' },
+  retryBtn: { padding: '.55rem 1.2rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem' },
   aliSection: { marginBottom: '1.5rem' },
   aliTabs: { display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' },
   aliTab: { padding: '.5rem 1.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer' },
