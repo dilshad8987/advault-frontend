@@ -108,62 +108,25 @@ function AIAnalysisTab({ ad, adId }) {
     const isActive   = !endDate || new Date(endDate*1000) > new Date();
     const countries  = ad.country_code ? (Array.isArray(ad.country_code) ? ad.country_code : [ad.country_code]) : [];
 
-    const prompt = `You are an expert TikTok advertising analyst. Analyze this ad and return ONLY valid JSON — no markdown, no explanation outside JSON.
-
-AD DATA:
-- Title: "${title}"
-- Objective: ${objective || 'unknown'}
-- Industry: ${industry || 'unknown'}
-- Likes: ${likes}
-- Comments: ${comments}
-- CTR: ${ctr}%
-- Impressions/Reach: ${impression}
-- Spend: $${cost}
-- Days Running: ${runDays}
-- Still Active: ${isActive}
-- Countries: ${countries.join(', ') || 'unknown'}
-
-Return this exact JSON structure:
-{
-  "overall_score": <0-100 integer>,
-  "verdict": "<one of: WINNING | AVERAGE | WEAK | VIRAL>",
-  "scores": {
-    "hook_strength": <0-25>,
-    "engagement_rate": <0-25>,
-    "spend_efficiency": <0-25>,
-    "longevity": <0-25>
-  },
-  "hook_analysis": "<2 sentences about the ad hook and opening>",
-  "target_audience": "<describe the likely target audience in 1-2 sentences>",
-  "cta_analysis": "<analyze the call to action strength>",
-  "winning_elements": ["<element 1>", "<element 2>", "<element 3>"],
-  "weak_points": ["<weak point 1>", "<weak point 2>"],
-  "recommendations": ["<action 1>", "<action 2>", "<action 3>"],
-  "competitor_threat": "<LOW | MEDIUM | HIGH>",
-  "scaling_potential": "<LOW | MEDIUM | HIGH>",
-  "best_for": "<which type of business/product this ad style works best for>"
-}`;
-
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }]
-        })
+      // Backend se AI analysis — CORS bypass
+      const res = await api.post('/ads/ai/analyze', {
+        adData: {
+          title, objective, industry, likes, comments,
+          ctr: parseFloat(ctr) || 0,
+          impression, cost, runDays, isActive,
+          countries
+        }
       });
-
-      const data = await response.json();
-      const text = data.content?.map(i => i.text || '').join('') || '';
-
-      // Parse JSON
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      setAnalysis(parsed);
+      if (res.data?.success && res.data?.analysis) {
+        setAnalysis(res.data.analysis);
+      } else {
+        setError('Analysis fail hua. Dobara try karo.');
+      }
     } catch(err) {
-      setError('Analysis fail hua. Dobara try karo.');
+      console.error('AI error:', err);
+      const msg = err.response?.data?.message || err.message || 'Analysis fail hua';
+      setError(msg);
     }
     setLoading(false);
   };
@@ -436,8 +399,19 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
     if (!videoUrl || !adId) return;
     setUrlLoading(true); setVideoError(false);
     api.get('/ads/video/url', { params: { video_id: adId } })
-      .then(res => setRealVideoUrl(res.data?.play_url ? res.data.play_url : makeProxyUrl(videoUrl)))
-      .catch(() => setRealVideoUrl(makeProxyUrl(videoUrl)))
+      .then(res => {
+        if (res.data?.play_url) {
+          setRealVideoUrl(res.data.play_url);
+        } else {
+          // 404 — scraper se URL nahi mili, proxy use karo
+          setRealVideoUrl(makeProxyUrl(videoUrl));
+        }
+      })
+      .catch(err => {
+        // 429 rate limit ya koi bhi error — proxy fallback
+        console.log('Video URL fetch fallback:', err.response?.status || err.message);
+        setRealVideoUrl(makeProxyUrl(videoUrl));
+      })
       .finally(() => setUrlLoading(false));
   }, [adId, videoUrl]); // eslint-disable-line
 
