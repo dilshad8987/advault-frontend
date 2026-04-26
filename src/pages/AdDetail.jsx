@@ -378,7 +378,7 @@ function makeProxyUrl(rawUrl) {
   return `${API_BASE}/api/ads/video/stream?url=${encodeURIComponent(rawUrl)}&token=${encodeURIComponent(token)}`;
 }
 
-function VideoPlayer({ videoUrl, cover, title, adId }) {
+function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId }) {
   const videoRef    = useRef(null);
   const progressRef = useRef(null);
   const hideTimer   = useRef(null);
@@ -399,7 +399,7 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
     if (!adId) return;
     setUrlLoading(true); setVideoError(false);
     // vid_url = actual CDN URL from ad data, video_id = material_id for API lookup
-    api.get('/ads/video/url', { params: { video_id: adId, vid_url: videoUrl || '' } })
+    api.get('/ads/video/url', { params: { video_id: adId, tiktok_url: tiktokItemUrl || '' } })
       .then(res => {
         if (res.data?.play_url) {
           setRealVideoUrl(res.data.play_url);
@@ -414,7 +414,7 @@ function VideoPlayer({ videoUrl, cover, title, adId }) {
         setRealVideoUrl(makeProxyUrl(videoUrl));
       })
       .finally(() => setUrlLoading(false));
-  }, [adId, videoUrl]); // eslint-disable-line
+  }, [adId, tiktokItemUrl]); // eslint-disable-line
 
   const proxyUrl = realVideoUrl || makeProxyUrl(videoUrl);
   const fmtTime  = (s) => !s||isNaN(s)?'0:00':`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
@@ -731,7 +731,12 @@ export default function AdDetail() {
   const title       = ad.ad_title||ad.title||'Ad Detail';
   const brand       = ad.brand_name||ad.advertiser_name||'Unknown Brand';
   const cover       = ad.video_info?.cover||ad.imageUrl||'';
-  const videoUrl    = ad.video_info?.vid||ad.video_url||'';
+  // video_url is object: {"720p": "https://...", "540p": "..."}
+  const videoUrlObj   = ad.video_info?.video_url;
+  const videoUrl      = (videoUrlObj && typeof videoUrlObj === 'object')
+    ? (videoUrlObj['720p'] || videoUrlObj['540p'] || videoUrlObj['480p'] || Object.values(videoUrlObj)[0] || '')
+    : (typeof videoUrlObj === 'string' ? videoUrlObj : ad.video_url || '');
+  const tiktokItemUrl = ad.tiktok_item_url || ad.share_url || ad.item_url || '';
   const isVideo     = !!ad.video_info||ad.isVideo;
   const likes       = ad.like||ad.metrics?.likes||0;
   const comments    = ad.comment||ad.metrics?.comments||0;
@@ -785,7 +790,7 @@ export default function AdDetail() {
         {/* HERO */}
         <div className="hero-grid" style={S.hero}>
           <div className="media-wrap" style={S.mediaWrap}>
-            <VideoPlayer videoUrl={videoUrl} cover={cover} title={title} adId={adId} />
+            <VideoPlayer videoUrl={videoUrl} tiktokItemUrl={tiktokItemUrl} cover={cover} title={title} adId={adId} />
             {isActive && <span style={S.activeBadge}>● STILL ACTIVE</span>}
             {impression>0 && impression<1000 && <span style={S.lowImpBadge}>⚠️ Low Impression</span>}
           </div>
