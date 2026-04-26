@@ -27,5 +27,25 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>
+      // Disable zoom on desktop (same as mobile user-scalable=no)
+      // Block Ctrl + scroll wheel zoom
+      window.addEventListener('wheel', function(e) {
+        if (e.ctrlKey) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      // Block Ctrl + '+' / '-' / '0' keyboard zoom
+      window.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && (
+          e.key === '+' || e.key === '-' || e.key === '=' ||
+          e.key === '_' || e.key === '0' ||
+          e.keyCode === 187 || e.keyCode === 189 || e.keyCode === 48
+        )) {
+          e.preventDefault();
+        }
+      });
+    </script>
   </body>
 </html>
