@@ -21,6 +21,24 @@ function PublicRoute({ children }) {
 function App() {
   const [checking, setChecking] = useState(true);
 
+  // Disable browser zoom on desktop (same as mobile user-scalable=no)
+  useEffect(() => {
+    const preventZoom = (e) => {
+      if (e.ctrlKey) e.preventDefault();
+    };
+    const preventKeyZoom = (e) => {
+      if (e.ctrlKey && ['+', '-', '=', '_', '0'].includes(e.key)) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('wheel', preventZoom, { passive: false });
+    window.addEventListener('keydown', preventKeyZoom);
+    return () => {
+      window.removeEventListener('wheel', preventZoom);
+      window.removeEventListener('keydown', preventKeyZoom);
+    };
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
