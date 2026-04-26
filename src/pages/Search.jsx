@@ -1,17 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import AdCard from '../components/AdCard';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
+const CACHE_KEY = 'search_cache';
+
 export default function Search() {
-  const [keyword, setKeyword] = useState('');
-  const [platform, setPlatform] = useState('tiktok');
-  const [country, setCountry] = useState('US');
+  const [keyword, setKeyword] = useState(() => sessionStorage.getItem('search_keyword') || '');
+  const [platform, setPlatform] = useState(() => sessionStorage.getItem('search_platform') || 'tiktok');
+  const [country, setCountry] = useState(() => sessionStorage.getItem('search_country') || 'US');
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [total, setTotal] = useState(0);
+
+  // Back aane pe cached results restore karo
+  useEffect(() => {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setAds(parsed);
+        setTotal(parsed.length);
+        setSearched(true);
+      } catch {}
+    }
+  }, []);
+
+  // Filter changes save karo
+  useEffect(() => { sessionStorage.setItem('search_keyword', keyword); }, [keyword]);
+  useEffect(() => { sessionStorage.setItem('search_platform', platform); }, [platform]);
+  useEffect(() => { sessionStorage.setItem('search_country', country); }, [country]);
 
   const search = async () => {
     if (!keyword.trim()) return toast.error('Keyword daalo');
@@ -29,6 +49,8 @@ export default function Search() {
       const result = Array.isArray(raw) ? raw : [];
       setAds(result);
       setTotal(result.length);
+      // Cache mein save karo
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(result));
       if (result.length === 0) toast('Koi ads nahi mili', { icon: '📭' });
       else toast.success(result.length + ' ads mili!');
     } catch (err) {
