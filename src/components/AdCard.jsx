@@ -42,26 +42,37 @@ export default function AdCard({ ad }) {
         e.currentTarget.style.transform = 'translateY(-3px)';
         e.currentTarget.style.borderColor = 'rgba(108,71,255,.4)';
         e.currentTarget.style.boxShadow = '0 8px 24px rgba(108,71,255,.12)';
-        e.currentTarget.querySelector('.hover-overlay').style.opacity = '1';
+        const ov = e.currentTarget.querySelector('.hover-overlay');
+        if (ov) ov.style.opacity = '1';
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)';
         e.currentTarget.style.boxShadow = 'none';
-        e.currentTarget.querySelector('.hover-overlay').style.opacity = '0';
+        const ov = e.currentTarget.querySelector('.hover-overlay');
+        if (ov) ov.style.opacity = '0';
       }}
     >
-      {/* ── MEDIA ── */}
+      {/* ── MEDIA — Minea style ── */}
       <div style={styles.media}>
         {cover ? (
-          <img
-            src={cover}
-            alt={title}
-            style={styles.img}
-            loading="lazy"
-          />
+          <>
+            {/* Blurred background layer — sides fill karta hai */}
+            <div style={{
+              ...styles.blurBg,
+              backgroundImage: `url(${cover})`,
+            }} />
+
+            {/* Main image — contain so full visible */}
+            <img
+              src={cover}
+              alt={title}
+              style={styles.img}
+              loading="lazy"
+            />
+          </>
         ) : (
-          <span style={{ fontSize: '2.8rem' }}>🎵</span>
+          <span style={{ fontSize: '2.8rem', position: 'relative', zIndex: 1 }}>🎵</span>
         )}
 
         {isVideo && <span style={styles.videoBadge}>▶ Video</span>}
@@ -126,13 +137,15 @@ const styles = {
     cursor: 'pointer',
     position: 'relative',
     transition: 'transform .25s, border-color .25s, box-shadow .25s',
-    touchAction: 'manipulation',   // ← zoom band
+    touchAction: 'manipulation',
     WebkitTapHighlightColor: 'transparent',
     userSelect: 'none',
   },
+
+  // Container — fixed height, clips everything
   media: {
     width: '100%',
-    height: '200px',
+    height: '220px',
     background: '#161625',
     display: 'flex',
     alignItems: 'center',
@@ -140,41 +153,59 @@ const styles = {
     position: 'relative',
     overflow: 'hidden',
   },
+
+  // Blurred background — same image, stretched + blurred for sides
+  blurBg: {
+    position: 'absolute',
+    inset: 0,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    filter: 'blur(18px) brightness(0.5) saturate(1.2)',
+    transform: 'scale(1.1)', // edge bleeding hatao
+    zIndex: 0,
+  },
+
+  // Main image — full height, auto width, centered
   img: {
-    width: '100%',
+    position: 'relative',
+    zIndex: 1,
     height: '100%',
-    objectFit: 'cover',       // ← poori jagah fill
-    objectPosition: 'center top', // ← upar se dikhao (face/product)
+    width: 'auto',
+    maxWidth: '100%',
+    objectFit: 'contain',
     display: 'block',
   },
+
   hoverOverlay: {
     position: 'absolute',
     inset: 0,
-    background: 'rgba(108,71,255,0.55)',
+    background: 'rgba(108,71,255,0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     opacity: 0,
     transition: 'opacity .2s',
     backdropFilter: 'blur(2px)',
+    zIndex: 2,
   },
   viewText:       { color: '#fff', fontWeight: 700, fontSize: '.95rem' },
-  videoBadge:     { position:'absolute', bottom:'8px', right:'8px', background:'rgba(0,0,0,.7)', borderRadius:'5px', padding:'.25rem .6rem', fontSize:'.7rem', color:'#fff' },
-  objectiveBadge: { position:'absolute', top:'8px', left:'8px', background:'rgba(108,71,255,.85)', borderRadius:'5px', padding:'.2rem .55rem', fontSize:'.65rem', color:'#fff', fontWeight:700 },
-  body:           { padding: '1rem' },
-  topRow:         { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'.6rem' },
-  platform:       { display:'inline-block', padding:'.2rem .55rem', borderRadius:'4px', fontSize:'.72rem', fontWeight:700, background:'rgba(255,255,255,.06)', color:'#8888aa' },
-  industry:       { fontSize:'.65rem', color:'#8888aa', background:'#161625', padding:'.2rem .5rem', borderRadius:'4px' },
-  title:          { fontSize:'.88rem', fontWeight:600, lineHeight:1.4, marginBottom:'.5rem', color:'#f0f0f8', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' },
-  brand:          { display:'flex', alignItems:'center', gap:'.4rem', marginBottom:'.75rem' },
-  avatar:         { width:'22px', height:'22px', borderRadius:'50%', background:'linear-gradient(135deg,#6c47ff,#ff4f87)', flexShrink:0 },
-  brandName:      { fontSize:'.78rem', color:'#8888aa' },
-  metrics:        { display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:'.4rem', paddingTop:'.75rem', borderTop:'1px solid rgba(255,255,255,.08)', marginBottom:'.75rem' },
-  metric:         { textAlign:'center', background:'#161625', borderRadius:'8px', padding:'.4rem .2rem' },
-  metricVal:      { fontSize:'.75rem', fontWeight:700 },
-  metricKey:      { fontSize:'.6rem', color:'#8888aa', marginTop:'.1rem' },
-  actions:        { display:'flex', gap:'.5rem' },
-  actionBtn:      { flex:1, padding:'.45rem', borderRadius:'7px', border:'1px solid rgba(255,255,255,.08)', background:'transparent', color:'#8888aa', fontSize:'.78rem', cursor:'pointer' },
-  savedBtn:       { background:'rgba(108,71,255,.25)', color:'#8b6bff', border:'1px solid rgba(108,71,255,.3)' },
-  detailBtn:      { flex:1, padding:'.45rem', borderRadius:'7px', border:'1px solid rgba(108,71,255,.3)', background:'rgba(108,71,255,.15)', color:'#8b6bff', fontSize:'.78rem', cursor:'pointer', fontWeight:600 },
+  videoBadge:     { position:'absolute', bottom:'8px', right:'8px', background:'rgba(0,0,0,.75)', borderRadius:'5px', padding:'.25rem .6rem', fontSize:'.7rem', color:'#fff', zIndex:3 },
+  objectiveBadge: { position:'absolute', top:'8px', left:'8px', background:'rgba(108,71,255,.9)', borderRadius:'5px', padding:'.2rem .55rem', fontSize:'.65rem', color:'#fff', fontWeight:700, zIndex:3 },
+
+  body:      { padding: '1rem' },
+  topRow:    { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'.6rem' },
+  platform:  { display:'inline-block', padding:'.2rem .55rem', borderRadius:'4px', fontSize:'.72rem', fontWeight:700, background:'rgba(255,255,255,.06)', color:'#8888aa' },
+  industry:  { fontSize:'.65rem', color:'#8888aa', background:'#161625', padding:'.2rem .5rem', borderRadius:'4px' },
+  title:     { fontSize:'.88rem', fontWeight:600, lineHeight:1.4, marginBottom:'.5rem', color:'#f0f0f8', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' },
+  brand:     { display:'flex', alignItems:'center', gap:'.4rem', marginBottom:'.75rem' },
+  avatar:    { width:'22px', height:'22px', borderRadius:'50%', background:'linear-gradient(135deg,#6c47ff,#ff4f87)', flexShrink:0 },
+  brandName: { fontSize:'.78rem', color:'#8888aa' },
+  metrics:   { display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:'.4rem', paddingTop:'.75rem', borderTop:'1px solid rgba(255,255,255,.08)', marginBottom:'.75rem' },
+  metric:    { textAlign:'center', background:'#161625', borderRadius:'8px', padding:'.4rem .2rem' },
+  metricVal: { fontSize:'.75rem', fontWeight:700 },
+  metricKey: { fontSize:'.6rem', color:'#8888aa', marginTop:'.1rem' },
+  actions:   { display:'flex', gap:'.5rem' },
+  actionBtn: { flex:1, padding:'.45rem', borderRadius:'7px', border:'1px solid rgba(255,255,255,.08)', background:'transparent', color:'#8888aa', fontSize:'.78rem', cursor:'pointer' },
+  savedBtn:  { background:'rgba(108,71,255,.25)', color:'#8b6bff', border:'1px solid rgba(108,71,255,.3)' },
+  detailBtn: { flex:1, padding:'.45rem', borderRadius:'7px', border:'1px solid rgba(108,71,255,.3)', background:'rgba(108,71,255,.15)', color:'#8b6bff', fontSize:'.78rem', cursor:'pointer', fontWeight:600 },
 };
