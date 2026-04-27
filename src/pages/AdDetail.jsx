@@ -505,7 +505,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId }) {
       <video ref={videoRef} src={proxyUrl} poster={cover} style={VP.video}
         onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoaded}
         onEnded={() => { setPlaying(false); setShowControls(true); }}
-        onError={() => setVideoError(true)} playsInline preload="metadata" crossOrigin="anonymous" />
+        onError={() => setVideoError(true)} playsInline preload="none" crossOrigin="anonymous" />
       {!playing && <div style={VP.playOverlay}><div style={VP.playCircle}>▶</div></div>}
       <div style={{...VP.controls,opacity:showControls?1:0,transition:'opacity .3s'}} onClick={e=>e.stopPropagation()}>
         <div ref={progressRef} style={VP.progressTrack} onClick={seek}>
@@ -734,23 +734,37 @@ export default function AdDetail() {
   // video_url is object: {"720p": "https://...", "540p": "..."}
   const videoUrlObj   = ad.video_info?.video_url;
   const videoUrl      = (videoUrlObj && typeof videoUrlObj === 'object')
-    ? (videoUrlObj['720p'] || videoUrlObj['540p'] || videoUrlObj['480p'] || Object.values(videoUrlObj)[0] || '')
+    ? (videoUrlObj['720p'] || videoUrlObj['1080p'] || videoUrlObj['540p'] || videoUrlObj['480p'] || videoUrlObj['360p'] || Object.values(videoUrlObj)[0] || '')
     : (typeof videoUrlObj === 'string' ? videoUrlObj : ad.video_url || '');
   const tiktokItemUrl = ad.tiktok_item_url || ad.share_url || ad.item_url || '';
   const isVideo     = !!ad.video_info||ad.isVideo;
-  const likes       = ad.like||ad.metrics?.likes||0;
-  const comments    = ad.comment||ad.metrics?.comments||0;
-  const ctr         = ad.ctr?(ad.ctr*100).toFixed(2)+'%':'—';
-  const cost        = ad.cost||ad.spend||0;
-  const impression  = ad.impression||ad.reach||0;
-  const countries   = ad.country_code?(Array.isArray(ad.country_code)?ad.country_code:[ad.country_code]):[];
-  const startDate   = ad.first_shown_date||ad.start_date||null;
-  const endDate     = ad.last_shown_date||ad.end_date||null;
-  const isActive    = !endDate||new Date(endDate*1000)>new Date();
-  const runningDays = startDate?Math.floor((Date.now()/1000-startDate)/86400):null;
-  const transcript  = ad.ad_text||ad.description||ad.caption||'';
-  const objective   = ad.objective_key?.replace('campaign_objective_','')||ad.objective||'';
-  const industry    = ad.industry_key?.replace('label_','')||'';
+  const likes       = Number(ad.like || 0);
+  const comments    = Number(ad.comment || 0);
+  const favorite    = Number(ad.favorite || 0);
+  const share       = Number(ad.share || 0);
+  // ctr from API is decimal e.g. 0.28 = 28%
+  const ctr         = ad.ctr ? (Number(ad.ctr) * 100).toFixed(2) + '%' : '—';
+  // cost = spend amount from API
+  const cost        = Number(ad.cost || 0);
+  const costFmt     = cost ? '$' + cost.toLocaleString() : '—';
+  // impression NOT in list API, only in detail sometimes
+  const impression  = Number(ad.impression || ad.reach || 0);
+  // country_code — list ya string
+  const rawCountries = ad.country_code || ad.country_codes || ad.countries || [];
+  const countries    = Array.isArray(rawCountries) ? rawCountries : (rawCountries ? [rawCountries] : []);
+  // dates — unix timestamp ya milliseconds
+  const rawStart    = ad.first_shown_date || ad.start_date || ad.create_time || null;
+  const rawEnd      = ad.last_shown_date  || ad.end_date   || null;
+  // agar value badi ho (ms mein) toh seconds mein convert karo
+  const startDate   = rawStart && rawStart > 1e10 ? Math.floor(rawStart/1000) : rawStart;
+  const endDate     = rawEnd   && rawEnd   > 1e10 ? Math.floor(rawEnd/1000)   : rawEnd;
+  const isActive    = ad.is_search !== undefined
+    ? true  // agar is_search field hai matlab active ad hai
+    : (!endDate || new Date(endDate*1000) > new Date());
+  const runningDays = startDate ? Math.floor((Date.now()/1000 - startDate) / 86400) : null;
+  const transcript  = ad.ad_text || ad.description || ad.caption || ad.ad_title || '';
+  const objective   = ad.objective_key?.replace('campaign_objective_','') || ad.objective || '';
+  const industry    = ad.industry_key?.replace('label_','') || '';
   const fmtDate     = (ts)=>ts?new Date(ts*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
 
   if (loading && !passedAd) return (
@@ -812,13 +826,15 @@ export default function AdDetail() {
               <div style={S.runRow}><span style={S.runKey}>📅 Running Time</span><span style={S.runVal}>{fmtDate(startDate)} → {endDate?fmtDate(endDate):'Today'}</span></div>
               {runningDays!==null && <div style={S.runRow}><span style={S.runKey}>⏱ Days Running</span><span style={S.runVal}>{runningDays} days</span></div>}
               <div style={S.runRow}><span style={S.runKey}>🌍 Countries</span><span style={S.runVal}>{countries.length>0?countries.slice(0,6).map(c=>`${countryFlag(c)} ${c}`).join('  '):'—'}</span></div>
-              <div style={S.runRow}><span style={S.runKey}>💰 Spend</span><span style={S.runVal}>{cost?`$${cost}`:'—'}</span></div>
+              <div style={S.runRow}><span style={S.runKey}>💰 Spend</span><span style={S.runVal}>{costFmt}</span></div>
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:'.6rem'}}>
-              <StatBox icon="❤️" label="Likes"    value={likes.toLocaleString()} />
+              <StatBox icon="❤️" label="Likes"    value={likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString()} />
               <StatBox icon="💬" label="Comments" value={comments.toLocaleString()} />
               <StatBox icon="📊" label="CTR"      value={ctr} />
-              <StatBox icon="👁" label="Reach"    value={impression?impression.toLocaleString():'—'} />
+              <StatBox icon="💰" label="Spend"    value={costFmt} />
+              {favorite>0 && <StatBox icon="⭐" label="Saves" value={favorite>=1000?(favorite/1000).toFixed(1)+'K':favorite.toLocaleString()} />}
+              {share>0    && <StatBox icon="↗️" label="Share" value={share>=1000?(share/1000).toFixed(1)+'K':share.toLocaleString()} />}
             </div>
           </div>
         </div>
@@ -851,11 +867,12 @@ export default function AdDetail() {
                   ['Days Running', runningDays!==null?`${runningDays} days`:'—'],
                   ['Objective',    objective||'—'],
                   ['Industry',     industry||'—'],
-                  ['Spend',        cost?`$${cost}`:'—'],
-                  ['Reach',        impression?impression.toLocaleString():'—'],
+                  ['Spend',        costFmt],
                   ['CTR',          ctr],
-                  ['Likes',        likes.toLocaleString()],
+                  ['Likes',        likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString()],
                   ['Comments',     comments.toLocaleString()],
+                  ['Saves',        favorite>0?favorite.toLocaleString():'—'],
+                  ['Shares',       share>0?share.toLocaleString():'—'],
                   ['Format',       isVideo?'Video':'Image'],
                 ].map(([k,v])=>(
                   <div key={k} style={S.detailItem}>
@@ -876,12 +893,13 @@ export default function AdDetail() {
             <div style={S.card}>
               <h3 style={S.cardTitle}>📈 Performance</h3>
               <div style={{display:'flex',flexWrap:'wrap',gap:'.75rem'}}>
-                <StatBox icon="❤️" label="Likes"       value={likes.toLocaleString()} />
-                <StatBox icon="💬" label="Comments"    value={comments.toLocaleString()} />
-                <StatBox icon="📊" label="CTR"         value={ctr} />
-                <StatBox icon="👁" label="Impressions" value={impression?impression.toLocaleString():'—'} />
-                <StatBox icon="💰" label="Spend"       value={cost?`$${cost}`:'—'} />
-                <StatBox icon="⏱" label="Days Run"    value={runningDays??'—'} />
+                <StatBox icon="❤️" label="Likes"     value={likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString()} />
+                <StatBox icon="💬" label="Comments"  value={comments.toLocaleString()} />
+                <StatBox icon="📊" label="CTR"       value={ctr} />
+                <StatBox icon="💰" label="Spend"     value={costFmt} />
+                {favorite>0 && <StatBox icon="⭐" label="Saves"   value={favorite>=1000?(favorite/1000).toFixed(1)+'K':favorite.toLocaleString()} />}
+                {share>0    && <StatBox icon="↗️" label="Shares"  value={share>=1000?(share/1000).toFixed(1)+'K':share.toLocaleString()} />}
+                <StatBox icon="⏱" label="Days Run" value={runningDays??'—'} />
               </div>
             </div>
           </div>
