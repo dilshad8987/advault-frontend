@@ -533,7 +533,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId }) {
 }
 
 const VP = {
-  wrap:          {borderRadius:'16px',overflow:'hidden',background:'#0f0f1a',position:'relative',aspectRatio:'9/16',width:'100%',cursor:'pointer',userSelect:'none'},
+  wrap:          {borderRadius:'16px',overflow:'hidden',background:'#0f0f1a',position:'relative',aspectRatio:'9/16',width:'100%',maxWidth:'400px',margin:'0 auto',cursor:'pointer',userSelect:'none'},
   video:         {width:'100%',height:'100%',objectFit:'cover',display:'block'},
   noVideo:       {display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',fontSize:'3rem',background:'#161625'},
   playOverlay:   {position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.3)',backdropFilter:'blur(1px)'},
@@ -784,7 +784,6 @@ export default function AdDetail() {
         .action-btn:hover { opacity:.85; transform:translateY(-1px); }
         @media(max-width:640px){
           .hero-grid { grid-template-columns:1fr!important; }
-          .media-wrap { max-height:360px!important; }
         }
       `}</style>
 
@@ -975,7 +974,7 @@ const S = {
   pillOutline:{padding:'.45rem 1.1rem',borderRadius:'20px',border:'1px solid rgba(255,255,255,.12)',background:'transparent',color:'#8888aa',fontWeight:600,fontSize:'.8rem',cursor:'pointer',textDecoration:'none',transition:'all .2s',display:'inline-block'},
   page:       {padding:'1.5rem clamp(1rem,4vw,2rem) 3rem',maxWidth:'1100px',margin:'0 auto'},
   hero:       {display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(300px,100%),1fr))',gap:'2rem',marginBottom:'2rem',alignItems:'start'},
-  mediaWrap:  {borderRadius:'16px',overflow:'hidden',background:'#0f0f1a',position:'relative',minHeight:'280px'},
+  mediaWrap:  {borderRadius:'16px',overflow:'hidden',background:'#0f0f1a',position:'relative'},
   activeBadge:{position:'absolute',top:'10px',left:'10px',background:'rgba(74,222,128,.15)',border:'1px solid rgba(74,222,128,.3)',color:'#4ade80',borderRadius:'20px',padding:'.25rem .75rem',fontSize:'.7rem',fontWeight:700,zIndex:10},
   lowImpBadge:{position:'absolute',top:'10px',right:'10px',background:'rgba(251,146,60,.15)',border:'1px solid rgba(251,146,60,.3)',color:'#fb923c',borderRadius:'20px',padding:'.25rem .65rem',fontSize:'.65rem',fontWeight:700,zIndex:10},
   tagPurple:  {background:'rgba(108,71,255,.2)',color:'#8b6bff',border:'1px solid rgba(108,71,255,.3)',borderRadius:'20px',padding:'.2rem .75rem',fontSize:'.72rem',fontWeight:700},
