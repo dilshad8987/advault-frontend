@@ -533,7 +533,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId }) {
 }
 
 const VP = {
-  wrap:          {borderRadius:'16px',overflow:'hidden',background:'#0f0f1a',position:'relative',aspectRatio:'9/16',width:'100%',maxWidth:'400px',margin:'0 auto',cursor:'pointer',userSelect:'none'},
+  wrap:          {borderRadius:'0',overflow:'hidden',background:'#0f0f1a',position:'relative',width:'100%',aspectRatio:'16/9',cursor:'pointer',userSelect:'none'},
   video:         {width:'100%',height:'100%',objectFit:'cover',display:'block'},
   noVideo:       {display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',fontSize:'3rem',background:'#161625'},
   playOverlay:   {position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.3)',backdropFilter:'blur(1px)'},
@@ -807,33 +807,37 @@ export default function AdDetail() {
             {isActive && <span style={S.activeBadge}>● STILL ACTIVE</span>}
             {impression>0 && impression<1000 && <span style={S.lowImpBadge}>⚠️ Low Impression</span>}
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:'1rem',animation:'fadeIn .4s ease'}}>
-            <div style={{display:'flex',alignItems:'center',gap:'.75rem'}}>
-              <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'linear-gradient(135deg,#6c47ff,#ff4f87)',flexShrink:0}}></div>
-              <div>
-                <div style={{fontWeight:700,fontSize:'.95rem'}}>{brand}</div>
-                <div style={{fontSize:'.72rem',color:'#8888aa'}}>🎵 TikTok Advertiser</div>
+          {/* AdCard style info — platform, title, brand, 4 stats */}
+          <div style={{background:'#0f0f1a',padding:'0.9rem',borderTop:'1px solid rgba(255,255,255,.06)'}}>
+            {/* Platform + objective + active */}
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'.5rem',flexWrap:'wrap',gap:'.3rem'}}>
+              <span style={{background:'rgba(255,255,255,.06)',color:'#8888aa',borderRadius:'4px',padding:'.15rem .5rem',fontSize:'.68rem',fontWeight:700}}>🎵 TIKTOK</span>
+              <div style={{display:'flex',gap:'.35rem',flexWrap:'wrap'}}>
+                {objective && <span style={S.tagPurple}>{objective}</span>}
+                {isActive  && <span style={S.tagGreen}>● Active</span>}
               </div>
             </div>
-            <h1 style={{fontSize:'clamp(1rem,2.5vw,1.4rem)',fontWeight:800,lineHeight:1.35,margin:0}}>{title}</h1>
-            <div style={{display:'flex',flexWrap:'wrap',gap:'.5rem'}}>
-              {objective && <span style={S.tagPurple}>{objective}</span>}
-              {industry  && <span style={S.tagGray}>{industry}</span>}
-              {isActive  && <span style={S.tagGreen}>● Active</span>}
+            {/* Title */}
+            <p style={{fontSize:'.9rem',fontWeight:700,lineHeight:1.4,color:'#f0f0f8',margin:'0 0 .5rem'}}>{title}</p>
+            {/* Brand */}
+            <div style={{display:'flex',alignItems:'center',gap:'.4rem',marginBottom:'.75rem'}}>
+              <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'linear-gradient(135deg,#6c47ff,#ff4f87)',flexShrink:0}}></div>
+              <span style={{fontSize:'.75rem',color:'#8888aa'}}>{brand}</span>
             </div>
-            <div style={S.runBox}>
-              <div style={S.runRow}><span style={S.runKey}>📅 Running Time</span><span style={S.runVal}>{fmtDate(startDate)} → {endDate?fmtDate(endDate):'Today'}</span></div>
-              {runningDays!==null && <div style={S.runRow}><span style={S.runKey}>⏱ Days Running</span><span style={S.runVal}>{runningDays} days</span></div>}
-              <div style={S.runRow}><span style={S.runKey}>🌍 Countries</span><span style={S.runVal}>{countries.length>0?countries.slice(0,6).map(c=>`${countryFlag(c)} ${c}`).join('  '):'—'}</span></div>
-              <div style={S.runRow}><span style={S.runKey}>💰 Spend</span><span style={S.runVal}>{costFmt}</span></div>
-            </div>
-            <div style={{display:'flex',flexWrap:'wrap',gap:'.6rem'}}>
-              <StatBox icon="❤️" label="Likes"    value={likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString()} />
-              <StatBox icon="💬" label="Comments" value={comments.toLocaleString()} />
-              <StatBox icon="📊" label="CTR"      value={ctr} />
-              <StatBox icon="💰" label="Spend"    value={costFmt} />
-              {favorite>0 && <StatBox icon="⭐" label="Saves" value={favorite>=1000?(favorite/1000).toFixed(1)+'K':favorite.toLocaleString()} />}
-              {share>0    && <StatBox icon="↗️" label="Share" value={share>=1000?(share/1000).toFixed(1)+'K':share.toLocaleString()} />}
+            {/* 4 stat boxes — exactly like AdCard */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'.35rem',paddingTop:'.65rem',borderTop:'1px solid rgba(255,255,255,.07)'}}>
+              {[
+                ['❤️', likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString(), 'Likes'],
+                ['💬', comments.toLocaleString(), 'Comments'],
+                ['📊', ctr, 'CTR'],
+                ['💰', costFmt, 'Spend'],
+              ].map(([icon,val,key])=>(
+                <div key={key} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'.1rem',background:'#161625',borderRadius:'8px',padding:'.4rem .2rem'}}>
+                  <span style={{fontSize:'.75rem'}}>{icon}</span>
+                  <span style={{fontSize:'.72rem',fontWeight:700,color:'#f0f0f8'}}>{val}</span>
+                  <span style={{fontSize:'.58rem',color:'#8888aa'}}>{key}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -973,8 +977,8 @@ const S = {
   pillSaved:  {background:'rgba(108,71,255,.2)',color:'#8b6bff',border:'1px solid rgba(108,71,255,.3)'},
   pillOutline:{padding:'.45rem 1.1rem',borderRadius:'20px',border:'1px solid rgba(255,255,255,.12)',background:'transparent',color:'#8888aa',fontWeight:600,fontSize:'.8rem',cursor:'pointer',textDecoration:'none',transition:'all .2s',display:'inline-block'},
   page:       {padding:'1.5rem clamp(1rem,4vw,2rem) 3rem',maxWidth:'1100px',margin:'0 auto'},
-  hero:       {display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(300px,100%),1fr))',gap:'2rem',marginBottom:'2rem',alignItems:'start'},
-  mediaWrap:  {borderRadius:'16px',overflow:'hidden',background:'#0f0f1a',position:'relative'},
+  hero:       {display:'flex',flexDirection:'column',gap:'0',marginBottom:'1.5rem'},
+  mediaWrap:  {background:'#0f0f1a',position:'relative',overflow:'hidden'},
   activeBadge:{position:'absolute',top:'10px',left:'10px',background:'rgba(74,222,128,.15)',border:'1px solid rgba(74,222,128,.3)',color:'#4ade80',borderRadius:'20px',padding:'.25rem .75rem',fontSize:'.7rem',fontWeight:700,zIndex:10},
   lowImpBadge:{position:'absolute',top:'10px',right:'10px',background:'rgba(251,146,60,.15)',border:'1px solid rgba(251,146,60,.3)',color:'#fb923c',borderRadius:'20px',padding:'.25rem .65rem',fontSize:'.65rem',fontWeight:700,zIndex:10},
   tagPurple:  {background:'rgba(108,71,255,.2)',color:'#8b6bff',border:'1px solid rgba(108,71,255,.3)',borderRadius:'20px',padding:'.2rem .75rem',fontSize:'.72rem',fontWeight:700},
