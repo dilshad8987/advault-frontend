@@ -1,110 +1,257 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import Landing from './pages/Landing';
-import Auth from './pages/Auth';
-import ForgotPassword from './pages/ForgotPassword';
-import Dashboard from './pages/Dashboard';
-import Search from './pages/Search';
-import AdDetail from './pages/AdDetail';
-import Profile from './pages/Profile';
-import Upgrade from './pages/Upgrade';
+import React, { useState, useEffect, useCallback } from 'react';
+import Navbar from '../components/Navbar';
+import AdCard from '../components/AdCard';
+import AliExpressCard from '../components/AliExpressCard';
+import api from '../api/axios';
 
-function PrivateRoute({ children }) {
-  const token = localStorage.getItem('accessToken');
-  return token ? children : <Navigate to="/login" />;
-}
+// Cache key helper
+const cacheKey = (tab, country, period, orderBy, aliTab) =>
+  `dashboard_cache_${tab}_${country}_${period}_${orderBy}_${aliTab}`;
 
-function PublicRoute({ children }) {
-  const token = localStorage.getItem('accessToken');
-  return token ? <Navigate to="/dashboard" /> : children;
-}
+export default function Dashboard() {
+  const [ads, setAds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState(() => sessionStorage.getItem('dash_tab') || 'tiktok');
+  const [aliTab, setAliTab] = useState(() => sessionStorage.getItem('dash_aliTab') || 'trending');
+  const [country, setCountry] = useState(() => sessionStorage.getItem('dash_country') || 'US');
+  const [period, setPeriod] = useState(() => sessionStorage.getItem('dash_period') || '30');
+  const [orderBy, setOrderBy] = useState(() => sessionStorage.getItem('dash_orderBy') || 'impression');
+  const [aliSearchInput, setAliSearchInput] = useState('');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-function App() {
-  const [checking, setChecking] = useState(true);
+  const countries = ['US','DE','GB','FR','IT','ES','NL','PL','AT','BE','SE','NO','DK','FI'];
+  const periods = [{ v: '7', l: '7 Days' }, { v: '30', l: '30 Days' }, { v: '90', l: '90 Days' }, { v: '180', l: '180 Days' }];
+  const orders = [{ v: 'impression', l: '👁 Impressions' }, { v: 'like', l: '❤️ Likes' }, { v: 'ctr', l: '📊 CTR' }];
 
-  // Disable browser zoom on desktop (same as mobile user-scalable=no)
-  useEffect(() => {
-    const preventZoom = (e) => {
-      if (e.ctrlKey) e.preventDefault();
-    };
-    const preventKeyZoom = (e) => {
-      if (e.ctrlKey && ['+', '-', '=', '_', '0'].includes(e.key)) {
-        e.preventDefault();
-      }
-    };
-    window.addEventListener('wheel', preventZoom, { passive: false });
-    window.addEventListener('keydown', preventKeyZoom);
-    return () => {
-      window.removeEventListener('wheel', preventZoom);
-      window.removeEventListener('keydown', preventKeyZoom);
-    };
-  }, []);
+  const ALI_TABS = [
+    { id: 'trending', label: '🔥 Trending' },
+    { id: 'highsell',  label: '📈 High Sell' },
+    { id: 'search',    label: '🔍 Search' },
+  ];
 
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
+  const ALI_CAT_MAP = { trending: '15', highsell: '200003655' };
 
-    if (token && refreshToken) {
-      fetch((process.env.REACT_APP_API_URL || 'http://localhost:5000/api') + '/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.accessToken) {
-            localStorage.setItem('accessToken', data.accessToken);
-          }
-        })
-        .catch(() => {})
-        .finally(() => setChecking(false));
-    } else {
-      setChecking(false);
+  // Filter change hone pe sessionStorage mein save karo
+  useEffect(() => { sessionStorage.setItem('dash_tab', tab); }, [tab]);
+  useEffect(() => { sessionStorage.setItem('dash_aliTab', aliTab); }, [aliTab]);
+  useEffect(() => { sessionStorage.setItem('dash_country', country); }, [country]);
+  useEffect(() => { sessionStorage.setItem('dash_period', period); }, [period]);
+  useEffect(() => { sessionStorage.setItem('dash_orderBy', orderBy); }, [orderBy]);
+
+  const fetchAds = useCallback(async () => {
+    const key = cacheKey(tab, country, period, orderBy, aliTab);
+
+    // Cache check karo — agar data hai toh seedha dikhao, load nahi
+    const cached = sessionStorage.getItem(key);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setAds(parsed);
+        setLoading(false);
+        return;
+      } catch {}
     }
-  }, []);
 
-  if (checking) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#08080f',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid rgba(108,71,255,.2)',
-          borderTop: '3px solid #6c47ff',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }}></div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+    setLoading(true);
+    setAds([]);
+    try {
+      if (tab === 'tiktok') {
+        const res = await api.get('/ads/tiktok', {
+          params: { country, period, order: orderBy }
+        });
+
+        const d = res.data;
+        const L3 = d?.data?.data;
+        const L4 = L3?.data;
+
+        const raw =
+          L4?.materials ||
+          L4?.list ||
+          L4?.ad_list ||
+          (Array.isArray(L4) ? L4 : null) ||
+          L3?.materials ||
+          (Array.isArray(L3) ? L3 : null) ||
+          [];
+
+        const result = Array.isArray(raw) ? raw : [];
+        setAds(result);
+        // Cache mein save karo (5 minute valid)
+        sessionStorage.setItem(key, JSON.stringify(result));
+        sessionStorage.setItem(key + '_time', Date.now().toString());
+
+      } else if (tab === 'aliexpress') {
+        const catId = ALI_CAT_MAP[aliTab] || '15';
+        const res = await api.get('/ads/aliexpress', {
+          params: { catId, page: 1, currency: 'USD' }
+        });
+        const raw = res.data?.data?.data || res.data?.data || [];
+        const result = Array.isArray(raw) ? raw : [];
+        setAds(result);
+        sessionStorage.setItem(key, JSON.stringify(result));
+        sessionStorage.setItem(key + '_time', Date.now().toString());
+      }
+    } catch (err) {
+      console.error(err);
+      setAds([]);
+    }
+    setLoading(false);
+  }, [tab, country, period, orderBy, aliTab]);
+
+  useEffect(() => {
+    if (aliTab !== 'search') fetchAds();
+    else setLoading(false);
+  }, [fetchAds, aliTab]);
+
+  const searchAliExpress = async () => {
+    if (!aliSearchInput.trim()) return;
+    setLoading(true);
+    setAds([]);
+    try {
+      const res = await api.get('/ads/aliexpress', {
+        params: { catId: '15', page: 1, currency: 'USD', keyword: aliSearchInput }
+      });
+      const raw = res.data?.data?.data || res.data?.data || [];
+      setAds(Array.isArray(raw) ? raw : []);
+    } catch (err) {
+      console.error(err);
+      setAds([]);
+    }
+    setLoading(false);
+  };
 
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" toastOptions={{
-        style: { background: '#161625', color: '#f0f0f8', border: '1px solid rgba(255,255,255,.08)' }
-      }} />
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<PublicRoute><Auth /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><Auth /></PublicRoute>} />
-        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/search" element={<PrivateRoute><Search /></PrivateRoute>} />
-        <Route path="/ad/:adId" element={<PrivateRoute><AdDetail /></PrivateRoute>} />
-        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-        <Route path="/upgrade" element={<PrivateRoute><Upgrade /></PrivateRoute>} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </BrowserRouter>
+    <div style={{ minHeight: '100vh', background: '#08080f' }}>
+      <Navbar />
+      <div style={styles.page}>
+
+        <div style={styles.hero}>
+          <h1 style={styles.h1}>
+            Welcome back, <span style={{ color: '#8b6bff' }}>{user.name}</span> 👋
+          </h1>
+          <p style={styles.sub}>Trending ads aur hot products dekho</p>
+        </div>
+
+        {/* MAIN TABS */}
+        <div style={styles.mainTabs}>
+          <button style={{ ...styles.mainTab, ...(tab === 'tiktok' ? styles.mainTabActive : {}) }} onClick={() => setTab('tiktok')}>
+            🎵 TikTok Ads
+          </button>
+          <button style={{ ...styles.mainTab, ...(tab === 'aliexpress' ? styles.mainTabActive : {}) }} onClick={() => setTab('aliexpress')}>
+            🛒 AliExpress
+          </button>
+        </div>
+
+        {/* TIKTOK FILTERS */}
+        {tab === 'tiktok' && (
+          <div style={styles.filterBar}>
+            <div style={styles.filterGroup}>
+              <label style={styles.label}>🌍 Country</label>
+              <select style={styles.select} value={country} onChange={e => setCountry(e.target.value)}>
+                {countries.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div style={styles.filterGroup}>
+              <label style={styles.label}>📅 Period</label>
+              <select style={styles.select} value={period} onChange={e => setPeriod(e.target.value)}>
+                {periods.map(p => <option key={p.v} value={p.v}>{p.l}</option>)}
+              </select>
+            </div>
+            <div style={styles.filterGroup}>
+              <label style={styles.label}>📊 Sort By</label>
+              <select style={styles.select} value={orderBy} onChange={e => setOrderBy(e.target.value)}>
+                {orders.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* ALIEXPRESS SUB TABS */}
+        {tab === 'aliexpress' && (
+          <div style={styles.aliSection}>
+            <div style={styles.aliTabs}>
+              {ALI_TABS.map(t => (
+                <button
+                  key={t.id}
+                  style={{ ...styles.aliTab, ...(aliTab === t.id ? styles.aliTabActive : {}) }}
+                  onClick={() => setAliTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {aliTab === 'trending' && <p style={styles.aliDesc}>🔥 Abhi sabse zyada bikne wale products worldwide</p>}
+            {aliTab === 'highsell' && <p style={styles.aliDesc}>📈 High volume sellers — proven winning products</p>}
+            {aliTab === 'search' && (
+              <div style={styles.aliSearchBar}>
+                <input
+                  style={styles.aliInput}
+                  placeholder="Product dhundo — shoes, watch, bag..."
+                  value={aliSearchInput}
+                  onChange={e => setAliSearchInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && searchAliExpress()}
+                />
+                <button style={styles.aliSearchBtn} onClick={searchAliExpress}>🔍 Search</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CONTENT */}
+        {loading ? (
+          <div style={styles.center}>
+            <div style={styles.spinner}></div>
+            <p style={{ color: '#8888aa', marginTop: '1rem' }}>Load ho raha hai...</p>
+          </div>
+        ) : aliTab === 'search' && tab === 'aliexpress' && ads.length === 0 ? (
+          <div style={styles.center}>
+            <p style={{ fontSize: '2.5rem' }}>🔍</p>
+            <p style={{ color: '#8888aa', marginTop: '.5rem' }}>Upar search karo product dhundne ke liye</p>
+          </div>
+        ) : ads.length === 0 ? (
+          <div style={styles.center}>
+            <p style={{ fontSize: '2.5rem' }}>📭</p>
+            <p style={{ color: '#8888aa', marginTop: '.5rem' }}>Kuch nahi mila</p>
+            <button style={styles.retryBtn} onClick={fetchAds}>Dobara try karo</button>
+          </div>
+        ) : (
+          <>
+            <p style={styles.count}>✅ {ads.length} {tab === 'tiktok' ? 'ads' : 'products'} mile</p>
+            <div style={styles.grid}>
+              {tab === 'tiktok'
+                ? ads.map((ad, i) => <AdCard key={ad.id || i} ad={ad} />)
+                : ads.map((p, i) => <AliExpressCard key={p.product_id || i} product={p} />)
+              }
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
-export default App;
+const styles = {
+  page: { padding: '80px clamp(1rem,4vw,2rem) 3rem' },
+  hero: { marginBottom: '1.75rem' },
+  h1: { fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, letterSpacing: '-.02em' },
+  sub: { color: '#8888aa', marginTop: '.4rem', fontSize: '.9rem' },
+  mainTabs: { display: 'flex', gap: '.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' },
+  mainTab: { padding: '.6rem 1.4rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all .2s' },
+  mainTabActive: { background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: '1px solid #6c47ff', boxShadow: '0 0 16px rgba(108,71,255,.35)' },
+  filterBar: { display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', padding: '1.25rem', background: '#0f0f1a', borderRadius: '12px', border: '1px solid rgba(255,255,255,.07)', marginBottom: '1.5rem' },
+  filterGroup: { display: 'flex', flexDirection: 'column', gap: '.4rem' },
+  label: { fontSize: '.72rem', color: '#8888aa', fontWeight: 700, textTransform: 'uppercase' },
+  select: { padding: '.5rem .9rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.85rem', cursor: 'pointer', outline: 'none' },
+  retryBtn: { padding: '.55rem 1.2rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem' },
+  aliSection: { marginBottom: '1.5rem' },
+  aliTabs: { display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' },
+  aliTab: { padding: '.5rem 1.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer' },
+  aliTabActive: { background: '#161625', color: '#fff', border: '1px solid rgba(108,71,255,.5)', boxShadow: '0 0 12px rgba(108,71,255,.2)' },
+  aliDesc: { color: '#8888aa', fontSize: '.85rem', marginBottom: '.5rem' },
+  aliSearchBar: { display: 'flex', gap: '.75rem', flexWrap: 'wrap' },
+  aliInput: { flex: 1, minWidth: '200px', padding: '.75rem 1rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.88rem', outline: 'none' },
+  aliSearchBtn: { padding: '.75rem 1.5rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' },
+  count: { color: '#8888aa', fontSize: '.83rem', marginBottom: '1rem' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap: '1.25rem' },
+  center: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '.5rem' },
+  spinner: { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+};
