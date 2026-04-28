@@ -30,15 +30,6 @@ export default function Navbar() {
                 </div>
                 <div style={s.profileInfo}>
                   <span style={s.profileName}>{user.name}</span>
-                  {!isPro && (
-                    <Link
-                      to="/upgrade"
-                      style={s.upgradeText}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      Upgrade
-                    </Link>
-                  )}
                   {isPro && <span style={s.proBadge}>⭐ Pro</span>}
                 </div>
                 <span style={{ color: '#8888aa', fontSize: '.7rem' }}>▾</span>
@@ -57,7 +48,7 @@ export default function Navbar() {
                   <div style={s.divider} />
 
                   <Link to="/upgrade" style={s.dropItem} onClick={() => setMenuOpen(false)}>
-                    ⚙️ Account Settings
+                    ⚡ Upgrade
                   </Link>
 
                   <div style={s.divider} />
@@ -90,7 +81,6 @@ const s = {
   avatarCircle: { width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '.9rem', flexShrink: 0 },
   profileInfo: { display: 'flex', flexDirection: 'column', lineHeight: 1.2 },
   profileName: { fontSize: '.82rem', fontWeight: 700, color: '#f0f0f8' },
-  upgradeText: { fontSize: '.72rem', color: '#ff7c2b', fontWeight: 700, textDecoration: 'none', letterSpacing: '.01em' },
   proBadge: { fontSize: '.7rem', color: '#ffb700', fontWeight: 700 },
 
   dropdown: { position: 'absolute', top: '46px', right: 0, width: '210px', background: '#0f0f1a', border: '1px solid rgba(255,255,255,.07)', borderRadius: '12px', padding: '.75rem', zIndex: 200, boxShadow: '0 12px 40px rgba(0,0,0,.5)' },
