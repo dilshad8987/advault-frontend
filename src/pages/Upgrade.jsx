@@ -53,7 +53,7 @@ const PLANS = [
   },
 ];
 
-export default function Upgrade() {
+export default function Profile() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [tab, setTab] = useState('plans');
