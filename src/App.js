@@ -8,6 +8,9 @@ import Dashboard from './pages/Dashboard';
 import Search from './pages/Search';
 import AdDetail from './pages/AdDetail';
 import Profile from './pages/Profile';
+import Collections from './pages/Collections';
+import Alerts from './pages/Alerts';
+import AITools from './pages/AITools';
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('accessToken');
@@ -22,16 +25,9 @@ function PublicRoute({ children }) {
 function App() {
   const [checking, setChecking] = useState(true);
 
-  // Disable browser zoom on desktop (same as mobile user-scalable=no)
   useEffect(() => {
-    const preventZoom = (e) => {
-      if (e.ctrlKey) e.preventDefault();
-    };
-    const preventKeyZoom = (e) => {
-      if (e.ctrlKey && ['+', '-', '=', '_', '0'].includes(e.key)) {
-        e.preventDefault();
-      }
-    };
+    const preventZoom = (e) => { if (e.ctrlKey) e.preventDefault(); };
+    const preventKeyZoom = (e) => { if (e.ctrlKey && ['+', '-', '=', '_', '0'].includes(e.key)) e.preventDefault(); };
     window.addEventListener('wheel', preventZoom, { passive: false });
     window.addEventListener('keydown', preventKeyZoom);
     return () => {
@@ -43,7 +39,6 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
-
     if (token && refreshToken) {
       fetch((process.env.REACT_APP_API_URL || 'http://localhost:5000/api') + '/auth/refresh', {
         method: 'POST',
@@ -51,11 +46,7 @@ function App() {
         body: JSON.stringify({ refreshToken })
       })
         .then(res => res.json())
-        .then(data => {
-          if (data.accessToken) {
-            localStorage.setItem('accessToken', data.accessToken);
-          }
-        })
+        .then(data => { if (data.accessToken) localStorage.setItem('accessToken', data.accessToken); })
         .catch(() => {})
         .finally(() => setChecking(false));
     } else {
@@ -65,21 +56,8 @@ function App() {
 
   if (checking) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#08080f',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid rgba(108,71,255,.2)',
-          borderTop: '3px solid #6c47ff',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }}></div>
+      <div style={{ minHeight: '100vh', background: '#08080f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -100,6 +78,9 @@ function App() {
         <Route path="/ad/:adId" element={<PrivateRoute><AdDetail /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/upgrade" element={<PrivateRoute><Profile /></PrivateRoute>} />
+        <Route path="/collections" element={<PrivateRoute><Collections /></PrivateRoute>} />  {/* ✅ NEW */}
+        <Route path="/alerts" element={<PrivateRoute><Alerts /></PrivateRoute>} />             {/* ✅ NEW */}
+        <Route path="/ai" element={<PrivateRoute><AITools /></PrivateRoute>} />                {/* ✅ NEW */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
