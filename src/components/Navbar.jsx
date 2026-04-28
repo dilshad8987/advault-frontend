@@ -32,7 +32,6 @@ export default function Navbar() {
                   <span style={s.profileName}>{user.name}</span>
                   {isPro && <span style={s.proBadge}>⭐ Pro</span>}
                 </div>
-                <span style={{ color: '#8888aa', fontSize: '.7rem' }}>▾</span>
               </div>
 
               {menuOpen && (
@@ -72,12 +71,12 @@ export default function Navbar() {
 }
 
 const s = {
-  nav: { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', height: '60px', background: '#0a0a12', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+  nav: { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.25rem', height: '60px', background: '#0a0a12', borderBottom: '1px solid rgba(255,255,255,0.05)' },
   logo: { display: 'flex', alignItems: 'center', gap: '.5rem', fontWeight: 800, fontSize: '1.2rem', color: '#fff', textDecoration: 'none' },
   logoIcon: { width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   right: { display: 'flex', alignItems: 'center' },
 
-  profileRow: { display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer', padding: '.3rem .5rem', borderRadius: '10px' },
+  profileRow: { display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer', padding: '.3rem .4rem', borderRadius: '10px' },
   avatarCircle: { width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '.9rem', flexShrink: 0 },
   profileInfo: { display: 'flex', flexDirection: 'column', lineHeight: 1.2 },
   profileName: { fontSize: '.82rem', fontWeight: 700, color: '#f0f0f8' },
@@ -89,7 +88,7 @@ const s = {
   dropName: { fontSize: '.83rem', fontWeight: 700, color: '#f0f0f8' },
   dropEmail: { fontSize: '.7rem', color: '#8888aa' },
   divider: { height: '1px', background: 'rgba(255,255,255,.06)', margin: '.45rem 0' },
-  dropItem: { display: 'block', padding: '.45rem .3rem', color: '#c8c8e0', fontSize: '.83rem', fontWeight: 500, textDecoration: 'none', borderRadius: '6px' },
+  dropItem: { display: 'block', padding: '.5rem .4rem', color: '#c8c8e0', fontSize: '.83rem', fontWeight: 500, textDecoration: 'none', borderRadius: '6px' },
   dropLogout: { width: '100%', padding: '.5rem', background: 'rgba(255,79,135,.08)', border: '1px solid rgba(255,79,135,.15)', color: '#ff4f87', borderRadius: '6px', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 },
 
   authBtns: { display: 'flex', gap: '.6rem' },
