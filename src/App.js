@@ -5,6 +5,7 @@ import Landing from './pages/Landing';
 import Auth from './pages/Auth';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
+import Search from './pages/Search';
 import AdDetail from './pages/AdDetail';
 import Profile from './pages/Profile';
 
@@ -21,6 +22,7 @@ function PublicRoute({ children }) {
 function App() {
   const [checking, setChecking] = useState(true);
 
+  // Disable browser zoom on desktop (same as mobile user-scalable=no)
   useEffect(() => {
     const preventZoom = (e) => {
       if (e.ctrlKey) e.preventDefault();
@@ -94,6 +96,7 @@ function App() {
         <Route path="/register" element={<PublicRoute><Auth /></PublicRoute>} />
         <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/search" element={<PrivateRoute><Search /></PrivateRoute>} />
         <Route path="/ad/:adId" element={<PrivateRoute><AdDetail /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/upgrade" element={<PrivateRoute><Profile /></PrivateRoute>} />
