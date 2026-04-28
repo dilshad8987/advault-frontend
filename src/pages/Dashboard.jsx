@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import AdCard from '../components/AdCard';
 import AliExpressCard from '../components/AliExpressCard';
 import api from '../api/axios';
 
-// Cache key helper
 const cacheKey = (tab, country, period, orderBy, aliTab) =>
   `dashboard_cache_${tab}_${country}_${period}_${orderBy}_${aliTab}`;
 
+const FEATURE_CARDS = [
+  { icon: '🔍', label: 'Search Ads',      desc: 'Keyword search',         path: '/search',      color: '#6c47ff' },
+  { icon: '📁', label: 'Collections',     desc: 'Pinterest style boards', path: '/collections', color: '#00d4aa' },
+  { icon: '🔔', label: 'Alerts',          desc: 'Competitor tracking',    path: '/alerts',      color: '#ffb700' },
+  { icon: '🤖', label: 'AI Tools',        desc: 'Copy, hooks, audience',  path: '/ai',          color: '#ff4f87' },
+];
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState(() => sessionStorage.getItem('dash_tab') || 'tiktok');
@@ -22,16 +30,9 @@ export default function Dashboard() {
   const countries = ['US','DE','GB','FR','IT','ES','NL','PL','AT','BE','SE','NO','DK','FI'];
   const periods = [{ v: '7', l: '7 Days' }, { v: '30', l: '30 Days' }, { v: '90', l: '90 Days' }, { v: '180', l: '180 Days' }];
   const orders = [{ v: 'impression', l: '👁 Impressions' }, { v: 'like', l: '❤️ Likes' }, { v: 'ctr', l: '📊 CTR' }];
-
-  const ALI_TABS = [
-    { id: 'trending', label: '🔥 Trending' },
-    { id: 'highsell',  label: '📈 High Sell' },
-    { id: 'search',    label: '🔍 Search' },
-  ];
-
+  const ALI_TABS = [{ id: 'trending', label: '🔥 Trending' }, { id: 'highsell', label: '📈 High Sell' }, { id: 'search', label: '🔍 Search' }];
   const ALI_CAT_MAP = { trending: '15', highsell: '200003655' };
 
-  // Filter change hone pe sessionStorage mein save karo
   useEffect(() => { sessionStorage.setItem('dash_tab', tab); }, [tab]);
   useEffect(() => { sessionStorage.setItem('dash_aliTab', aliTab); }, [aliTab]);
   useEffect(() => { sessionStorage.setItem('dash_country', country); }, [country]);
@@ -40,59 +41,31 @@ export default function Dashboard() {
 
   const fetchAds = useCallback(async () => {
     const key = cacheKey(tab, country, period, orderBy, aliTab);
-
-    // Cache check karo — agar data hai toh seedha dikhao, load nahi
     const cached = sessionStorage.getItem(key);
     if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        setAds(parsed);
-        setLoading(false);
-        return;
-      } catch {}
+      try { setAds(JSON.parse(cached)); setLoading(false); return; } catch {}
     }
-
-    setLoading(true);
-    setAds([]);
+    setLoading(true); setAds([]);
     try {
       if (tab === 'tiktok') {
-        const res = await api.get('/ads/tiktok', {
-          params: { country, period, order: orderBy }
-        });
-
+        const res = await api.get('/ads/tiktok', { params: { country, period, order: orderBy } });
         const d = res.data;
         const L3 = d?.data?.data;
         const L4 = L3?.data;
-
-        const raw =
-          L4?.materials ||
-          L4?.list ||
-          L4?.ad_list ||
-          (Array.isArray(L4) ? L4 : null) ||
-          L3?.materials ||
-          (Array.isArray(L3) ? L3 : null) ||
-          [];
-
+        const raw = L4?.materials || L4?.list || L4?.ad_list || (Array.isArray(L4) ? L4 : null) || L3?.materials || (Array.isArray(L3) ? L3 : null) || [];
         const result = Array.isArray(raw) ? raw : [];
         setAds(result);
-        // Cache mein save karo (5 minute valid)
         sessionStorage.setItem(key, JSON.stringify(result));
-        sessionStorage.setItem(key + '_time', Date.now().toString());
-
       } else if (tab === 'aliexpress') {
         const catId = ALI_CAT_MAP[aliTab] || '15';
-        const res = await api.get('/ads/aliexpress', {
-          params: { catId, page: 1, currency: 'USD' }
-        });
+        const res = await api.get('/ads/aliexpress', { params: { catId, page: 1, currency: 'USD' } });
         const raw = res.data?.data?.data || res.data?.data || [];
         const result = Array.isArray(raw) ? raw : [];
         setAds(result);
         sessionStorage.setItem(key, JSON.stringify(result));
-        sessionStorage.setItem(key + '_time', Date.now().toString());
       }
     } catch (err) {
-      console.error(err);
-      setAds([]);
+      console.error(err); setAds([]);
     }
     setLoading(false);
   }, [tab, country, period, orderBy, aliTab]);
@@ -104,119 +77,115 @@ export default function Dashboard() {
 
   const searchAliExpress = async () => {
     if (!aliSearchInput.trim()) return;
-    setLoading(true);
-    setAds([]);
+    setLoading(true); setAds([]);
     try {
-      const res = await api.get('/ads/aliexpress', {
-        params: { catId: '15', page: 1, currency: 'USD', keyword: aliSearchInput }
-      });
+      const res = await api.get('/ads/aliexpress', { params: { catId: '15', page: 1, currency: 'USD', keyword: aliSearchInput } });
       const raw = res.data?.data?.data || res.data?.data || [];
       setAds(Array.isArray(raw) ? raw : []);
-    } catch (err) {
-      console.error(err);
-      setAds([]);
-    }
+    } catch (err) { console.error(err); setAds([]); }
     setLoading(false);
   };
 
   return (
     <div style={{ minHeight: '100vh', background: '#08080f' }}>
       <Navbar />
-      <div style={styles.page}>
+      <div style={st.page}>
 
-        <div style={styles.hero}>
-          <h1 style={styles.h1}>
-            Welcome back, <span style={{ color: '#8b6bff' }}>{user.name}</span> 👋
-          </h1>
-          <p style={styles.sub}>Trending ads aur hot products dekho</p>
+        {/* Hero */}
+        <div style={st.hero}>
+          <h1 style={st.h1}>Welcome back, <span style={{ color: '#8b6bff' }}>{user.name}</span> 👋</h1>
+          <p style={st.sub}>Trending ads aur hot products dekho</p>
         </div>
 
-        {/* MAIN TABS */}
-        <div style={styles.mainTabs}>
-          <button style={{ ...styles.mainTab, ...(tab === 'tiktok' ? styles.mainTabActive : {}) }} onClick={() => setTab('tiktok')}>
+        {/* ── Feature Quick Access ── */}
+        <div style={st.featureGrid}>
+          {FEATURE_CARDS.map(f => (
+            <button key={f.path} style={st.featureCard} onClick={() => navigate(f.path)}>
+              <div style={{ ...st.featureIcon, background: f.color + '22', color: f.color }}>{f.icon}</div>
+              <div style={st.featureLabel}>{f.label}</div>
+              <div style={st.featureDesc}>{f.desc}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Main Tabs */}
+        <div style={st.mainTabs}>
+          <button style={{ ...st.mainTab, ...(tab === 'tiktok' ? st.mainTabActive : {}) }} onClick={() => setTab('tiktok')}>
             🎵 TikTok Ads
           </button>
-          <button style={{ ...styles.mainTab, ...(tab === 'aliexpress' ? styles.mainTabActive : {}) }} onClick={() => setTab('aliexpress')}>
+          <button style={{ ...st.mainTab, ...(tab === 'aliexpress' ? st.mainTabActive : {}) }} onClick={() => setTab('aliexpress')}>
             🛒 AliExpress
           </button>
         </div>
 
-        {/* TIKTOK FILTERS */}
+        {/* TikTok Filters */}
         {tab === 'tiktok' && (
-          <div style={styles.filterBar}>
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>🌍 Country</label>
-              <select style={styles.select} value={country} onChange={e => setCountry(e.target.value)}>
+          <div style={st.filterBar}>
+            <div style={st.filterGroup}>
+              <label style={st.label}>🌍 Country</label>
+              <select style={st.select} value={country} onChange={e => setCountry(e.target.value)}>
                 {countries.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>📅 Period</label>
-              <select style={styles.select} value={period} onChange={e => setPeriod(e.target.value)}>
+            <div style={st.filterGroup}>
+              <label style={st.label}>📅 Period</label>
+              <select style={st.select} value={period} onChange={e => setPeriod(e.target.value)}>
                 {periods.map(p => <option key={p.v} value={p.v}>{p.l}</option>)}
               </select>
             </div>
-            <div style={styles.filterGroup}>
-              <label style={styles.label}>📊 Sort By</label>
-              <select style={styles.select} value={orderBy} onChange={e => setOrderBy(e.target.value)}>
+            <div style={st.filterGroup}>
+              <label style={st.label}>📊 Sort By</label>
+              <select style={st.select} value={orderBy} onChange={e => setOrderBy(e.target.value)}>
                 {orders.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
             </div>
           </div>
         )}
 
-        {/* ALIEXPRESS SUB TABS */}
+        {/* AliExpress Sub Tabs */}
         {tab === 'aliexpress' && (
-          <div style={styles.aliSection}>
-            <div style={styles.aliTabs}>
+          <div style={st.aliSection}>
+            <div style={st.aliTabs}>
               {ALI_TABS.map(t => (
-                <button
-                  key={t.id}
-                  style={{ ...styles.aliTab, ...(aliTab === t.id ? styles.aliTabActive : {}) }}
-                  onClick={() => setAliTab(t.id)}
-                >
+                <button key={t.id} style={{ ...st.aliTab, ...(aliTab === t.id ? st.aliTabActive : {}) }} onClick={() => setAliTab(t.id)}>
                   {t.label}
                 </button>
               ))}
             </div>
-            {aliTab === 'trending' && <p style={styles.aliDesc}>🔥 Abhi sabse zyada bikne wale products worldwide</p>}
-            {aliTab === 'highsell' && <p style={styles.aliDesc}>📈 High volume sellers — proven winning products</p>}
+            {aliTab === 'trending' && <p style={st.aliDesc}>🔥 Abhi sabse zyada bikne wale products worldwide</p>}
+            {aliTab === 'highsell' && <p style={st.aliDesc}>📈 High volume sellers — proven winning products</p>}
             {aliTab === 'search' && (
-              <div style={styles.aliSearchBar}>
-                <input
-                  style={styles.aliInput}
-                  placeholder="Product dhundo — shoes, watch, bag..."
-                  value={aliSearchInput}
-                  onChange={e => setAliSearchInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && searchAliExpress()}
-                />
-                <button style={styles.aliSearchBtn} onClick={searchAliExpress}>🔍 Search</button>
+              <div style={st.aliSearchBar}>
+                <input style={st.aliInput} placeholder="Product dhundo — shoes, watch, bag..."
+                  value={aliSearchInput} onChange={e => setAliSearchInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && searchAliExpress()} />
+                <button style={st.aliSearchBtn} onClick={searchAliExpress}>🔍 Search</button>
               </div>
             )}
           </div>
         )}
 
-        {/* CONTENT */}
+        {/* Content */}
         {loading ? (
-          <div style={styles.center}>
-            <div style={styles.spinner}></div>
+          <div style={st.center}>
+            <div style={st.spinner} />
             <p style={{ color: '#8888aa', marginTop: '1rem' }}>Load ho raha hai...</p>
           </div>
         ) : aliTab === 'search' && tab === 'aliexpress' && ads.length === 0 ? (
-          <div style={styles.center}>
+          <div style={st.center}>
             <p style={{ fontSize: '2.5rem' }}>🔍</p>
             <p style={{ color: '#8888aa', marginTop: '.5rem' }}>Upar search karo product dhundne ke liye</p>
           </div>
         ) : ads.length === 0 ? (
-          <div style={styles.center}>
+          <div style={st.center}>
             <p style={{ fontSize: '2.5rem' }}>📭</p>
             <p style={{ color: '#8888aa', marginTop: '.5rem' }}>Kuch nahi mila</p>
-            <button style={styles.retryBtn} onClick={fetchAds}>Dobara try karo</button>
+            <button style={st.retryBtn} onClick={fetchAds}>Dobara try karo</button>
           </div>
         ) : (
           <>
-            <p style={styles.count}>✅ {ads.length} {tab === 'tiktok' ? 'ads' : 'products'} mile</p>
-            <div style={styles.grid}>
+            <p style={st.count}>✅ {ads.length} {tab === 'tiktok' ? 'ads' : 'products'} mile</p>
+            <div style={st.grid}>
               {tab === 'tiktok'
                 ? ads.map((ad, i) => <AdCard key={ad.id || i} ad={ad} />)
                 : ads.map((p, i) => <AliExpressCard key={p.product_id || i} product={p} />)
@@ -229,13 +198,21 @@ export default function Dashboard() {
   );
 }
 
-const styles = {
-  page: { padding: '80px clamp(1rem,4vw,2rem) 3rem' },
-  hero: { marginBottom: '1.75rem' },
-  h1: { fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, letterSpacing: '-.02em' },
-  sub: { color: '#8888aa', marginTop: '.4rem', fontSize: '.9rem' },
+const st = {
+  page: { padding: '72px clamp(.75rem,4vw,2rem) 3rem' },
+  hero: { marginBottom: '1.5rem' },
+  h1: { fontSize: 'clamp(1.3rem,4vw,1.9rem)', fontWeight: 900, letterSpacing: '-.02em', color: '#f0f0f8' },
+  sub: { color: '#8888aa', marginTop: '.35rem', fontSize: '.88rem' },
+
+  // Feature cards
+  featureGrid: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '.6rem', marginBottom: '1.5rem' },
+  featureCard: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.3rem', padding: '.9rem .5rem', background: '#0f0f1a', border: '1px solid rgba(255,255,255,.07)', borderRadius: '14px', cursor: 'pointer', textAlign: 'center', transition: 'transform .15s, border-color .15s' },
+  featureIcon: { width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', marginBottom: '.1rem' },
+  featureLabel: { color: '#f0f0f8', fontSize: '.78rem', fontWeight: 700 },
+  featureDesc: { color: '#8888aa', fontSize: '.68rem' },
+
   mainTabs: { display: 'flex', gap: '.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' },
-  mainTab: { padding: '.6rem 1.4rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all .2s' },
+  mainTab: { padding: '.6rem 1.4rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer' },
   mainTabActive: { background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: '1px solid #6c47ff', boxShadow: '0 0 16px rgba(108,71,255,.35)' },
   filterBar: { display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', padding: '1.25rem', background: '#0f0f1a', borderRadius: '12px', border: '1px solid rgba(255,255,255,.07)', marginBottom: '1.5rem' },
   filterGroup: { display: 'flex', flexDirection: 'column', gap: '.4rem' },
