@@ -22,7 +22,6 @@ function PublicRoute({ children }) {
 function App() {
   const [checking, setChecking] = useState(true);
 
-  // Disable browser zoom on desktop (same as mobile user-scalable=no)
   useEffect(() => {
     const preventZoom = (e) => {
       if (e.ctrlKey) e.preventDefault();
