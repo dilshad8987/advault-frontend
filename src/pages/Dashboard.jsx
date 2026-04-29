@@ -14,8 +14,8 @@ export default function Dashboard() {
   const [tab, setTab] = useState(() => sessionStorage.getItem('dash_tab') || 'tiktok');
   const [aliTab, setAliTab] = useState(() => sessionStorage.getItem('dash_aliTab') || 'trending');
   const [country, setCountry] = useState(() => sessionStorage.getItem('dash_country') || 'US');
-  const [period, setPeriod] = useState(() => sessionStorage.getItem('dash_period') || '30');
-  const [orderBy, setOrderBy] = useState(() => sessionStorage.getItem('dash_orderBy') || 'impression');
+  const [period, setPeriod] = useState(() => sessionStorage.getItem('dash_period') || '7');
+  const [orderBy, setOrderBy] = useState(() => sessionStorage.getItem('dash_orderBy') || 'like');
   const [aliSearchInput, setAliSearchInput] = useState('');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -73,7 +73,40 @@ export default function Dashboard() {
           (Array.isArray(L3) ? L3 : null) ||
           [];
 
-        const result = Array.isArray(raw) ? raw : [];
+        const allAds = Array.isArray(raw) ? raw : [];
+
+        // Sirf product ads — concerts, events, services, gaming filter out
+        const NON_PRODUCT_OBJECTIVES = [
+          'app_install','app_promotion','reach','brand_awareness',
+          'lead_generation','video_views','traffic','messages',
+        ];
+        const NON_PRODUCT_INDUSTRIES = [
+          'music','concert','event','gaming','game','entertainment',
+          'news','media','political','religion','education','software',
+          'finance','insurance','real_estate','recruitment','ngo',
+        ];
+        const NON_PRODUCT_KEYWORDS = [
+          'concert','tour','ticket','event','festival','live show',
+          'album','stream now','download app','install','sign up',
+          'apply now','vote','donate','webinar','seminar','course',
+          'slots','casino','betting','loan','insurance','mortgage',
+        ];
+
+        const result = allAds.filter(ad => {
+          const obj      = (ad.objective_key || '').toLowerCase();
+          const industry = (ad.industry_key  || '').toLowerCase();
+          const title    = (ad.ad_title || ad.title || '').toLowerCase();
+
+          // Objective filter
+          if (NON_PRODUCT_OBJECTIVES.some(o => obj.includes(o))) return false;
+          // Industry filter
+          if (NON_PRODUCT_INDUSTRIES.some(i => industry.includes(i))) return false;
+          // Title keyword filter
+          if (NON_PRODUCT_KEYWORDS.some(k => title.includes(k))) return false;
+
+          return true;
+        });
+
         setAds(result);
         // Cache mein save karo (5 minute valid)
         sessionStorage.setItem(key, JSON.stringify(result));
@@ -128,7 +161,7 @@ export default function Dashboard() {
           <h1 style={styles.h1}>
             Welcome back, <span style={{ color: '#8b6bff' }}>{user.name}</span> 👋
           </h1>
-          <p style={styles.sub}>Trending ads aur hot products dekho</p>
+          <p style={styles.sub}>🔥 Last 7 days ke sabse trending product ads</p>
         </div>
 
         {/* MAIN TABS */}
