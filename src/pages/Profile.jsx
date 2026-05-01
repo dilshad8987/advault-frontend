@@ -86,9 +86,21 @@ export default function Profile() {
     setSavingName(false);
   };
 
+  // Fix: Password strength check — sirf length nahi, sab rules apply honge
+  function checkPasswordStrength(password) {
+    if (!password || password.length < 8) return 'Password kam se kam 8 characters ka hona chahiye.';
+    if (!/[A-Z]/.test(password)) return 'Ek uppercase letter zaroori hai (A-Z).';
+    if (!/[a-z]/.test(password)) return 'Ek lowercase letter zaroori hai (a-z).';
+    if (!/[0-9]/.test(password)) return 'Ek number zaroori hai (0-9).';
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password))
+      return 'Ek special character zaroori hai (!@#$%^&* etc).';
+    return null;
+  }
+
   const savePassword = async () => {
     if (!oldPass || !newPass || !confirmPass) return toast.error('Sab fields bharo');
-    if (newPass.length < 8) return toast.error('Password 8+ characters ka hona chahiye');
+    const strengthErr = checkPasswordStrength(newPass);
+    if (strengthErr) return toast.error(strengthErr);
     if (newPass !== confirmPass) return toast.error('Passwords match nahi karte');
     setSavingPass(true);
     try {
