@@ -1,16 +1,29 @@
+// components/Navbar.jsx
+// Fix: Logout ab server pe bhi call karta hai (pehle sirf localStorage.clear() tha)
+// Server logout se refreshToken invalidate hota hai aur device session hatata hai
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axios';
 
 export default function Navbar() {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const user  = JSON.parse(localStorage.getItem('user') || 'null');
   const isPro = user?.plan && user.plan !== 'free';
 
-  const logout = () => {
-    localStorage.clear();
-    navigate('/login');
+  const logout = async () => {
     setMenuOpen(false);
+    try {
+      // Server pe logout call — refreshToken invalidate + device session remove
+      const refreshToken = localStorage.getItem('refreshToken');
+      await api.post('/auth/logout', { refreshToken });
+    } catch {
+      // Server down ho toh bhi local logout karo
+    } finally {
+      localStorage.clear();
+      navigate('/login');
+    }
   };
 
   return (
@@ -75,13 +88,11 @@ const s = {
   logo: { display: 'flex', alignItems: 'center', gap: '.5rem', fontWeight: 800, fontSize: '1.2rem', color: '#fff', textDecoration: 'none' },
   logoIcon: { width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   right: { display: 'flex', alignItems: 'center' },
-
   profileRow: { display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer', padding: '.3rem .4rem', borderRadius: '10px' },
   avatarCircle: { width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '.9rem', flexShrink: 0 },
   profileInfo: { display: 'flex', flexDirection: 'column', lineHeight: 1.2 },
   profileName: { fontSize: '.82rem', fontWeight: 700, color: '#f0f0f8' },
   proBadge: { fontSize: '.7rem', color: '#ffb700', fontWeight: 700 },
-
   dropdown: { position: 'absolute', top: '46px', right: 0, width: '210px', background: '#0f0f1a', border: '1px solid rgba(255,255,255,.07)', borderRadius: '12px', padding: '.75rem', zIndex: 200, boxShadow: '0 12px 40px rgba(0,0,0,.5)' },
   dropHeader: { display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.15rem 0 .3rem' },
   dropAvatar: { width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, flexShrink: 0 },
@@ -90,7 +101,6 @@ const s = {
   divider: { height: '1px', background: 'rgba(255,255,255,.06)', margin: '.45rem 0' },
   dropItem: { display: 'block', padding: '.5rem .4rem', color: '#c8c8e0', fontSize: '.83rem', fontWeight: 500, textDecoration: 'none', borderRadius: '6px' },
   dropLogout: { width: '100%', padding: '.5rem', background: 'rgba(255,79,135,.08)', border: '1px solid rgba(255,79,135,.15)', color: '#ff4f87', borderRadius: '6px', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 },
-
   authBtns: { display: 'flex', gap: '.6rem' },
   loginBtn: { padding: '.45rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,.12)', borderRadius: '8px', color: '#fff', textDecoration: 'none' },
   registerBtn: { padding: '.45rem 1rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', borderRadius: '8px', color: '#fff', textDecoration: 'none' },
