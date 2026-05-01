@@ -18,24 +18,16 @@ function TikTokSVG({ active }) {
 }
 
 function MetaSVG({ active }) {
-  // Meta official infinity logo — blue to pink gradient
+  const c1 = active ? '#1877F2' : '#666';
+  const c2 = active ? '#E1306C' : '#555';
   return (
-    <svg width="26" height="14" viewBox="0 0 60 32" fill="none">
-      <defs>
-        <linearGradient id="mg" x1="0" y1="0" x2="60" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor={active ? "#0082FB" : "#666"} />
-          <stop offset="60%"  stopColor={active ? "#0082FB" : "#666"} />
-          <stop offset="100%" stopColor={active ? "#E2477E" : "#777"} />
-        </linearGradient>
-      </defs>
-      <path
-        d="M14.5 3C8 3 3 8.5 3 16C3 21.5 5.8 25.5 10 27C13 28 15.5 26.5 18 23L22 17C24 14 26.5 11 30 11C33.5 11 36 14.5 36 16C36 17.5 33.5 21 30 21"
-        stroke="url(#mg)" strokeWidth="5" strokeLinecap="round" fill="none"
-      />
-      <path
-        d="M30 21C26.5 21 24 17.5 24 16C24 14.5 26.5 11 30 11C33.5 11 36 14 38 17L42 23C44.5 26.5 47 28 50 27C54.2 25.5 57 21.5 57 16C57 8.5 52 3 45.5 3"
-        stroke="url(#mg)" strokeWidth="5" strokeLinecap="round" fill="none"
-      />
+    <svg width="22" height="14" viewBox="0 0 44 28" fill="none">
+      <path d="M2 14C2 9 4.8 5 8 5C10.2 5 12.2 6.8 14.2 10L17.5 15.5C19.2 18.5 21 21 22.5 21C24.8 21 26.5 18 26.5 14C26.5 10.5 25 8 23 7"
+        stroke={c1} strokeWidth="2.8" strokeLinecap="round" fill="none"/>
+      <path d="M23 7C24.8 4.8 26.5 3.5 28 3.5C31.2 3.5 34 7.5 36 12C38 16.5 39.5 20 42 22"
+        stroke={c1} strokeWidth="2.8" strokeLinecap="round" fill="none"/>
+      <path d="M2 14C2 18.5 4.2 23 7.5 23C10 23 12 21 14.2 17.5L17 13"
+        stroke={c2} strokeWidth="2.8" strokeLinecap="round" fill="none"/>
     </svg>
   );
 }
