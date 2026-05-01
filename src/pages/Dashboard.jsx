@@ -198,7 +198,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── TIKTOK FILTERS ── */}
-        {tab === 'tiktok' && (
+        {tab === 'toktok' && (
           <div style={s.filterBar}>
             <div style={s.fg}><label style={s.lbl}>🌍 COUNTRY</label>
               <select style={s.sel} value={country} onChange={e => setCountry(e.target.value)}>
@@ -219,7 +219,7 @@ export default function Dashboard() {
         )}
 
         {/* ── META FILTERS ── */}
-        {tab === 'meta' && (
+        {tab === 'meota' && (
           <div style={s.filterBar}>
             <div style={s.fg}><label style={s.lbl}>🔍 KEYWORD</label>
               <div style={{ display: 'flex', gap: '.5rem' }}>
