@@ -8,6 +8,83 @@ import api from '../api/axios';
 const cacheKey = (tab, country, period, orderBy, aliTab) =>
   `dashboard_cache_${tab}_${country}_${period}_${orderBy}_${aliTab}`;
 
+// ─── Brand SVG Logos ──────────────────────────────────────────────────────────
+
+function TikTokLogo({ size = 18, active }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path
+        d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.17 8.17 0 004.78 1.52V6.77a4.85 4.85 0 01-1.01-.08z"
+        fill={active ? '#fff' : '#888'}
+      />
+      {/* TikTok musical note double color effect */}
+      <path
+        d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5"
+        fill={active ? '#69C9D0' : 'none'}
+        stroke={active ? '#69C9D0' : 'none'}
+        strokeWidth="0"
+      />
+    </svg>
+  );
+}
+
+function MetaLogo({ size = 18, active }) {
+  return (
+    <svg width={size * 1.6} height={size} viewBox="0 0 40 20" fill="none">
+      {/* Meta infinity logo */}
+      <path
+        d="M5 10C5 7 6.5 4.5 8.5 4.5C10 4.5 11.2 5.8 12.5 8L15 12.5C16.8 15.5 18.5 17 20 17C22 17 23.5 14.5 23.5 11.5C23.5 9 22.5 7 21 7"
+        stroke={active ? '#1877F2' : '#888'}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M21 7C22 5.5 23.2 4.5 24.5 4.5C27 4.5 29 7 30.5 10C32 13 33 16 35 17"
+        stroke={active ? '#1877F2' : '#888'}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M5 10C5 13.5 6.5 17 9 17C11 17 12.5 15.5 14 13L16.5 9"
+        stroke={active ? '#E1306C' : '#666'}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+function AliExpressLogo({ size = 18, active }) {
+  // AliExpress "A" style mark
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" fill={active ? '#FF6A00' : 'transparent'} opacity={active ? 0.15 : 0}/>
+      <text
+        x="12" y="16.5"
+        textAnchor="middle"
+        fontSize="13"
+        fontWeight="900"
+        fontFamily="Arial, sans-serif"
+        fill={active ? '#FF6A00' : '#888'}
+      >
+        A
+      </text>
+      <path
+        d="M7 17 L12 5 L17 17"
+        stroke={active ? '#FF6A00' : '#888'}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <path d="M9 13 L15 13" stroke={active ? '#FF6A00' : '#888'} strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 export default function Dashboard() {
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +108,41 @@ export default function Dashboard() {
 
   const ALI_CAT_MAP = { trending: '15', highsell: '200003655' };
 
-  // Filter change hone pe sessionStorage mein save karo
+  // ─── Tab definitions with brand colors ────────────────────────────────────
+  const MAIN_TABS = [
+    {
+      id: 'tiktok',
+      label: 'TikTok Ads',
+      // TikTok brand: black with cyan+red accent (we use dark bg + white)
+      activeGrad: 'linear-gradient(135deg, #010101 0%, #1a1a1a 100%)',
+      activeBorder: '#69C9D0',
+      activeShadow: '0 0 18px rgba(105,201,208,.4)',
+      activeColor: '#fff',
+      logo: (active) => <TikTokLogo size={17} active={active} />,
+    },
+    {
+      id: 'meta',
+      label: 'Meta Ads',
+      // Meta brand: blue
+      activeGrad: 'linear-gradient(135deg, #0866FF 0%, #1877F2 100%)',
+      activeBorder: '#1877F2',
+      activeShadow: '0 0 18px rgba(24,119,242,.45)',
+      activeColor: '#fff',
+      logo: (active) => <MetaLogo size={17} active={active} />,
+    },
+    {
+      id: 'aliexpress',
+      label: 'AliExpress',
+      // AliExpress brand: orange-red
+      activeGrad: 'linear-gradient(135deg, #FF4F00 0%, #FF6A00 100%)',
+      activeBorder: '#FF6A00',
+      activeShadow: '0 0 18px rgba(255,106,0,.4)',
+      activeColor: '#fff',
+      logo: (active) => <AliExpressLogo size={17} active={active} />,
+    },
+  ];
+
+  // Save tab state
   useEffect(() => { sessionStorage.setItem('dash_tab', tab); }, [tab]);
   useEffect(() => { sessionStorage.setItem('dash_aliTab', aliTab); }, [aliTab]);
   useEffect(() => { sessionStorage.setItem('dash_country', country); }, [country]);
@@ -41,12 +152,10 @@ export default function Dashboard() {
   const fetchAds = useCallback(async () => {
     const key = cacheKey(tab, country, period, orderBy, aliTab);
 
-    // Cache check karo — agar data hai toh seedha dikhao, load nahi
     const cached = sessionStorage.getItem(key);
     if (cached) {
       try {
-        const parsed = JSON.parse(cached);
-        setAds(parsed);
+        setAds(JSON.parse(cached));
         setLoading(false);
         return;
       } catch {}
@@ -60,7 +169,7 @@ export default function Dashboard() {
           params: { country, period, order: orderBy }
         });
 
-        const d = res.data;
+        const d  = res.data;
         const L3 = d?.data?.data;
         const L4 = L3?.data;
 
@@ -75,7 +184,6 @@ export default function Dashboard() {
 
         const allAds = Array.isArray(raw) ? raw : [];
 
-        // Sirf product ads — concerts, events, services, gaming filter out
         const NON_PRODUCT_OBJECTIVES = [
           'app_install','app_promotion','reach','brand_awareness',
           'lead_generation','video_views','traffic','messages',
@@ -96,33 +204,46 @@ export default function Dashboard() {
           const obj      = (ad.objective_key || '').toLowerCase();
           const industry = (ad.industry_key  || '').toLowerCase();
           const title    = (ad.ad_title || ad.title || '').toLowerCase();
-
-          // Objective filter
           if (NON_PRODUCT_OBJECTIVES.some(o => obj.includes(o))) return false;
-          // Industry filter
           if (NON_PRODUCT_INDUSTRIES.some(i => industry.includes(i))) return false;
-          // Title keyword filter
           if (NON_PRODUCT_KEYWORDS.some(k => title.includes(k))) return false;
-
           return true;
         });
 
         setAds(result);
-        // Cache mein save karo (5 minute valid)
         sessionStorage.setItem(key, JSON.stringify(result));
-        sessionStorage.setItem(key + '_time', Date.now().toString());
+
+      } else if (tab === 'meta') {
+        // Meta Ads — same TikTok API fallback (ya future mein alag endpoint)
+        try {
+          const res = await api.get('/ads/tiktok', {
+            params: { country, period, order: orderBy }
+          });
+          const d   = res.data;
+          const L3  = d?.data?.data;
+          const L4  = L3?.data;
+          const raw =
+            L4?.materials || L4?.list ||
+            (Array.isArray(L4) ? L4 : null) ||
+            L3?.materials || (Array.isArray(L3) ? L3 : null) || [];
+          const result = Array.isArray(raw) ? raw : [];
+          setAds(result);
+          sessionStorage.setItem(key, JSON.stringify(result));
+        } catch {
+          setAds([]);
+        }
 
       } else if (tab === 'aliexpress') {
         const catId = ALI_CAT_MAP[aliTab] || '15';
         const res = await api.get('/ads/aliexpress', {
           params: { catId, page: 1, currency: 'USD' }
         });
-        const raw = res.data?.data?.data || res.data?.data || [];
+        const raw    = res.data?.data?.data || res.data?.data || [];
         const result = Array.isArray(raw) ? raw : [];
         setAds(result);
         sessionStorage.setItem(key, JSON.stringify(result));
-        sessionStorage.setItem(key + '_time', Date.now().toString());
       }
+
     } catch (err) {
       console.error(err);
       setAds([]);
@@ -131,9 +252,12 @@ export default function Dashboard() {
   }, [tab, country, period, orderBy, aliTab]);
 
   useEffect(() => {
-    if (aliTab !== 'search') fetchAds();
-    else setLoading(false);
-  }, [fetchAds, aliTab]);
+    if (tab === 'aliexpress' && aliTab === 'search') {
+      setLoading(false);
+    } else {
+      fetchAds();
+    }
+  }, [fetchAds, tab, aliTab]);
 
   const searchAliExpress = async () => {
     if (!aliSearchInput.trim()) return;
@@ -152,8 +276,15 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const activeTabConfig = MAIN_TABS.find(t => t.id === tab);
+
   return (
     <div style={{ minHeight: '100vh', background: '#08080f' }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .tab-btn { transition: all .22s cubic-bezier(.4,0,.2,1) !important; }
+        .tab-btn:hover { opacity: .88; transform: translateY(-1px); }
+      `}</style>
       <Navbar />
       <div style={styles.page}>
 
@@ -161,21 +292,39 @@ export default function Dashboard() {
           <h1 style={styles.h1}>
             Welcome back, <span style={{ color: '#8b6bff' }}>{user.name}</span> 👋
           </h1>
-          <p style={styles.sub}>🔥 Last 7 days ke sabse trending product ads</p>
+          <p style={styles.sub}>🔥 Trending winning ads — TikTok, Meta & AliExpress</p>
         </div>
 
-        {/* MAIN TABS */}
+        {/* ── MAIN TABS with original brand colors ── */}
         <div style={styles.mainTabs}>
-          <button style={{ ...styles.mainTab, ...(tab === 'tiktok' ? styles.mainTabActive : {}) }} onClick={() => setTab('tiktok')}>
-            🎵 TikTok Ads
-          </button>
-          <button style={{ ...styles.mainTab, ...(tab === 'aliexpress' ? styles.mainTabActive : {}) }} onClick={() => setTab('aliexpress')}>
-            🛒 AliExpress
-          </button>
+          {MAIN_TABS.map(t => {
+            const isActive = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                className="tab-btn"
+                onClick={() => setTab(t.id)}
+                style={{
+                  ...styles.mainTab,
+                  ...(isActive ? {
+                    background:   t.activeGrad,
+                    border:       `1.5px solid ${t.activeBorder}`,
+                    boxShadow:    t.activeShadow,
+                    color:        t.activeColor,
+                  } : {}),
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  {t.logo(isActive)}
+                  <span>{t.label}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* TIKTOK FILTERS */}
-        {tab === 'tiktok' && (
+        {/* ── TIKTOK / META FILTERS ── */}
+        {(tab === 'tiktok' || tab === 'meta') && (
           <div style={styles.filterBar}>
             <div style={styles.filterGroup}>
               <label style={styles.label}>🌍 Country</label>
@@ -195,10 +344,16 @@ export default function Dashboard() {
                 {orders.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
             </div>
+            {tab === 'meta' && (
+              <div style={styles.metaNotice}>
+                <span style={{ fontSize: '1rem' }}>ℹ️</span>
+                <span>Meta dedicated API coming soon — showing top ads for now</span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ALIEXPRESS SUB TABS */}
+        {/* ── ALIEXPRESS SUB TABS ── */}
         {tab === 'aliexpress' && (
           <div style={styles.aliSection}>
             <div style={styles.aliTabs}>
@@ -229,13 +384,13 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* CONTENT */}
+        {/* ── CONTENT ── */}
         {loading ? (
           <div style={styles.center}>
             <div style={styles.spinner}></div>
             <p style={{ color: '#8888aa', marginTop: '1rem' }}>Load ho raha hai...</p>
           </div>
-        ) : aliTab === 'search' && tab === 'aliexpress' && ads.length === 0 ? (
+        ) : tab === 'aliexpress' && aliTab === 'search' && ads.length === 0 ? (
           <div style={styles.center}>
             <p style={{ fontSize: '2.5rem' }}>🔍</p>
             <p style={{ color: '#8888aa', marginTop: '.5rem' }}>Upar search karo product dhundne ke liye</p>
@@ -248,11 +403,11 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <p style={styles.count}>✅ {ads.length} {tab === 'tiktok' ? 'ads' : 'products'} mile</p>
+            <p style={styles.count}>✅ {ads.length} {tab === 'aliexpress' ? 'products' : 'ads'} mile</p>
             <div style={styles.grid}>
-              {tab === 'tiktok'
-                ? ads.map((ad, i) => <AdCard key={ad.id || i} ad={ad} />)
-                : ads.map((p, i) => <AliExpressCard key={p.product_id || i} product={p} />)
+              {tab === 'aliexpress'
+                ? ads.map((p, i) => <AliExpressCard key={p.product_id || i} product={p} />)
+                : ads.map((ad, i) => <AdCard key={ad.id || i} ad={ad} />)
               }
             </div>
           </>
@@ -263,28 +418,44 @@ export default function Dashboard() {
 }
 
 const styles = {
-  page: { padding: '80px clamp(1rem,4vw,2rem) 3rem' },
-  hero: { marginBottom: '1.75rem' },
-  h1: { fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, letterSpacing: '-.02em' },
-  sub: { color: '#8888aa', marginTop: '.4rem', fontSize: '.9rem' },
-  mainTabs: { display: 'flex', gap: '.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' },
-  mainTab: { padding: '.6rem 1.4rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all .2s' },
-  mainTabActive: { background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: '1px solid #6c47ff', boxShadow: '0 0 16px rgba(108,71,255,.35)' },
-  filterBar: { display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', padding: '1.25rem', background: '#0f0f1a', borderRadius: '12px', border: '1px solid rgba(255,255,255,.07)', marginBottom: '1.5rem' },
-  filterGroup: { display: 'flex', flexDirection: 'column', gap: '.4rem' },
-  label: { fontSize: '.72rem', color: '#8888aa', fontWeight: 700, textTransform: 'uppercase' },
-  select: { padding: '.5rem .9rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.85rem', cursor: 'pointer', outline: 'none' },
-  retryBtn: { padding: '.55rem 1.2rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem' },
+  page:       { padding: '80px clamp(1rem,4vw,2rem) 3rem' },
+  hero:       { marginBottom: '1.75rem' },
+  h1:         { fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, letterSpacing: '-.02em' },
+  sub:        { color: '#8888aa', marginTop: '.4rem', fontSize: '.9rem' },
+
+  mainTabs:   { display: 'flex', gap: '.6rem', marginBottom: '1.25rem', flexWrap: 'wrap' },
+  mainTab: {
+    display: 'flex', alignItems: 'center',
+    padding: '.6rem 1.3rem',
+    borderRadius: '10px',
+    border: '1.5px solid rgba(255,255,255,.09)',
+    background: 'rgba(255,255,255,.03)',
+    color: '#8888aa',
+    fontSize: '.85rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    letterSpacing: '.01em',
+  },
+
+  filterBar:  { display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', padding: '1.25rem', background: '#0f0f1a', borderRadius: '12px', border: '1px solid rgba(255,255,255,.07)', marginBottom: '1.5rem' },
+  filterGroup:{ display: 'flex', flexDirection: 'column', gap: '.4rem' },
+  label:      { fontSize: '.72rem', color: '#8888aa', fontWeight: 700, textTransform: 'uppercase' },
+  select:     { padding: '.5rem .9rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.85rem', cursor: 'pointer', outline: 'none' },
+  retryBtn:   { padding: '.55rem 1.2rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem' },
+
+  metaNotice: { display: 'flex', alignItems: 'center', gap: '.5rem', background: 'rgba(24,119,242,.08)', border: '1px solid rgba(24,119,242,.2)', borderRadius: '8px', padding: '.5rem .85rem', color: '#7aadff', fontSize: '.75rem', fontWeight: 600, alignSelf: 'center' },
+
   aliSection: { marginBottom: '1.5rem' },
-  aliTabs: { display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' },
-  aliTab: { padding: '.5rem 1.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer' },
-  aliTabActive: { background: '#161625', color: '#fff', border: '1px solid rgba(108,71,255,.5)', boxShadow: '0 0 12px rgba(108,71,255,.2)' },
-  aliDesc: { color: '#8888aa', fontSize: '.85rem', marginBottom: '.5rem' },
-  aliSearchBar: { display: 'flex', gap: '.75rem', flexWrap: 'wrap' },
-  aliInput: { flex: 1, minWidth: '200px', padding: '.75rem 1rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.88rem', outline: 'none' },
-  aliSearchBtn: { padding: '.75rem 1.5rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' },
-  count: { color: '#8888aa', fontSize: '.83rem', marginBottom: '1rem' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap: '1.25rem' },
-  center: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '.5rem' },
-  spinner: { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+  aliTabs:    { display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' },
+  aliTab:     { padding: '.5rem 1.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer' },
+  aliTabActive:{ background: '#161625', color: '#FF6A00', border: '1px solid rgba(255,106,0,.4)', boxShadow: '0 0 12px rgba(255,106,0,.15)' },
+  aliDesc:    { color: '#8888aa', fontSize: '.85rem', marginBottom: '.5rem' },
+  aliSearchBar:{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' },
+  aliInput:   { flex: 1, minWidth: '200px', padding: '.75rem 1rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.88rem', outline: 'none' },
+  aliSearchBtn:{ padding: '.75rem 1.5rem', background: 'linear-gradient(135deg,#FF4F00,#FF6A00)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' },
+
+  count:      { color: '#8888aa', fontSize: '.83rem', marginBottom: '1rem' },
+  grid:       { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap: '1.25rem' },
+  center:     { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '.5rem' },
+  spinner:    { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
 };
