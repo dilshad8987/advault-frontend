@@ -20,20 +20,16 @@ function TikTokSVG({ active }) {
 function MetaSVG({ active }) {
   const color = active ? 'url(#metaGrad)' : '#666';
   return (
-    <svg width="28" height="14" viewBox="0 0 60 28" fill="none">
+    <svg width="28" height="14" viewBox="0 0 512 214" fill="none">
       <defs>
-        <linearGradient id="metaGrad" x1="0" y1="0" x2="60" y2="0" gradientUnits="userSpaceOnUse">
+        <linearGradient id="metaGrad" x1="0" y1="0" x2="512" y2="0" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#0081FB"/>
           <stop offset="100%" stopColor="#0041C4"/>
         </linearGradient>
       </defs>
       <path
-        d="M7 14C7 10.5 8.5 7.5 11 7.5C13 7.5 14.8 9 17 12.5L19 15.5C21.5 19.5 23.5 21 26 21C29.5 21 31.5 18 31.5 14C31.5 10.5 30 8 27.5 8"
-        stroke={color} strokeWidth="3" strokeLinecap="round" fill="none"
-      />
-      <path
-        d="M53 14C53 10.5 51.5 7.5 49 7.5C47 7.5 45.2 9 43 12.5L41 15.5C38.5 19.5 36.5 21 34 21C30.5 21 28.5 18 28.5 14C28.5 10.5 30 8 32.5 8"
-        stroke={color} strokeWidth="3" strokeLinecap="round" fill="none"
+        d="M363.3 35.1c-22.1 0-41.9 10.9-54 28.1-12.1-17.2-31.9-28.1-54-28.1-22.1 0-41.9 10.9-54 28.1-12.1-17.2-31.9-28.1-54-28.1-49.8 0-90.1 40.3-90.1 90.1s40.3 90.1 90.1 90.1c22.1 0 41.9-10.9 54-28.1 12.1 17.2 31.9 28.1 54 28.1 22.1 0 41.9-10.9 54-28.1 12.1 17.2 31.9 28.1 54 28.1 49.8 0 90.1-40.3 90.1-90.1s-40.3-90.1-90.1-90.1zm-216 137.9c-26.4 0-47.8-21.4-47.8-47.8s21.4-47.8 47.8-47.8 47.8 21.4 47.8 47.8-21.4 47.8-47.8 47.8zm108.6-47.8c0-14.8 6.7-27.9 17.2-36.8 10.5 8.9 17.2 22 17.2 36.8s-6.7 27.9-17.2 36.8c-10.5-8.9-17.2-22-17.2-36.8zm107.4 47.8c-26.4 0-47.8-21.4-47.8-47.8s21.4-47.8 47.8-47.8 47.8 21.4 47.8 47.8-21.4 47.8-47.8 47.8z"
+        fill={color}
       />
     </svg>
   );
@@ -91,7 +87,6 @@ export default function Dashboard() {
   const [metaStatus, setMetaStatus]   = useState('ACTIVE');
   const [aliSearchInput, setAliSearchInput] = useState('');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-
   const countries = ['US','DE','GB','FR','IT','ES','NL','PL','AT','BE','SE','NO','DK','FI'];
   const periods   = [{ v: '7', l: '7 Days' },{ v: '30', l: '30 Days' },{ v: '90', l: '90 Days' },{ v: '180', l: '180 Days' }];
   const orders    = [{ v: 'impression', l: '👁 Impressions' },{ v: 'like', l: '❤️ Likes' },{ v: 'ctr', l: '📊 CTR' }];
@@ -339,3 +334,4 @@ const s = {
   center:{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '.5rem' },
   spin:  { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
 };
+  
