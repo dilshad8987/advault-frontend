@@ -44,8 +44,8 @@ function AliExpressSVG({ active }) {
 
 const MAIN_TABS = [
   {
-    id: 'toktok',
-    label: 'TikTok',
+    id: 'tiktok',
+    label: 'TokTok',
     logo: (on) => <TikTokSVG active={on} />,
     activeBg:     'rgba(255,255,255,.05)',
     activeBorder: 'rgba(255,255,255,.25)',
@@ -53,8 +53,8 @@ const MAIN_TABS = [
     activeShadow: 'none',
   },
   {
-    id: 'metao',
-    label: 'Metao',
+    id: 'meta',
+    label: 'Meta',
     logo: (on) => <MetaSVG active={on} />,
     activeBg:     'rgba(24,119,242,.08)',
     activeBorder: '#1877F2',
