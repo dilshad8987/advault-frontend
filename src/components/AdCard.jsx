@@ -56,8 +56,10 @@ function MediaModal({ adData, videoUrl, imageUrl, libraryId, authToken, onClose 
   const [imgError, setImgError] = useState(false);
   const [videoError, setVideoError] = useState(false);
 
-  // Proxy se image URL banao
-  const proxiedImage = proxyImageUrl(imageUrl, libraryId);
+  // R2 URL hai toh seedha use karo, warna proxy
+  const proxiedImage = (imageUrl && imageUrl.startsWith('http') && !imageUrl.includes('fbcdn'))
+    ? imageUrl  // R2 URL — seedha use karo
+    : proxyImageUrl(imageUrl, libraryId);  // CDN URL — proxy se
 
   // Video stream URL — backend proxy se (token bhi pass karo)
   const streamUrl = videoUrl
@@ -213,18 +215,21 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   const objective = isMeta ? mtStatus : ttObjective;
 
   // ── Raw image/video URLs ──
+  // R2 URL pehle (permanent, fast) → phir CDN URL (fallback)
+  const r2ImageUrl  = isMeta ? (ad.r2_image_url || ad._raw?.r2_image_url || '') : '';
   const rawImageUrl = isMeta
-    ? (ad.image || ad._raw?.image || ad.ad_snapshot_url || ad.snapshot_url || ad._raw?.snapshot_url || '')
+    ? (r2ImageUrl || ad.image || ad._raw?.image || ad.ad_snapshot_url || ad.snapshot_url || '')
     : ttCover;
 
   const rawVideoUrl = isMeta
     ? (ad.video_url || ad._raw?.video || ad.video || '')
     : (ad.video_info?.play_url || '');
 
-  // ── Thumbnail — proxy se (Meta), direct (TikTok) ──
+  // ── Thumbnail ──
+  // R2 URL hai toh seedha use karo — proxy/CDN ki zaroorat nahi
   const libraryId = isMeta ? (ad._raw?.library_id || mtAdId) : null;
   const thumbUrl  = isMeta
-    ? proxyImageUrl(fixImageUrl(rawImageUrl), libraryId)
+    ? (r2ImageUrl || proxyImageUrl(rawImageUrl, libraryId))
     : fixImageUrl(rawImageUrl);
 
   // ── Auth token for video stream ──
