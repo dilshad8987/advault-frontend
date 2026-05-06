@@ -250,7 +250,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── TIKTOK FILTERS ── */}
-        {tab === 'tiktok' && (
+        {tab === 'tikpok' && (
           <div style={s.filterBar}>
             <div style={s.fg}><label style={s.lbl}>🌍 COUNTRY</label>
               <select style={s.sel} value={country} onChange={e => setCountry(e.target.value)}>
