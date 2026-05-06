@@ -266,16 +266,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
   return (
     <>
-      {showModal && (
-        <MediaModal
-          adData={modalAdData}
-          videoUrl={rawVideoUrl}
-          imageUrl={rawImageUrl}
-          libraryId={libraryId}
-          authToken={authToken}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+
 
       <div
         style={s.card}
@@ -301,15 +292,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
                 loading="lazy"
                 onError={() => setThumbError(true)}
               />
-              {/* Video play overlay — sirf tab jab video ho */}
-              {rawVideoUrl && (
-                <div
-                  style={s.playOverlay}
-                  onClick={(e) => { e.stopPropagation(); openModal(e); }}
-                >
-                  <div style={s.playBtn}>▶</div>
-                </div>
-              )}
+
             </>
           ) : isMeta ? (
             // Placeholder — no "View on Facebook"
@@ -377,12 +360,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             <button style={s.detailBtn} onClick={openDetail}>
               🔍 Detail
             </button>
-            {/* View button — sirf tab jab image ya video ho (Facebook link nahi) */}
-            {isMeta && (rawVideoUrl || rawImageUrl) && (
-              <button style={s.viewBtn} onClick={openModal}>
-                {rawVideoUrl ? '▶ Play' : '🖼 View'}
-              </button>
-            )}
+
           </div>
         </div>
       </div>
@@ -392,9 +370,9 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
 const s = {
   card: { background: '#0f0f1a', border: '1px solid rgba(255,255,255,.08)', borderRadius: '14px', overflow: 'hidden', cursor: 'pointer', transition: 'transform .22s, border-color .22s', userSelect: 'none', WebkitTapHighlightColor: 'transparent' },
-  media: { width: '100%', height: '220px', background: '#161625', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  blurBg: { position: 'absolute', inset: 0, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(18px) brightness(0.45) saturate(1.3)', transform: 'scale(1.12)', zIndex: 0 },
-  img: { position: 'relative', zIndex: 1, height: '100%', width: '100%', maxWidth: '100%', objectFit: 'cover', display: 'block' },
+  media: { width: '100%', height: '240px', background: '#161625', position: 'relative', overflow: 'hidden' },
+  blurBg: { position: 'absolute', inset: 0, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(0.5) saturate(1.4)', transform: 'scale(1.15)', zIndex: 0 },
+  img: { position: 'absolute', inset: 0, zIndex: 1, height: '100%', width: '100%', objectFit: 'cover', display: 'block' },
   noImg: { fontSize: '2.5rem', color: '#8888aa' },
 
   // Meta placeholder — no "View on Facebook"
