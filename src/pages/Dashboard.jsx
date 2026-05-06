@@ -94,7 +94,7 @@ function AliExpressSVG({ active }) {
 const MAIN_TABS = [
   {
     id: 'tiktok',
-    label: 'TikTok',
+    label: 'TookoooooooooTok',
     logo: (on) => <TikTokSVG active={on} />,
     activeBg:     'rgba(255,255,255,.05)',
     activeBorder: 'rgba(255,255,255,.25)',
@@ -103,7 +103,7 @@ const MAIN_TABS = [
   },
   {
     id: 'meta',
-    label: 'Meta',
+    label: 'Meooooota',
     logo: (on) => <MetaSVG active={on} />,
     activeBg:     'rgba(24,119,242,.08)',
     activeBorder: '#1877F2',
@@ -250,7 +250,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── TIKTOK FILTERS ── */}
-        {tab === 'tikpok' && (
+        {tab === 'tiktok' && (
           <div style={s.filterBar}>
             <div style={s.fg}><label style={s.lbl}>🌍 COUNTRY</label>
               <select style={s.sel} value={country} onChange={e => setCountry(e.target.value)}>
