@@ -39,12 +39,12 @@ function TikTokBadge() {
 
 function MetaBadge() {
   return (
-    <span style={{ ...s.platformBadge, background: 'rgba(24,119,242,.15)', color: '#5aabff' }}>
+    <span style={{ ...s.platformBadge, background: 'rgba(255,255,255,.06)', color: '#8888aa' }}>
       <svg width="20" height="9" viewBox="0 0 66 30" fill="none" style={{ flexShrink: 0 }}>
-        <path d="M4 18C4 13 6.5 8 10 8C12.5 8 14.5 10 17 14L20 19C22 22.5 24 25 26.5 25C29.5 25 31.5 21.5 31.5 16.5C31.5 12 29.5 9 27 8" stroke="#1877F2" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M4 16C4 10 6.5 5 11 5C13.5 5 16 7 18.5 11L21.5 16C23.5 19.5 26 22.5 28.5 22.5" stroke="#E1306C" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M36 18C36 13 38.5 8 42 8C44.5 8 46.5 10 49 14L52 19C54 22.5 56 25 58.5 25C61.5 25 63.5 21.5 63.5 16.5C63.5 12 61.5 9 59 8" stroke="#1877F2" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M36 16C36 10 38.5 5 43 5C45.5 5 48 7 50.5 11L53.5 16C55.5 19.5 58 22.5 60.5 22.5" stroke="#E1306C" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+        <path d="M4 18C4 13 6.5 8 10 8C12.5 8 14.5 10 17 14L20 19C22 22.5 24 25 26.5 25C29.5 25 31.5 21.5 31.5 16.5C31.5 12 29.5 9 27 8" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+        <path d="M4 16C4 10 6.5 5 11 5C13.5 5 16 7 18.5 11L21.5 16C23.5 19.5 26 22.5 28.5 22.5" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+        <path d="M36 18C36 13 38.5 8 42 8C44.5 8 46.5 10 49 14L52 19C54 22.5 56 25 58.5 25C61.5 25 63.5 21.5 63.5 16.5C63.5 12 61.5 9 59 8" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+        <path d="M36 16C36 10 38.5 5 43 5C45.5 5 48 7 50.5 11L53.5 16C55.5 19.5 58 22.5 60.5 22.5" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
       </svg>
       META
     </span>
@@ -304,16 +304,8 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             <div style={s.noImg}>🎵</div>
           )}
 
-          {objective && (
-            <span style={{
-              ...s.objBadge,
-              ...(isMeta && mtStatus === 'Active'   ? { background: 'rgba(34,197,94,.88)' }  : {}),
-              ...(isMeta && mtStatus === 'Inactive' ? { background: 'rgba(239,68,68,.78)' }  : {}),
-            }}>
-              {objective}
-            </span>
-          )}
-          <span style={s.vidBadge}>{isMeta ? '📣 Meta Ad' : '▶ Video'}</span>
+
+
         </div>
 
         {/* ── BODY ── */}
