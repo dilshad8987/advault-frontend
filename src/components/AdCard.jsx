@@ -1,427 +1,337 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import Navbar from '../components/Navbar';
+import AdCard from '../components/AdCard';
+import AliExpressCard from '../components/AliExpressCard';
 import api from '../api/axios';
-import toast from 'react-hot-toast';
 
-// ─── API Base URL ────────────────────────────────────────────────────────────
-const API_BASE = process.env.REACT_APP_API_URL || 'https://advault-backend-production-fb35.up.railway.app/api';
+const cacheKey = (tab, country, period, orderBy, aliTab) =>
+  `dashboard_cache_${tab}_${country}_${period}_${orderBy}_${aliTab}`;
 
-// ─── Image Proxy — Facebook CDN expire hoti hai, backend se serve karo ───────
-function proxyImageUrl(imageUrl, libraryId) {
-  if (!imageUrl && !libraryId) return '';
-  const params = new URLSearchParams();
-  if (libraryId) params.set('id', libraryId);
-  if (imageUrl)  params.set('url', encodeURIComponent(imageUrl));
-  return API_BASE.replace('/api', '') + '/api/ads/image-proxy?' + params.toString();
-}
-
-// ─── Fix blurry image — s60x60 → s600x600 ───────────────────────────────────
-function fixImageUrl(url) {
-  if (!url) return '';
-  return url
-    .replace('s60x60', 's600x600')
-    .replace('dst-jpg_s60x60', 'dst-jpg_s600x600')
-    .replace('_s60x60', '_s600x600')
-    .replace('p60x60', 'p600x600');
-}
-
-// ─── Badges ───────────────────────────────────────────────────────────────────
-function TikTokBadge() {
+function TikTokSVG({ active }) {
   return (
-    <span style={s.platformBadge}>
-      <svg width="10" height="11" viewBox="0 0 24 24" fill="#ccc" style={{ flexShrink: 0 }}>
-        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.17 8.17 0 004.78 1.52V6.77a4.85 4.85 0 01-1.01-.08z"/>
-      </svg>
-      TIKTOK
-    </span>
+    <svg width="14" height="16" viewBox="0 0 24 24" fill={active ? '#fff' : '#666'}>
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.17 8.17 0 004.78 1.52V6.77a4.85 4.85 0 01-1.01-.08z"/>
+    </svg>
   );
 }
 
-function MetaBadge() {
+function MetaSVG({ active }) {
   return (
-    <span style={{ ...s.platformBadge, background: 'rgba(255,255,255,.06)', color: '#8888aa' }}>
-      <svg width="20" height="9" viewBox="0 0 66 30" fill="none" style={{ flexShrink: 0 }}>
-        <path d="M4 18C4 13 6.5 8 10 8C12.5 8 14.5 10 17 14L20 19C22 22.5 24 25 26.5 25C29.5 25 31.5 21.5 31.5 16.5C31.5 12 29.5 9 27 8" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M4 16C4 10 6.5 5 11 5C13.5 5 16 7 18.5 11L21.5 16C23.5 19.5 26 22.5 28.5 22.5" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M36 18C36 13 38.5 8 42 8C44.5 8 46.5 10 49 14L52 19C54 22.5 56 25 58.5 25C61.5 25 63.5 21.5 63.5 16.5C63.5 12 61.5 9 59 8" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M36 16C36 10 38.5 5 43 5C45.5 5 48 7 50.5 11L53.5 16C55.5 19.5 58 22.5 60.5 22.5" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-      </svg>
-      META
-    </span>
+    <svg width="26" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mg" x1="0" y1="8" x2="16" y2="8" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor={active ? "#0082FB" : "#555"} />
+          <stop offset="100%" stopColor={active ? "#0040C4" : "#444"} />
+        </linearGradient>
+      </defs>
+      <path fillRule="evenodd" fill="url(#mg)" d="M8.217 5.243C9.145 3.988 10.171 3 11.483 3C13.96 3 16 6.153 16.001 9.907c0 2.29-.986 3.725-2.757 3.725-1.543 0-2.395-.866-3.924-3.424l-.667-1.123-.118-.197a55 55 0 0 0-.53-.877l-1.178 2.08c-1.673 2.925-2.615 3.541-3.923 3.541C1.086 13.632 0 12.217 0 9.973C0 6.388 1.995 3 4.598 3q.477-.001.924.122c.31.086.611.22.913.407c.577.359 1.154.915 1.782 1.714m1.516 2.224q-.378-.615-.727-1.133L9 6.326c.845-1.305 1.543-1.954 2.372-1.954c1.723 0 3.102 2.537 3.102 5.653c0 1.188-.39 1.877-1.195 1.877-.773 0-1.142-.51-2.61-2.87zM4.846 4.756c.725.1 1.385.634 2.34 2.001A212 212 0 0 0 5.551 9.3c-1.357 2.126-1.826 2.603-2.581 2.603-.777 0-1.24-.682-1.24-1.9c0-2.602 1.298-5.264 2.846-5.264q.137 0 .27.018"/>
+    </svg>
   );
 }
 
-// ─── In-App Media Modal — "View on Facebook" NAHI, sab andar ─────────────────
-function MediaModal({ adData, videoUrl, imageUrl, libraryId, authToken, onClose }) {
-  const [imgError, setImgError] = useState(false);
-  const [videoError, setVideoError] = useState(false);
+function AliExpressSVG({ active }) {
+  const c = active ? '#FF6A00' : '#666';
+  return (
+    <svg width="15" height="15" viewBox="0 0 100 100" fill="none">
+      <path d="M50 8 L90 88 H68 L50 44 L32 88 H10 Z" fill={c}/>
+      <line x1="22" y1="65" x2="78" y2="65" stroke={c} strokeWidth="9" strokeLinecap="round"/>
+    </svg>
+  );
+}
 
-  // R2 URL hai toh seedha use karo, warna proxy
-  const proxiedImage = (imageUrl && imageUrl.startsWith('http') && !imageUrl.includes('fbcdn'))
-    ? imageUrl  // R2 URL — seedha use karo
-    : proxyImageUrl(imageUrl, libraryId);  // CDN URL — proxy se
+const MAIN_TABS = [
+  {
+    id: 'tiktok',
+    label: 'TikTok',
+    logo: (on) => <TikTokSVG active={on} />,
+    activeBg:     'rgba(255,255,255,.05)',
+    activeBorder: 'rgba(255,255,255,.25)',
+    activeColor:  '#fff',
+    activeShadow: 'none',
+  },
+  {
+    id: 'meta',
+    label: 'Meta',
+    logo: (on) => <MetaSVG active={on} />,
+    activeBg:     'rgba(24,119,242,.08)',
+    activeBorder: '#1877F2',
+    activeColor:  '#5aabff',
+    activeShadow: '0 0 12px rgba(24,119,242,.18)',
+  },
+  {
+    id: 'aliexpress',
+    label: 'AliExpress',
+    logo: (on) => <AliExpressSVG active={on} />,
+    activeBg:     'rgba(255,106,0,.07)',
+    activeBorder: '#FF6A00',
+    activeColor:  '#ff8c3a',
+    activeShadow: '0 0 12px rgba(255,106,0,.18)',
+  },
+];
 
-  // Video stream URL — backend proxy se (token bhi pass karo)
-  const streamUrl = videoUrl
-    ? API_BASE.replace('/api', '') + '/api/ads/video/stream?token=' + encodeURIComponent(authToken) + '&url=' + encodeURIComponent(videoUrl)
-    : null;
+export default function Dashboard() {
+  const [ads, setAds]           = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [tab, setTab]           = useState(() => sessionStorage.getItem('dash_tab') || 'tiktok');
+  const [aliTab, setAliTab]     = useState(() => sessionStorage.getItem('dash_aliTab') || 'trending');
+  const [country, setCountry]   = useState(() => sessionStorage.getItem('dash_country') || 'US');
+  const [period, setPeriod]     = useState(() => sessionStorage.getItem('dash_period') || '7');
+  const [orderBy, setOrderBy]   = useState(() => sessionStorage.getItem('dash_orderBy') || 'like');
+  const [metaKeyword, setMetaKeyword] = useState('product');
+  const [metaStatus, setMetaStatus]   = useState('ACTIVE');
+  const [aliSearchInput, setAliSearchInput] = useState('');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const countries = ['US','DE','GB','FR','IT','ES','NL','PL','AT','BE','SE','NO','DK','FI'];
+  const periods   = [{ v: '7', l: '7 Days' },{ v: '30', l: '30 Days' },{ v: '90', l: '90 Days' },{ v: '180', l: '180 Days' }];
+  const orders    = [{ v: 'impression', l: '👁 Impressions' },{ v: 'like', l: '❤️ Likes' },{ v: 'ctr', l: '📊 CTR' }];
+  const ALI_TABS  = [{ id: 'trending', label: '🔥 Trending' },{ id: 'highsell', label: '📈 High Sell' },{ id: 'search', label: '🔍 Search' }];
+  const ALI_CAT_MAP = { trending: '15', highsell: '200003655' };
+
+  useEffect(() => { sessionStorage.setItem('dash_tab', tab); }, [tab]);
+  useEffect(() => { sessionStorage.setItem('dash_aliTab', aliTab); }, [aliTab]);
+  useEffect(() => { sessionStorage.setItem('dash_country', country); }, [country]);
+  useEffect(() => { sessionStorage.setItem('dash_period', period); }, [period]);
+  useEffect(() => { sessionStorage.setItem('dash_orderBy', orderBy); }, [orderBy]);
+
+  const fetchAds = useCallback(async () => {
+    const key = cacheKey(tab, country, period, orderBy, aliTab);
+    const cached = sessionStorage.getItem(key);
+    if (cached) {
+      try { setAds(JSON.parse(cached)); setLoading(false); return; } catch {}
+    }
+
+    setLoading(true); setAds([]);
+    try {
+      if (tab === 'tiktok') {
+        const res = await api.get('/ads/tiktok', { params: { country, period, order: orderBy } });
+        const d = res.data, L3 = d?.data?.data, L4 = L3?.data;
+        const raw = L4?.materials || L4?.list || L4?.ad_list ||
+          (Array.isArray(L4) ? L4 : null) || L3?.materials ||
+          (Array.isArray(L3) ? L3 : null) || [];
+        const allAds = Array.isArray(raw) ? raw : [];
+
+        const NON_OBJ = ['app_install','app_promotion','reach','brand_awareness','lead_generation','video_views','traffic','messages'];
+        const NON_IND = ['music','concert','event','gaming','game','entertainment','news','media','political','religion','education','software','finance','insurance','real_estate','recruitment','ngo'];
+        const NON_KW  = ['concert','tour','ticket','event','festival','live show','album','stream now','download app','install','sign up','apply now','vote','donate','webinar','seminar','course','slots','casino','betting','loan','insurance','mortgage'];
+
+        const result = allAds.filter(ad => {
+          const obj = (ad.objective_key||'').toLowerCase();
+          const ind = (ad.industry_key||'').toLowerCase();
+          const ttl = (ad.ad_title||ad.title||'').toLowerCase();
+          if (NON_OBJ.some(o => obj.includes(o))) return false;
+          if (NON_IND.some(i => ind.includes(i))) return false;
+          if (NON_KW.some(k => ttl.includes(k))) return false;
+          return true;
+        });
+        setAds(result);
+        sessionStorage.setItem(key, JSON.stringify(result));
+
+      } else if (tab === 'meta') {
+        const res = await api.get('/ads/meta', { params: { keyword: metaKeyword, country: 'ALL', activeStatus: metaStatus } });
+        const raw = res.data?.data;
+        const normalized = Array.isArray(raw) ? raw : [];
+        // ✅ Duplicate remove — library_id se dedup
+        const deduped = [...new Map(normalized.map(ad => [
+          ad._raw?.library_id || ad.id || Math.random(), ad
+        ])).values()];
+        setAds(deduped);
+        sessionStorage.setItem(key, JSON.stringify(deduped));
+
+      } else if (tab === 'aliexpress') {
+        const catId = ALI_CAT_MAP[aliTab] || '15';
+        const res   = await api.get('/ads/aliexpress', { params: { catId, page: 1, currency: 'USD' } });
+        const raw   = res.data?.data?.data || res.data?.data || [];
+        const result = Array.isArray(raw) ? raw : [];
+        setAds(result);
+        sessionStorage.setItem(key, JSON.stringify(result));
+      }
+    } catch (err) { console.error(err); setAds([]); }
+    setLoading(false);
+  }, [tab, country, period, orderBy, aliTab, metaKeyword, metaStatus]);
+
+  useEffect(() => {
+    if (tab === 'aliexpress' && aliTab === 'search') { setLoading(false); return; }
+    fetchAds();
+  }, [fetchAds, tab, aliTab]);
+
+  const searchAliExpress = async () => {
+    if (!aliSearchInput.trim()) return;
+    setLoading(true); setAds([]);
+    try {
+      const res = await api.get('/ads/aliexpress', { params: { catId: '15', page: 1, currency: 'USD', keyword: aliSearchInput } });
+      const raw = res.data?.data?.data || res.data?.data || [];
+      setAds(Array.isArray(raw) ? raw : []);
+    } catch { setAds([]); }
+    setLoading(false);
+  };
 
   return (
-    <div style={s.modalOverlay} onClick={onClose}>
-      <div style={s.modalBox} onClick={e => e.stopPropagation()}>
+    <div style={{ minHeight: '100vh', background: '#08080f' }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <Navbar />
+      <div style={s.page}>
 
-        {/* Header */}
-        <div style={s.modalHeader}>
-          <div style={s.modalHeaderLeft}>
-            <MetaBadge />
-            <span style={s.modalTitle}>{adData.brand}</span>
-          </div>
-          <button style={s.modalClose} onClick={onClose}>✕</button>
+        <div style={s.hero}>
+          <h1 style={s.h1}>Welcome back, <span style={{ color: '#8b6bff' }}>{user.name}</span> 👋</h1>
+          <p style={s.sub}>🔥 Last 7 days ke sabse trending product ads</p>
         </div>
 
-        {/* Main Media — Video ya Image */}
-        <div style={s.modalBody}>
-          {streamUrl && !videoError ? (
-            // ✅ Direct MP4 — backend proxy se stream
-            <video
-              src={streamUrl}
-              controls
-              autoPlay
-              playsInline
-              style={s.modalVideo}
-              poster={proxiedImage}
-              onError={() => setVideoError(true)}
-            >
-              Your browser does not support video.
-            </video>
-          ) : proxiedImage && !imgError ? (
-            // ✅ Proxy se image
-            <div style={s.modalImgWrap}>
-              <img
-                src={proxiedImage}
-                alt={adData.title}
-                style={s.modalImg}
-                onError={() => setImgError(true)}
-              />
+        {/* TABS */}
+        <div style={s.tabRow}>
+          {MAIN_TABS.map(t => {
+            const on = tab === t.id;
+            return (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                style={{
+                  ...s.tab,
+                  ...(on ? {
+                    background:  t.activeBg,
+                    border:      `1.5px solid ${t.activeBorder}`,
+                    color:       t.activeColor,
+                    boxShadow:   t.activeShadow,
+                  } : {})
+                }}>
+                {t.logo(on)}
+                <span>{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* TIKTOK FILTERS */}
+        {tab === 'tiktok' && (
+          <div style={s.filterBar}>
+            <div style={s.fg}><label style={s.lbl}>🌍 COUNTRY</label>
+              <select style={s.sel} value={country} onChange={e => setCountry(e.target.value)}>
+                {countries.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
-          ) : (
-            // ✅ Dono fail — placeholder dikhao, Facebook pe mat bhejo
-            <div style={s.modalPlaceholder}>
-              <div style={s.placeholderIcon}>📣</div>
-              <p style={s.placeholderTitle}>{adData.brand}</p>
-              <p style={s.placeholderBody}>{adData.title}</p>
-              {adData.startDate && (
-                <p style={s.placeholderDate}>📅 Started: {adData.startDate}</p>
-              )}
-              <div style={s.placeholderMeta}>
-                <span style={s.placeholderBadge}>Meta Ad</span>
-                {libraryId && <span style={s.placeholderId}>ID: {libraryId}</span>}
+            <div style={s.fg}><label style={s.lbl}>📅 PERIOD</label>
+              <select style={s.sel} value={period} onChange={e => setPeriod(e.target.value)}>
+                {periods.map(p => <option key={p.v} value={p.v}>{p.l}</option>)}
+              </select>
+            </div>
+            <div style={s.fg}><label style={s.lbl}>📊 SORT BY</label>
+              <select style={s.sel} value={orderBy} onChange={e => setOrderBy(e.target.value)}>
+                {orders.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* META FILTERS */}
+        {tab === 'meta' && (
+          <div style={s.filterBar}>
+            <div style={s.fg}><label style={s.lbl}>🔍 KEYWORD</label>
+              <div style={{ display: 'flex', gap: '.5rem' }}>
+                <input style={{ ...s.sel, minWidth: '160px' }}
+                  value={metaKeyword} onChange={e => setMetaKeyword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && fetchAds()}
+                  placeholder="e.g. product, fashion..."/>
+                <button style={s.searchBtn} onClick={fetchAds}>Search</button>
               </div>
             </div>
-          )}
-        </div>
+            <div style={s.fg}><label style={s.lbl}>📡 STATUS</label>
+              <select style={s.sel} value={metaStatus} onChange={e => setMetaStatus(e.target.value)}>
+                <option value="ACTIVE">Active</option>
+                <option value="ALL">All</option>
+                <option value="INACTIVE">Inactive</option>
+              </select>
+            </div>
+          </div>
+        )}
 
-        {/* Ad Info Footer */}
-        <div style={s.modalFooter}>
-          {adData.title && (
-            <p style={s.modalAdTitle}>{adData.title.slice(0, 100)}{adData.title.length > 100 ? '...' : ''}</p>
-          )}
-          <div style={s.modalMeta}>
-            {adData.startDate && <span style={s.modalMetaItem}>📅 {adData.startDate}</span>}
-            {libraryId && <span style={s.modalMetaItem}>🆔 {libraryId}</span>}
-            {adData.status && (
-              <span style={{
-                ...s.modalMetaItem,
-                color: adData.status === 'Active' ? '#22c55e' : '#ef4444',
-              }}>
-                ● {adData.status}
-              </span>
+        {/* ALIEXPRESS SUB TABS */}
+        {tab === 'aliexpress' && (
+          <div style={s.aliSec}>
+            <div style={s.aliTabRow}>
+              {ALI_TABS.map(t => (
+                <button key={t.id}
+                  style={{ ...s.aliTab, ...(aliTab === t.id ? s.aliTabOn : {}) }}
+                  onClick={() => setAliTab(t.id)}>{t.label}</button>
+              ))}
+            </div>
+            {aliTab === 'trending' && <p style={s.aliDesc}>🔥 Abhi sabse zyada bikne wale products worldwide</p>}
+            {aliTab === 'highsell' && <p style={s.aliDesc}>📈 High volume sellers — proven winning products</p>}
+            {aliTab === 'search' && (
+              <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
+                <input style={{ ...s.sel, flex: 1, minWidth: '200px' }}
+                  placeholder="Product dhundo — shoes, watch, bag..."
+                  value={aliSearchInput} onChange={e => setAliSearchInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && searchAliExpress()}/>
+                <button style={s.searchBtn} onClick={searchAliExpress}>🔍 Search</button>
+              </div>
             )}
           </div>
-        </div>
+        )}
+
+        {/* CONTENT */}
+        {loading ? (
+          <div style={s.center}>
+            <div style={s.spin}/><p style={{ color: '#8888aa', marginTop: '1rem' }}>Load ho raha hai...</p>
+          </div>
+        ) : tab === 'aliexpress' && aliTab === 'search' && ads.length === 0 ? (
+          <div style={s.center}>
+            <p style={{ fontSize: '2.5rem' }}>🔍</p>
+            <p style={{ color: '#8888aa' }}>Upar search karo product dhundne ke liye</p>
+          </div>
+        ) : ads.length === 0 ? (
+          <div style={s.center}>
+            <p style={{ fontSize: '2.5rem' }}>📭</p>
+            <p style={{ color: '#8888aa' }}>Kuch nahi mila</p>
+            <button style={s.retryBtn} onClick={fetchAds}>Dobara try karo</button>
+          </div>
+        ) : (
+          <>
+            <div style={s.grid}>
+              {tab === 'aliexpress'
+                ? ads.map((p,i) => <AliExpressCard key={p.product_id||i} product={p}/>)
+                // ✅ Dedup by library_id for meta, id for tiktok
+                : [...new Map(ads.map((ad,i) => [ad._raw?.library_id || ad.id || i, ad])).values()]
+                    .map((ad,i) => <AdCard key={ad._raw?.library_id || ad.id || i} ad={ad} platform={tab} />)
+              }
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-// ─── Main AdCard ──────────────────────────────────────────────────────────────
-export default function AdCard({ ad, platform = 'tiktok' }) {
-  const [saved, setSaved] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [thumbError, setThumbError] = useState(false);
-  const navigate = useNavigate();
-  const isMeta = platform === 'meta';
-
-  function fmtNum(n) {
-    n = Number(n);
-    return n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'K' : n.toLocaleString();
-  }
-
-  // ── TikTok fields ──
-  const ttTitle    = ad.ad_title || ad.title || 'No Title';
-  const ttBrand    = ad.brand_name || 'Unknown Brand';
-  const ttLikes    = Number(ad.like || 0);
-  const ttComments = Number(ad.comment || 0);
-  const ttCtr      = ad.ctr ? (ad.ctr * 100).toFixed(1) + '%' : '—';
-  const ttCost     = ad.cost ? '$' + Number(ad.cost).toLocaleString() : '—';
-  const ttCover    = ad.video_info?.cover || '';
-  const ttObjective = ad.objective_key?.replace('campaign_objective_', '') || '';
-  const ttAdId     = ad.id || ad.material_id || String(Math.random());
-
-  // ── Meta fields ──
-  const mtTitle = (
-    ad.ad_creative_bodies?.[0] ||
-    ad.ad_creative_link_titles?.[0] ||
-    ad._raw?.body ||
-    ad._raw?.page_name ||
-    ad.page_name ||
-    ad.title ||
-    'No Title'
-  ).slice(0, 120);
-
-  const mtBrand   = ad.page_name || ad._raw?.page_name || ad._raw?.brand || ad.bylines || 'Unknown Page';
-  const mtStatus  = ad.active === false ? 'Inactive' : 'Active';
-  const mtSpend   = (() => {
-    const sp = ad.spend;
-    if (!sp) return '—';
-    if (typeof sp === 'object') {
-      const lo = sp.lower_bound, hi = sp.upper_bound;
-      if (lo && hi) return '$' + Number(lo).toLocaleString() + '–$' + Number(hi).toLocaleString();
-      if (lo) return '$' + Number(lo).toLocaleString() + '+';
-    }
-    if (sp) return '$' + Number(sp).toLocaleString();
-    return '—';
-  })();
-  const mtImpressions = (() => {
-    const imp = ad.impressions;
-    if (!imp) return '—';
-    if (typeof imp === 'object') {
-      const lo = imp.lower_bound, hi = imp.upper_bound;
-      if (lo && hi) return fmtNum((Number(lo)+Number(hi))/2);
-      if (lo) return fmtNum(Number(lo)) + '+';
-    }
-    return fmtNum(Number(imp));
-  })();
-  const mtStartDate = ad.ad_delivery_start_time
-    ? new Date(ad.ad_delivery_start_time).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'2-digit' })
-    : ad._raw?.start_date || '—';
-  const mtCurrency = ad.currency || 'USD';
-  const mtAdId     = ad.id || ad.ad_archive_id || ad._raw?.library_id || String(Math.random());
-
-  // ── Shared ──
-  const title     = isMeta ? mtTitle  : ttTitle;
-  const brand     = isMeta ? mtBrand  : ttBrand;
-  const adId      = isMeta ? mtAdId   : ttAdId;
-  const objective = isMeta ? mtStatus : ttObjective;
-
-  // ── Raw image/video URLs ──
-  // R2 URL pehle (permanent, fast) → phir CDN URL (fallback)
-  const r2ImageUrl  = isMeta ? (ad.r2_image_url || ad._raw?.r2_image_url || '') : '';
-  const rawImageUrl = isMeta
-    ? (r2ImageUrl || ad.image || ad._raw?.image || ad.ad_snapshot_url || ad.snapshot_url || '')
-    : ttCover;
-
-  const rawVideoUrl = isMeta
-    ? (ad.video_url || ad._raw?.video || ad.video || '')
-    : (ad.video_info?.play_url || '');
-
-  // ── Thumbnail ──
-  // R2 URL hai toh seedha use karo — proxy/CDN ki zaroorat nahi
-  const libraryId = isMeta ? (ad._raw?.library_id || mtAdId) : null;
-  const thumbUrl  = isMeta
-    ? (r2ImageUrl || proxyImageUrl(rawImageUrl, libraryId))
-    : fixImageUrl(rawImageUrl);
-
-  // ── Auth token for video stream ──
-  const authToken = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-
-  // ── Modal data ──
-  const modalAdData = {
-    brand: brand,
-    title: title,
-    startDate: mtStartDate,
-    status: mtStatus,
-  };
-
-  const saveAd = async (e) => {
-    e.stopPropagation();
-    try {
-      await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
-      setSaved(true);
-      toast.success('Ad save ho gayi!');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Save fail');
-    }
-  };
-
-  const openDetail = (e) => {
-    e.stopPropagation();
-    navigate('/ad/' + adId, { state: { ad } });
-  };
-
-  const openModal = (e) => {
-    e.stopPropagation();
-    setShowModal(true);
-  };
-
-  return (
-    <>
-
-
-      <div
-        style={s.card}
-        onClick={openDetail}
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = 'translateY(-3px)';
-          e.currentTarget.style.borderColor = isMeta ? 'rgba(24,119,242,.35)' : 'rgba(108,71,255,.35)';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)';
-        }}
-      >
-        {/* ── THUMBNAIL ── */}
-        <div style={s.media}>
-          {thumbUrl && !thumbError ? (
-            <>
-              <div style={{ ...s.blurBg, backgroundImage: 'url(' + thumbUrl + ')' }} />
-              <img
-                src={thumbUrl}
-                alt={title}
-                style={s.img}
-                loading="lazy"
-                onError={() => setThumbError(true)}
-              />
-
-            </>
-          ) : isMeta ? (
-            // Placeholder — no "View on Facebook"
-            <div style={s.metaPlaceholder}>
-              <div style={s.placeholderInnerIcon}>📣</div>
-              <p style={s.placeholderInnerText}>{brand}</p>
-            </div>
-          ) : (
-            <div style={s.noImg}>🎵</div>
-          )}
-
-
-
-        </div>
-
-        {/* ── BODY ── */}
-        <div style={s.body}>
-          <div style={s.topRow}>
-            {isMeta ? <MetaBadge /> : <TikTokBadge />}
-            <span style={s.adId}>{adId?.toString().slice(-10)}</span>
-          </div>
-
-          <p style={s.title}>{title}</p>
-
-          <div style={s.brandRow}>
-            <div style={{
-              ...s.avatar,
-              background: isMeta
-                ? 'linear-gradient(135deg,#1877F2,#E1306C)'
-                : 'linear-gradient(135deg,#6c47ff,#ff4f87)',
-            }} />
-            <span style={s.brandName}>{brand}</span>
-          </div>
-
-          <div style={s.stats}>
-            {isMeta ? (
-              <>
-                <div style={s.stat}><span style={s.statIcon}>👁</span><span style={s.statVal}>{mtImpressions}</span><span style={s.statKey}>Impressions</span></div>
-                <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{mtSpend}</span><span style={s.statKey}>Spend</span></div>
-                <div style={s.stat}><span style={s.statIcon}>📅</span><span style={s.statVal}>{mtStartDate}</span><span style={s.statKey}>Started</span></div>
-                <div style={s.stat}><span style={s.statIcon}>🌐</span><span style={s.statVal}>{mtCurrency}</span><span style={s.statKey}>Currency</span></div>
-              </>
-            ) : (
-              <>
-                <div style={s.stat}><span style={s.statIcon}>❤️</span><span style={s.statVal}>{fmtNum(ttLikes)}</span><span style={s.statKey}>Likes</span></div>
-                <div style={s.stat}><span style={s.statIcon}>💬</span><span style={s.statVal}>{fmtNum(ttComments)}</span><span style={s.statKey}>Comments</span></div>
-                <div style={s.stat}><span style={s.statIcon}>📊</span><span style={s.statVal}>{ttCtr}</span><span style={s.statKey}>CTR</span></div>
-                <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttCost}</span><span style={s.statKey}>Spend</span></div>
-              </>
-            )}
-          </div>
-
-          <div style={s.actions}>
-            <button style={{ ...s.saveBtn, ...(saved ? s.savedBtn : {}) }} onClick={saveAd} disabled={saved}>
-              {saved ? '✅ Saved' : '💾 Save'}
-            </button>
-            <button style={s.detailBtn} onClick={openDetail}>
-              🔍 Detail
-            </button>
-
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
 const s = {
-  card: { background: '#0f0f1a', border: '1px solid rgba(255,255,255,.08)', borderRadius: '14px', overflow: 'hidden', cursor: 'pointer', transition: 'transform .22s, border-color .22s', userSelect: 'none', WebkitTapHighlightColor: 'transparent' },
-  media: { width: '100%', height: '240px', background: '#161625', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  blurBg: { position: 'absolute', inset: 0, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(0.5) saturate(1.4)', transform: 'scale(1.15)', zIndex: 0 },
-  img: { position: 'relative', zIndex: 1, height: '100%', width: 'auto', maxWidth: '100%', objectFit: 'contain', display: 'block' },
-  noImg: { fontSize: '2.5rem', color: '#8888aa' },
+  page:    { padding: '80px clamp(1rem,4vw,2rem) 3rem' },
+  hero:    { marginBottom: '1.75rem' },
+  h1:      { fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, letterSpacing: '-.02em' },
+  sub:     { color: '#8888aa', marginTop: '.4rem', fontSize: '.9rem' },
 
-  // Meta placeholder — no "View on Facebook"
-  metaPlaceholder: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', background: 'linear-gradient(135deg,rgba(24,119,242,.1),rgba(225,48,108,.07))', gap: '0.5rem' },
-  placeholderInnerIcon: { fontSize: '2.2rem' },
-  placeholderInnerText: { color: '#5aabff', fontSize: '0.8rem', fontWeight: 700, textAlign: 'center', padding: '0 1rem', margin: 0 },
+  tabRow:  { display: 'flex', gap: '.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' },
+  tab: {
+    display: 'flex', alignItems: 'center', gap: '7px',
+    padding: '.55rem 1.2rem',
+    borderRadius: '10px',
+    border: '1.5px solid rgba(255,255,255,.07)',
+    background: 'transparent',
+    color: '#555',
+    fontSize: '.85rem', fontWeight: 700, cursor: 'pointer',
+    transition: 'all .18s',
+  },
 
-  // Play overlay — video ke liye
-  playOverlay: { position: 'absolute', inset: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0)', transition: 'background .2s', cursor: 'pointer' },
-  playBtn: { width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0,0,0,.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.2rem', border: '2px solid rgba(255,255,255,.4)', backdropFilter: 'blur(4px)' },
+  filterBar: { display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', padding: '1.25rem', background: '#0f0f1a', borderRadius: '12px', border: '1px solid rgba(255,255,255,.07)', marginBottom: '1.5rem' },
+  fg:      { display: 'flex', flexDirection: 'column', gap: '.4rem' },
+  lbl:     { fontSize: '.72rem', color: '#8888aa', fontWeight: 700, letterSpacing: '.05em' },
+  sel:     { padding: '.5rem .9rem', background: '#161625', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', color: '#f0f0f8', fontSize: '.85rem', cursor: 'pointer', outline: 'none' },
+  searchBtn: { padding: '.5rem 1.1rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem', whiteSpace: 'nowrap' },
+  retryBtn:  { padding: '.55rem 1.2rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '.85rem', marginTop: '.5rem' },
 
-  objBadge: { position: 'absolute', top: '8px', left: '8px', zIndex: 3, background: 'rgba(108,71,255,.92)', color: '#fff', borderRadius: '6px', padding: '.22rem .6rem', fontSize: '.65rem', fontWeight: 700, textTransform: 'capitalize' },
-  vidBadge: { position: 'absolute', bottom: '8px', right: '8px', zIndex: 3, background: 'rgba(0,0,0,.75)', color: '#fff', borderRadius: '6px', padding: '.22rem .6rem', fontSize: '.68rem', fontWeight: 600 },
-  body: { padding: '0.9rem' },
-  topRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.55rem' },
-  platformBadge: { display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,.06)', color: '#8888aa', borderRadius: '4px', padding: '.18rem .5rem', fontSize: '.68rem', fontWeight: 700 },
-  adId: { fontSize: '.62rem', color: '#555577' },
-  title: { fontSize: '.86rem', fontWeight: 600, lineHeight: 1.4, color: '#f0f0f8', margin: '0 0 .55rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
-  brandRow: { display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.75rem' },
-  avatar: { width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0 },
-  brandName: { fontSize: '.75rem', color: '#8888aa' },
-  stats: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '.35rem', marginBottom: '.75rem', paddingTop: '.65rem', borderTop: '1px solid rgba(255,255,255,.07)' },
-  stat: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.1rem', background: '#161625', borderRadius: '8px', padding: '.4rem .2rem' },
-  statIcon: { fontSize: '.75rem' },
-  statVal: { fontSize: '.72rem', fontWeight: 700, color: '#f0f0f8' },
-  statKey: { fontSize: '.58rem', color: '#8888aa' },
-  actions: { display: 'flex', gap: '.5rem' },
-  saveBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.76rem', cursor: 'pointer' },
-  savedBtn: { background: 'rgba(108,71,255,.2)', color: '#8b6bff', border: '1px solid rgba(108,71,255,.3)' },
-  detailBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(108,71,255,.3)', background: 'rgba(108,71,255,.15)', color: '#8b6bff', fontSize: '.76rem', cursor: 'pointer', fontWeight: 700 },
-  viewBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(24,119,242,.35)', background: 'rgba(24,119,242,.15)', color: '#5aabff', fontSize: '.76rem', cursor: 'pointer', fontWeight: 700 },
+  aliSec:    { marginBottom: '1.5rem' },
+  aliTabRow: { display: 'flex', gap: '.5rem', marginBottom: '.75rem', flexWrap: 'wrap' },
+  aliTab:    { padding: '.5rem 1.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.82rem', fontWeight: 600, cursor: 'pointer' },
+  aliTabOn:  { background: '#161625', color: '#ff8c3a', border: '1px solid rgba(255,106,0,.35)', boxShadow: '0 0 10px rgba(255,106,0,.12)' },
+  aliDesc:   { color: '#8888aa', fontSize: '.85rem', marginBottom: '.5rem' },
 
-  // Modal
-  modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.9)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' },
-  modalBox: { background: '#0f0f1a', border: '1px solid rgba(24,119,242,.25)', borderRadius: '16px', width: '100%', maxWidth: '480px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  modalHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,.07)' },
-  modalHeaderLeft: { display: 'flex', alignItems: 'center', gap: '.6rem' },
-  modalTitle: { color: '#f0f0f8', fontSize: '.85rem', fontWeight: 700 },
-  modalClose: { background: 'rgba(255,255,255,.08)', border: 'none', color: '#aaa', borderRadius: '6px', width: '28px', height: '28px', cursor: 'pointer', fontSize: '.9rem' },
-  modalBody: { flex: 1, overflow: 'hidden', minHeight: '300px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  modalVideo: { width: '100%', maxHeight: '60vh', objectFit: 'contain', display: 'block', background: '#000' },
-  modalImgWrap: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' },
-  modalImg: { maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', display: 'block' },
-
-  // Modal placeholder — no Facebook link
-  modalPlaceholder: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1.5rem', gap: '.75rem', width: '100%', minHeight: '300px' },
-  placeholderIcon: { fontSize: '3rem' },
-  placeholderTitle: { color: '#5aabff', fontSize: '1rem', fontWeight: 700, textAlign: 'center', margin: 0 },
-  placeholderBody: { color: '#8888aa', fontSize: '.82rem', textAlign: 'center', lineHeight: 1.5, margin: 0, maxWidth: '280px' },
-  placeholderDate: { color: '#555577', fontSize: '.75rem', margin: 0 },
-  placeholderMeta: { display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' },
-  placeholderBadge: { background: 'rgba(24,119,242,.15)', color: '#5aabff', borderRadius: '6px', padding: '.2rem .6rem', fontSize: '.72rem', fontWeight: 700 },
-  placeholderId: { color: '#555577', fontSize: '.7rem' },
-
-  // Modal footer
-  modalFooter: { padding: '.75rem 1rem', borderTop: '1px solid rgba(255,255,255,.07)' },
-  modalAdTitle: { color: '#f0f0f8', fontSize: '.82rem', lineHeight: 1.4, margin: '0 0 .5rem' },
-  modalMeta: { display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center' },
-  modalMetaItem: { fontSize: '.72rem', color: '#8888aa' },
+  count: { color: '#8888aa', fontSize: '.83rem', marginBottom: '1rem' },
+  grid:  { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap: '1.25rem' },
+  center:{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '.5rem' },
+  spin:  { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
 };
