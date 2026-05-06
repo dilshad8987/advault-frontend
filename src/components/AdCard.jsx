@@ -370,9 +370,9 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
 const s = {
   card: { background: '#0f0f1a', border: '1px solid rgba(255,255,255,.08)', borderRadius: '14px', overflow: 'hidden', cursor: 'pointer', transition: 'transform .22s, border-color .22s', userSelect: 'none', WebkitTapHighlightColor: 'transparent' },
-  media: { width: '100%', height: '240px', background: '#161625', position: 'relative', overflow: 'hidden' },
+  media: { width: '100%', height: '240px', background: '#161625', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   blurBg: { position: 'absolute', inset: 0, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(0.5) saturate(1.4)', transform: 'scale(1.15)', zIndex: 0 },
-  img: { position: 'absolute', inset: 0, zIndex: 1, height: '100%', width: '100%', objectFit: 'cover', display: 'block' },
+  img: { position: 'relative', zIndex: 1, height: '100%', width: 'auto', maxWidth: '100%', objectFit: 'contain', display: 'block' },
   noImg: { fontSize: '2.5rem', color: '#8888aa' },
 
   // Meta placeholder — no "View on Facebook"
