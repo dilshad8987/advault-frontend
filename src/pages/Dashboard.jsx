@@ -334,7 +334,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <p style={s.count}>✅ {ads.length} {tab === 'aliexpress' ? 'products' : 'ads'} mile</p>
+
             <div style={s.grid}>
               {tab === 'aliexpress'
                 ? ads.map((p,i) => <AliExpressCard key={p.product_id||i} product={p}/>)
