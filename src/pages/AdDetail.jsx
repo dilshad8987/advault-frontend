@@ -376,7 +376,8 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
 
   useEffect(() => {
     if (isMeta) {
-      if (videoUrl) setRealVideoUrl(videoUrl);
+      // R2 CORS restricted hai — backend proxy se serve karo
+      if (videoUrl) setRealVideoUrl(makeProxyUrl(videoUrl));
       setUrlLoading(false);
       return;
     }
@@ -391,7 +392,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
       .finally(() => setUrlLoading(false));
   }, [adId, tiktokItemUrl, isMeta, videoUrl]); // eslint-disable-line
 
-  const proxyUrl = isMeta ? (realVideoUrl || videoUrl || '') : (realVideoUrl || makeProxyUrl(videoUrl));
+  const proxyUrl = realVideoUrl || makeProxyUrl(videoUrl);
   const fmtTime  = (s) => !s||isNaN(s)?'0:00':`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 
   const showCtrl = () => {
@@ -484,7 +485,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
       <video ref={videoRef} src={proxyUrl} poster={cover} style={VP.video}
         onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoaded}
         onEnded={() => { setPlaying(false); setShowControls(true); }}
-        onError={() => setVideoError(true)} playsInline preload="none" crossOrigin="anonymous" />
+        onError={() => setVideoError(true)} playsInline preload="metadata" />
       {!playing && <div style={VP.playOverlay}><div style={VP.playCircle}>▶</div></div>}
       <div style={{...VP.controls,opacity:showControls?1:0,transition:'opacity .3s'}} onClick={e=>e.stopPropagation()}>
         <div ref={progressRef} style={VP.progressTrack} onClick={seek}>
