@@ -349,11 +349,16 @@ const SC = {
 };
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// API_BASE already /api include karta hai (e.g. https://...railway.app/api)
+// Toh /api/ads/... nahi, sirf /ads/... lagana hai
+const STREAM_BASE = API_BASE.endsWith('/api')
+  ? API_BASE
+  : API_BASE + '/api';
 
 function makeProxyUrl(rawUrl) {
   if (!rawUrl) return '';
   const token = localStorage.getItem('accessToken') || '';
-  return `${API_BASE}/api/ads/video/stream?url=${encodeURIComponent(rawUrl)}&token=${encodeURIComponent(token)}`;
+  return `${STREAM_BASE}/ads/video/stream?url=${encodeURIComponent(rawUrl)}&token=${encodeURIComponent(token)}`;
 }
 
 // ✅ VideoPlayer — FB button BILKUL NAHI, sirf image/video dikhao
@@ -429,7 +434,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
     try {
       const token = localStorage.getItem('accessToken');
       const filename = `advault-ad-${adId||Date.now()}.mp4`;
-      const url = `${API_BASE}/api/ads/video/download?url=${encodeURIComponent(videoUrl)}&filename=${filename}`;
+      const url = `${STREAM_BASE}/ads/video/download?url=${encodeURIComponent(videoUrl)}&filename=${filename}`;
       const response = await fetch(url, { headers:{ Authorization:`Bearer ${token}` } });
       if (!response.ok) throw new Error('fail');
       const total = parseInt(response.headers.get('content-length')||'0');
