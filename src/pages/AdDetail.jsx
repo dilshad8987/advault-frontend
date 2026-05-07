@@ -349,15 +349,12 @@ const SC = {
 };
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-// API_BASE already /api include karta hai (e.g. https://...railway.app/api)
-// Toh /api/ads/... nahi, sirf /ads/... lagana hai
-const STREAM_BASE = API_BASE.endsWith('/api')
-  ? API_BASE
-  : API_BASE + '/api';
+// API_BASE mein /api already ho sakta hai (Railway env) — double /api avoid karo
+const STREAM_BASE = API_BASE.endsWith('/api') ? API_BASE : API_BASE + '/api';
 
 function makeProxyUrl(rawUrl) {
   if (!rawUrl) return '';
-  const token = localStorage.getItem('accessToken') || '';
+  const token = localStorage.getItem('accessToken') || localStorage.getItem('token') || '';
   return `${STREAM_BASE}/ads/video/stream?url=${encodeURIComponent(rawUrl)}&token=${encodeURIComponent(token)}`;
 }
 
