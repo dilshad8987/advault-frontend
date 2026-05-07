@@ -58,94 +58,10 @@ function getVideoStreamUrl(videoUrl, authToken) {
   return API_BASE.replace('/api', '') + '/api/ads/video/stream?token=' + encodeURIComponent(authToken) + '&url=' + encodeURIComponent(videoUrl);
 }
 
-function MediaModal({ adData, videoUrl, imageUrl, libraryId, authToken, onClose }) {
-  const [imgError, setImgError] = useState(false);
-  const [videoError, setVideoError] = useState(false);
 
-  // ✅ R2 image — seedha use karo, warna proxy
-  const proxiedImage = (imageUrl && (imageUrl.includes('r2.dev') || imageUrl.includes('pub-')))
-    ? imageUrl
-    : proxyImageUrl(imageUrl, libraryId);
-
-  // ✅ R2 video seedha, baaki proxy se
-  const streamUrl = getVideoStreamUrl(videoUrl, authToken);
-
-  return (
-    <div style={s.modalOverlay} onClick={onClose}>
-      <div style={s.modalBox} onClick={e => e.stopPropagation()}>
-
-        <div style={s.modalHeader}>
-          <div style={s.modalHeaderLeft}>
-            <MetaBadge />
-            <span style={s.modalTitle}>{adData.brand}</span>
-          </div>
-          <button style={s.modalClose} onClick={onClose}>✕</button>
-        </div>
-
-        <div style={s.modalBody}>
-          {streamUrl && !videoError ? (
-            <video
-              src={streamUrl}
-              controls
-              autoPlay
-              playsInline
-              style={s.modalVideo}
-              poster={proxiedImage}
-              onError={() => setVideoError(true)}
-              crossOrigin="anonymous"
-            >
-              Your browser does not support video.
-            </video>
-          ) : proxiedImage && !imgError ? (
-            <div style={s.modalImgWrap}>
-              <img
-                src={proxiedImage}
-                alt={adData.title}
-                style={s.modalImg}
-                onError={() => setImgError(true)}
-              />
-            </div>
-          ) : (
-            <div style={s.modalPlaceholder}>
-              <div style={s.placeholderIcon}>📣</div>
-              <p style={s.placeholderTitle}>{adData.brand}</p>
-              <p style={s.placeholderBody}>{adData.title}</p>
-              {adData.startDate && (
-                <p style={s.placeholderDate}>📅 Started: {adData.startDate}</p>
-              )}
-              <div style={s.placeholderMeta}>
-                <span style={s.placeholderBadge}>Meta Ad</span>
-                {libraryId && <span style={s.placeholderId}>ID: {libraryId}</span>}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div style={s.modalFooter}>
-          {adData.title && (
-            <p style={s.modalAdTitle}>{adData.title.slice(0, 100)}{adData.title.length > 100 ? '...' : ''}</p>
-          )}
-          <div style={s.modalMeta}>
-            {adData.startDate && <span style={s.modalMetaItem}>📅 {adData.startDate}</span>}
-            {libraryId && <span style={s.modalMetaItem}>🆔 {libraryId}</span>}
-            {adData.status && (
-              <span style={{
-                ...s.modalMetaItem,
-                color: adData.status === 'Active' ? '#22c55e' : '#ef4444',
-              }}>
-                ● {adData.status}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function AdCard({ ad, platform = 'tiktok' }) {
   const [saved, setSaved] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const [thumbError, setThumbError] = useState(false);
   const navigate = useNavigate();
   const isMeta = platform === 'meta';
@@ -232,14 +148,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   // ✅ Video badge — video hai toh dikhao
   const hasVideo = isMeta ? !!rawVideoUrl : !!(ad.video_info || ad.isVideo);
 
-  const authToken = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-
-  const modalAdData = {
-    brand: brand,
-    title: title,
-    startDate: mtStartDate,
-    status: mtStatus,
-  };
 
   const saveAd = async (e) => {
     e.stopPropagation();
@@ -257,28 +165,11 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     navigate('/ad/' + adId, { state: { ad } });
   };
 
-  const openModal = (e) => {
-    e.stopPropagation();
-    setShowModal(true);
-  };
-
   return (
     <>
-      {/* ✅ Modal — video play hoga andar */}
-      {showModal && isMeta && (
-        <MediaModal
-          adData={modalAdData}
-          videoUrl={rawVideoUrl}
-          imageUrl={rawImageUrl}
-          libraryId={libraryId}
-          authToken={authToken}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-
       <div
         style={s.card}
-        onClick={isMeta && rawVideoUrl ? openModal : openDetail}
+        onClick={openDetail}
         onMouseEnter={e => {
           e.currentTarget.style.transform = 'translateY(-3px)';
           e.currentTarget.style.borderColor = isMeta ? 'rgba(24,119,242,.35)' : 'rgba(108,71,255,.35)';
@@ -315,8 +206,8 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             <span style={s.vidBadge}>▶ Video</span>
           )}
 
-          {/* ✅ Play button — video wale cards pe */}
-          {isMeta && rawVideoUrl && (
+          {/* ✅ Play button — sirf video wale ads pe (image ads pe nahi) */}
+          {hasVideo && (
             <div style={s.playOverlay}>
               <div style={s.playBtn}>▶</div>
             </div>
@@ -403,26 +294,26 @@ const s = {
   saveBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.76rem', cursor: 'pointer' },
   savedBtn: { background: 'rgba(108,71,255,.2)', color: '#8b6bff', border: '1px solid rgba(108,71,255,.3)' },
   detailBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(108,71,255,.3)', background: 'rgba(108,71,255,.15)', color: '#8b6bff', fontSize: '.76rem', cursor: 'pointer', fontWeight: 700 },
-  modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.9)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' },
-  modalBox: { background: '#0f0f1a', border: '1px solid rgba(24,119,242,.25)', borderRadius: '16px', width: '100%', maxWidth: '480px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  modalHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,.07)' },
-  modalHeaderLeft: { display: 'flex', alignItems: 'center', gap: '.6rem' },
-  modalTitle: { color: '#f0f0f8', fontSize: '.85rem', fontWeight: 700 },
-  modalClose: { background: 'rgba(255,255,255,.08)', border: 'none', color: '#aaa', borderRadius: '6px', width: '28px', height: '28px', cursor: 'pointer', fontSize: '.9rem' },
-  modalBody: { flex: 1, overflow: 'hidden', minHeight: '300px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  modalVideo: { width: '100%', maxHeight: '60vh', objectFit: 'contain', display: 'block', background: '#000' },
-  modalImgWrap: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' },
-  modalImg: { maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', display: 'block' },
-  modalPlaceholder: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1.5rem', gap: '.75rem', width: '100%', minHeight: '300px' },
-  placeholderIcon: { fontSize: '3rem' },
-  placeholderTitle: { color: '#5aabff', fontSize: '1rem', fontWeight: 700, textAlign: 'center', margin: 0 },
-  placeholderBody: { color: '#8888aa', fontSize: '.82rem', textAlign: 'center', lineHeight: 1.5, margin: 0, maxWidth: '280px' },
-  placeholderDate: { color: '#555577', fontSize: '.75rem', margin: 0 },
-  placeholderMeta: { display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' },
-  placeholderBadge: { background: 'rgba(24,119,242,.15)', color: '#5aabff', borderRadius: '6px', padding: '.2rem .6rem', fontSize: '.72rem', fontWeight: 700 },
-  placeholderId: { color: '#555577', fontSize: '.7rem' },
-  modalFooter: { padding: '.75rem 1rem', borderTop: '1px solid rgba(255,255,255,.07)' },
-  modalAdTitle: { color: '#f0f0f8', fontSize: '.82rem', lineHeight: 1.4, margin: '0 0 .5rem' },
-  modalMeta: { display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center' },
-  modalMetaItem: { fontSize: '.72rem', color: '#8888aa' },
+  modalOverlay: {},
+  modalBox: {},
+  modalHeader: {},
+  modalHeaderLeft: {},
+  modalTitle: {},
+  modalClose: {},
+  modalBody: {},
+  modalVideo: {},
+  modalImgWrap: {},
+  modalImg: {},
+  modalPlaceholder: {},
+  modalFooter: {},
+  modalAdTitle: {},
+  modalMeta: {},
+  modalMetaItem: {},
+  placeholderIcon: {},
+  placeholderTitle: {},
+  placeholderBody: {},
+  placeholderDate: {},
+  placeholderMeta: {},
+  placeholderBadge: {},
+  placeholderId: {},
 };
