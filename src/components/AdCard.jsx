@@ -151,6 +151,34 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     ? (r2ImageUrl || proxyImageUrl(rawImageUrl, libraryId))
     : fixImageUrl(rawImageUrl);
 
+  // Video ke liye: agar thumb nahi to video ka poster dynamically generate karo
+  const [videoPoster, setVideoPoster] = React.useState(null);
+
+  React.useEffect(() => {
+    // Sirf tab run karo jab hasVideo ho aur thumbUrl nahi ho ya fail ho
+    if (!hasVideo || !rawVideoUrl || thumbUrl) return;
+    // Canvas se video first frame capture karo
+    const vid = document.createElement('video');
+    vid.crossOrigin = 'anonymous';
+    vid.muted = true;
+    vid.preload = 'metadata';
+    vid.src = rawVideoUrl;
+    vid.addEventListener('loadeddata', () => {
+      vid.currentTime = 0.5;
+    });
+    vid.addEventListener('seeked', () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width  = vid.videoWidth  || 720;
+        canvas.height = vid.videoHeight || 405;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        setVideoPoster(canvas.toDataURL('image/jpeg', 0.85));
+      } catch(e) {}
+    });
+    vid.addEventListener('error', () => {});
+  }, [hasVideo, rawVideoUrl, thumbUrl]);
+
   const saveAd = async (e) => {
     e.stopPropagation();
     try {
@@ -182,15 +210,17 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     >
       {/* THUMBNAIL */}
       <div style={s.media}>
-        {thumbUrl && !thumbError ? (
+        {(thumbUrl && !thumbError) || videoPoster ? (
           <>
-            <div style={{ ...s.blurBg, backgroundImage: 'url(' + thumbUrl + ')' }} />
+            <div style={{ ...s.blurBg, backgroundImage: 'url(' + (thumbUrl && !thumbError ? thumbUrl : videoPoster) + ')' }} />
             <img
-              src={thumbUrl}
+              src={thumbUrl && !thumbError ? thumbUrl : videoPoster}
               alt={title}
               style={s.img}
               loading="lazy"
-              onError={() => setThumbError(true)}
+              onError={() => {
+                setThumbError(true);
+              }}
             />
           </>
         ) : isMeta ? (
