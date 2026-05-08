@@ -763,7 +763,7 @@ export default function AdDetail() {
   // ✅ Video — R2 pehle
   const videoUrlObj = ad.video_info?.video_url;
   const tiktokVideoUrl = (videoUrlObj && typeof videoUrlObj === 'object')
-    ? (videoUrlObj['720p'] || videoUrlObj['1080p'] || videoUrlObj['540p'] || videoUrlObj['480p'] || videoUrlObj['360p'] || Object.values(videoUrlObj)[0] || '')
+    ? (videoUrlObj['1080p'] || videoUrlObj['720p'] || videoUrlObj['540p'] || videoUrlObj['480p'] || videoUrlObj['360p'] || Object.values(videoUrlObj)[0] || '')
     : (typeof videoUrlObj === 'string' ? videoUrlObj : ad.video_url || '');
 
   const metaVideoUrl = ad.r2_video_url || ad.video_url || ad.video || '';
