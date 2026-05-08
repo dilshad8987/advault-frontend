@@ -379,8 +379,9 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
 
   useEffect(() => {
     if (isMeta) {
-      // Pehle proxy try karo, error pe seedha R2 URL use hoga
-      if (videoUrl) setRealVideoUrl(makeProxyUrl(videoUrl));
+      // Meta R2 videos seedha load karo — koi proxy nahi chahiye
+      // R2 public URL hai, direct video tag mein daal do
+      if (videoUrl) setRealVideoUrl(videoUrl);
       setUrlLoading(false);
       return;
     }
@@ -395,10 +396,10 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
       .finally(() => setUrlLoading(false));
   }, [adId, tiktokItemUrl, isMeta, videoUrl]); // eslint-disable-line
 
-  // Proxy error aaye toh seedha R2 URL use karo
-  const proxyUrl = useFallback
-    ? videoUrl
-    : (realVideoUrl || makeProxyUrl(videoUrl));
+  // Meta R2 videos: seedha URL — TikTok ke liye proxy
+  const proxyUrl = isMeta
+    ? (realVideoUrl || videoUrl)
+    : (useFallback ? videoUrl : (realVideoUrl || makeProxyUrl(videoUrl)));
   const fmtTime  = (s) => !s||isNaN(s)?'0:00':`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 
   const showCtrl = () => {
@@ -766,7 +767,12 @@ export default function AdDetail() {
     ? (videoUrlObj['1080p'] || videoUrlObj['720p'] || videoUrlObj['540p'] || videoUrlObj['480p'] || videoUrlObj['360p'] || Object.values(videoUrlObj)[0] || '')
     : (typeof videoUrlObj === 'string' ? videoUrlObj : ad.video_url || '');
 
-  const metaVideoUrl = ad.r2_video_url || ad.video_url || ad.video || '';
+  // Meta video: R2 URL pehle (trim check — empty string "" handle karo), phir original
+  const metaVideoUrl = (ad.r2_video_url && ad.r2_video_url.trim())
+    ? ad.r2_video_url
+    : ((ad.video_url && ad.video_url.trim()) ? ad.video_url
+    : ((ad.video && ad.video.trim()) ? ad.video : ''));
+
   const videoUrl = isMeta ? metaVideoUrl : tiktokVideoUrl;
   const tiktokItemUrl = ad.tiktok_item_url || ad.share_url || ad.item_url || '';
   const isVideo = isMeta ? !!(metaVideoUrl) : !!(ad.video_info || ad.isVideo);
