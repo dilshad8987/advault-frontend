@@ -298,7 +298,7 @@ function ShopAdCard({ ad, onClick }) {
     <div onClick={onClick} className="shop-ad-card" style={SC.card}>
       <div style={SC.thumb}>
         {cover
-          ? <img src={cover} alt={title} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />
+          ? <img src={cover} alt={title} style={{width:'100%',height:'100%',objectFit:'contain',display:'block',background:'#0f0f1a'}} />
           : <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',fontSize:'2rem',background:'#161625'}}>🎵</div>
         }
         <span style={{...SC.badge,...(isActive?SC.badgeGreen:SC.badgeGray)}}>{isActive?'● Active':'● Ended'}</span>
@@ -460,7 +460,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
 
   if (urlLoading) return (
     <div style={{...VP.wrap,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'1rem'}}>
-      {cover && <img src={cover} alt={title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',filter:'blur(3px)',opacity:.4}} />}
+      {cover && <img src={cover} alt={title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'contain',filter:'blur(3px)',opacity:.4}} />}
       <div style={{position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:'.75rem'}}>
         <div style={{width:'40px',height:'40px',border:'3px solid rgba(108,71,255,.2)',borderTop:'3px solid #6c47ff',borderRadius:'50%',animation:'spin 1s linear infinite'}}></div>
         <span style={{color:'rgba(255,255,255,.8)',fontSize:'.78rem',fontWeight:600}}>Video load ho rahi hai...</span>
@@ -472,7 +472,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
   if (!videoUrl || videoError) return (
     <div style={VP.wrap}>
       {cover
-        ? <img src={cover} alt={title} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />
+        ? <img src={cover} alt={title} style={{width:'100%',height:'100%',objectFit:'contain',display:'block',background:'#0f0f1a'}} />
         : <div style={VP.noVideo}>📣<p style={{color:'#8888aa',fontSize:'.8rem',marginTop:'.5rem'}}>Media nahi mili</p></div>
       }
       {/* TikTok fallback only — Meta ke liye kuch nahi */}
@@ -528,7 +528,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
 
 const VP = {
   wrap:          {borderRadius:'16px',overflow:'hidden',background:'#0f0f1a',position:'relative',aspectRatio:'9/16',width:'100%',maxWidth:'400px',margin:'0 auto',cursor:'pointer',userSelect:'none'},
-  video:         {width:'100%',height:'100%',objectFit:'cover',display:'block'},
+  video:         {width:'100%',height:'100%',objectFit:'contain',display:'block',background:'#0f0f1a'},
   noVideo:       {display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',fontSize:'3rem',background:'#161625'},
   playOverlay:   {position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.3)',backdropFilter:'blur(1px)'},
   playCircle:    {width:'60px',height:'60px',borderRadius:'50%',background:'rgba(108,71,255,.85)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.4rem',color:'#fff',boxShadow:'0 0 30px rgba(108,71,255,.5)'},
@@ -1102,7 +1102,7 @@ const RP = {
   grid:        {display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(min(180px,100%),1fr))',gap:'1rem'},
   card:        {background:'#0d0d1a',border:'1px solid rgba(255,255,255,.07)',borderRadius:'14px',overflow:'hidden',cursor:'pointer',transition:'all .25s',position:'relative'},
   cardMedia:   {position:'relative',aspectRatio:'9/14',background:'#161625',overflow:'hidden'},
-  cardImg:     {width:'100%',height:'100%',objectFit:'cover',display:'block',transition:'transform .3s'},
+  cardImg:     {width:'100%',height:'100%',objectFit:'contain',display:'block',transition:'transform .3s',background:'#0f0f1a'},
   cardNoImg:   {width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'2.5rem',background:'#161625'},
   videoBadge:  {position:'absolute',bottom:'8px',right:'8px',background:'rgba(0,0,0,.78)',color:'#fff',borderRadius:'5px',padding:'.2rem .5rem',fontSize:'.65rem',fontWeight:700},
   activeBadge: {position:'absolute',top:'8px',left:'8px',background:'rgba(74,222,128,.15)',border:'1px solid rgba(74,222,128,.3)',color:'#4ade80',borderRadius:'12px',padding:'.15rem .55rem',fontSize:'.62rem',fontWeight:700},
