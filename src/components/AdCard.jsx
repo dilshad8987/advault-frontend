@@ -134,17 +134,19 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     : ttCover;
 
   // Video: R2 URL sirf tab use karo jab actual R2 URL ho (r2.dev ya pub-)
-  const r2VideoUrl   = isMeta ? (ad.r2_video_url || ad._raw?.r2_video_url || '') : '';
+  const r2VideoUrl   = isMeta
+    ? (ad.r2_video_url || ad._raw?.r2_video_url || '')
+    : (ad.r2_video_url || '');  // ✅ TikTok R2 URL bhi lo
   const origVideoUrl = isMeta
     ? (ad.video_url || ad._raw?.video || ad.video || '')
-    : (ad.video_info?.play_url || '');
+    : (ad.video_info?.play_url || ad.video_info?.video_url || ad.video_url || '');  // ✅ all TikTok fallbacks
   const rawVideoUrl  = r2VideoUrl || origVideoUrl;
 
   // ── is_video: backend se aaye to use karo, warna detect karo ──────────────
   // IMPORTANT: sirf tab video manno jab actual video URL ho
   const hasVideo = isMeta
     ? !!(ad.is_video || ad.format === 'video' || (rawVideoUrl && rawVideoUrl.trim() !== ''))
-    : !!(ad.video_info?.play_url || ad.isVideo);
+    : !!(rawVideoUrl && rawVideoUrl.trim() !== '') || !!(ad.video_info?.play_url || ad.isVideo);  // ✅ r2_video_url bhi check
 
   // ── Thumbnail ──────────────────────────────────────────────────────────────
   const thumbUrl = isMeta
