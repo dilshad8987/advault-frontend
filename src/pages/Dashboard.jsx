@@ -105,10 +105,11 @@ export default function Dashboard() {
     try {
       if (tab === 'tiktok') {
         const res = await api.get('/ads/tiktok', { params: { country, period, order: orderBy } });
-        const d = res.data, L3 = d?.data?.data, L4 = L3?.data;
-        const raw = L4?.materials || L4?.list || L4?.ad_list ||
-          (Array.isArray(L4) ? L4 : null) || L3?.materials ||
-          (Array.isArray(L3) ? L3 : null) || [];
+        const d = res.data;
+        // Backend returns: { success, data: { materials: [...] } }
+        const raw = d?.data?.materials || d?.data?.list || d?.data?.ad_list ||
+          (Array.isArray(d?.data) ? d.data : null) ||
+          d?.materials || d?.list || [];
         const allAds = Array.isArray(raw) ? raw : [];
 
         const NON_OBJ = ['app_install','app_promotion','reach','brand_awareness','lead_generation','video_views','traffic','messages'];
