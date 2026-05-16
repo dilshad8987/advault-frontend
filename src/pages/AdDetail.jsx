@@ -379,12 +379,25 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
 
   useEffect(() => {
     if (isMeta) {
-      // Meta R2 videos seedha load karo — koi proxy nahi chahiye
-      // R2 public URL hai, direct video tag mein daal do
+      // Meta R2 videos seedha load karo
       if (videoUrl) setRealVideoUrl(videoUrl);
       setUrlLoading(false);
       return;
     }
+
+    // TikTok R2 URL: agar R2/Cloudflare URL hai to seedha use karo — proxy skip
+    const isR2Url = videoUrl && (
+      videoUrl.includes('r2.dev') ||
+      videoUrl.includes('pub-') ||
+      videoUrl.includes('cloudflare') ||
+      videoUrl.includes('advaultmedia')
+    );
+    if (isR2Url) {
+      setRealVideoUrl(videoUrl);
+      setUrlLoading(false);
+      return;
+    }
+
     if (!adId) return;
     setUrlLoading(true); setVideoError(false);
     api.get('/ads/video/url', { params: { video_id: adId, tiktok_url: tiktokItemUrl || '' } })
@@ -761,11 +774,15 @@ export default function AdDetail() {
     ? (ad.r2_image_url || ad.image || ad.ad_snapshot_url || ad.imageUrl || '')
     : (ad.video_info?.cover || ad.imageUrl || '');
 
-  // ✅ Video — R2 pehle
+  // ✅ Video — R2 pehle (TikTok)
+  // Backend r2_video_url, video_info.play_url, video_info.video_url, video_url — sab check karo
+  const r2TikTokVideoUrl = (ad.r2_video_url && ad.r2_video_url.trim()) ? ad.r2_video_url : '';
   const videoUrlObj = ad.video_info?.video_url;
-  const tiktokVideoUrl = (videoUrlObj && typeof videoUrlObj === 'object')
+  const videoInfoPlayUrl = ad.video_info?.play_url || '';
+  const videoUrlResolved = (videoUrlObj && typeof videoUrlObj === 'object')
     ? (videoUrlObj['1080p'] || videoUrlObj['720p'] || videoUrlObj['540p'] || videoUrlObj['480p'] || videoUrlObj['360p'] || Object.values(videoUrlObj)[0] || '')
-    : (typeof videoUrlObj === 'string' ? videoUrlObj : ad.video_url || '');
+    : (typeof videoUrlObj === 'string' ? videoUrlObj : '');
+  const tiktokVideoUrl = r2TikTokVideoUrl || videoInfoPlayUrl || videoUrlResolved || (ad.video_url || '');
 
   // Meta video: R2 URL pehle (trim check — empty string "" handle karo), phir original
   const metaVideoUrl = (ad.r2_video_url && ad.r2_video_url.trim())
@@ -775,7 +792,7 @@ export default function AdDetail() {
 
   const videoUrl = isMeta ? metaVideoUrl : tiktokVideoUrl;
   const tiktokItemUrl = ad.tiktok_item_url || ad.share_url || ad.item_url || '';
-  const isVideo = isMeta ? !!(metaVideoUrl) : !!(ad.video_info || ad.isVideo);
+  const isVideo = isMeta ? !!(metaVideoUrl) : !!(tiktokVideoUrl || ad.video_info || ad.isVideo);
 
   const likes       = Number(ad.like || 0);
   const comments    = Number(ad.comment || 0);
