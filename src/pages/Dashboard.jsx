@@ -78,6 +78,7 @@ export default function Dashboard() {
   const [period, setPeriod]     = useState(() => sessionStorage.getItem('dash_period') || '7');
   const [orderBy, setOrderBy]   = useState(() => sessionStorage.getItem('dash_orderBy') || 'like');
   const [metaKeyword, setMetaKeyword] = useState('product');
+  const [showDropshipping, setShowDropshipping] = useState(false);
   const [metaStatus, setMetaStatus]   = useState('ACTIVE');
   const [aliSearchInput, setAliSearchInput] = useState('');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -88,7 +89,7 @@ export default function Dashboard() {
   const ALI_TABS  = [{ id: 'trending', label: '🔥 Trending' },{ id: 'highsell', label: '📈 High Sell' },{ id: 'search', label: '🔍 Search' }];
   const ALI_CAT_MAP = { trending: '15', highsell: '200003655' };
 
-  useEffect(() => { sessionStorage.setItem('dash_tab', tab); }, [tab]);
+  useEffect(() => { sessionStorage.setItem('dash_tab', tab); setShowDropshipping(false); }, [tab]);
   useEffect(() => { sessionStorage.setItem('dash_aliTab', aliTab); }, [aliTab]);
   useEffect(() => { sessionStorage.setItem('dash_country', country); }, [country]);
   useEffect(() => { sessionStorage.setItem('dash_period', period); }, [period]);
@@ -149,7 +150,7 @@ export default function Dashboard() {
       }
     } catch (err) { console.error(err); setAds([]); }
     setLoading(false);
-  }, [tab, country, period, orderBy, aliTab, metaKeyword, metaStatus]);
+  }, [tab, country, period, orderBy, aliTab, metaKeyword, metaStatus, showDropshipping]);
 
   useEffect(() => {
     if (tab === 'aliexpress' && aliTab === 'search') { setLoading(false); return; }
@@ -217,6 +218,22 @@ export default function Dashboard() {
               <select style={s.sel} value={orderBy} onChange={e => setOrderBy(e.target.value)}>
                 {orders.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
+            </div>
+            <div style={s.fg}>
+              <label style={s.lbl}>🛍️ FILTER</label>
+              <button
+                onClick={() => setShowDropshipping(p => !p)}
+                style={{
+                  ...s.sel,
+                  cursor: 'pointer',
+                  background: showDropshipping ? 'rgba(108,71,255,.2)' : '#161625',
+                  color: showDropshipping ? '#8b6bff' : '#8888aa',
+                  border: showDropshipping ? '1px solid rgba(108,71,255,.4)' : '1px solid rgba(255,255,255,.08)',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                }}>
+                {showDropshipping ? '✅ Dropshipping' : '🛍️ All Ads'}
+              </button>
             </div>
           </div>
         )}
