@@ -93,31 +93,75 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
   const mtBrand  = ad.page_name || ad._raw?.page_name || ad._raw?.brand || ad.bylines || 'Unknown Page';
   const mtStatus = ad.active === false ? 'Inactive' : 'Active';
-  const mtSpend  = (() => {
+
+  // ── Estimated Spend ────────────────────────────────────────────────────────
+  const mtSpend = (() => {
+    // Pehle actual spend check karo
     const sp = ad.spend;
-    if (!sp) return '—';
-    if (typeof sp === 'object') {
+    if (sp && typeof sp === 'object') {
       const lo = sp.lower_bound, hi = sp.upper_bound;
-      if (lo && hi) return '$'+Number(lo).toLocaleString()+'–$'+Number(hi).toLocaleString();
-      if (lo) return '$'+Number(lo).toLocaleString()+'+';
+      if (lo && hi) return '~$' + Math.round((Number(lo)+Number(hi))/2).toLocaleString();
+      if (lo) return '$' + Number(lo).toLocaleString() + '+';
     }
-    if (sp) return '$' + Number(sp).toLocaleString();
+    if (sp && Number(sp) > 0) return '$' + Number(sp).toLocaleString();
+    // Estimated spend from scraper
+    const est = ad.estimated_spend || ad._raw?.estimated_spend;
+    if (est && Number(est) > 0) return '~$' + Number(est).toLocaleString();
+    // Khud calculate karo from impressions
+    const imp = ad.impression_count || ad._raw?.impression_count;
+    if (imp && Number(imp) > 0) return '~$' + Math.round(Number(imp) * 0.012).toLocaleString();
     return '—';
   })();
+
+  // ── Impressions ────────────────────────────────────────────────────────────
   const mtImpressions = (() => {
-    const imp = ad.impressions;
+    const imp = ad.impressions || ad.impression_count || ad._raw?.impression_count;
     if (!imp) return '—';
     if (typeof imp === 'object') {
       const lo = imp.lower_bound, hi = imp.upper_bound;
-      if (lo && hi) return fmtNum((Number(lo)+Number(hi))/2);
-      if (lo) return fmtNum(Number(lo))+'+';
+      if (lo && hi) return '~' + fmtNum((Number(lo)+Number(hi))/2);
+      if (lo) return fmtNum(Number(lo)) + '+';
     }
     return fmtNum(Number(imp));
   })();
-  const mtStartDate = ad.ad_delivery_start_time
-    ? new Date(ad.ad_delivery_start_time).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'2-digit' })
-    : ad._raw?.start_date || '—';
-  const mtCurrency = ad.currency || 'USD';
+
+  // ── Relative Time (24h / 2 days / 1 week / 1 month) ───────────────────────
+  function getRelativeTime(dateStr) {
+    if (!dateStr) return '—';
+    let date;
+    // "Feb 14 2025" ya ISO ya timestamp format handle karo
+    try { date = new Date(dateStr); } catch(e) { return '—'; }
+    if (isNaN(date.getTime())) return '—';
+    const now = Date.now();
+    const diffMs = now - date.getTime();
+    if (diffMs < 0) return '—';
+    const diffH = diffMs / (1000 * 60 * 60);
+    const diffD = diffMs / (1000 * 60 * 60 * 24);
+    const diffW = diffD / 7;
+    const diffM = diffD / 30;
+    if (diffH < 24) return Math.round(diffH) + 'h ago';
+    if (diffD < 7)  return Math.round(diffD) + ' day' + (Math.round(diffD) !== 1 ? 's' : '') + ' ago';
+    if (diffW < 4)  return Math.round(diffW) + ' week' + (Math.round(diffW) !== 1 ? 's' : '') + ' ago';
+    if (diffM < 12) return Math.round(diffM) + ' month' + (Math.round(diffM) !== 1 ? 's' : '') + ' ago';
+    return Math.round(diffM / 12) + ' year' + (Math.round(diffM / 12) !== 1 ? 's' : '') + ' ago';
+  }
+
+  const mtStartDate = getRelativeTime(
+    ad.ad_delivery_start_time || ad._raw?.start_date || ad.start_date
+  );
+
+  // ── Country Flag ──────────────────────────────────────────────────────────
+  const COUNTRY_FLAGS = {
+    'US': '🇺🇸', 'GB': '🇬🇧', 'AU': '🇦🇺', 'CA': '🇨🇦', 'IN': '🇮🇳',
+    'DE': '🇩🇪', 'FR': '🇫🇷', 'NL': '🇳🇱', 'AE': '🇦🇪', 'SA': '🇸🇦',
+    'PK': '🇵🇰', 'BR': '🇧🇷', 'MX': '🇲🇽', 'IT': '🇮🇹', 'ES': '🇪🇸',
+    'JP': '🇯🇵', 'KR': '🇰🇷', 'SG': '🇸🇬', 'ZA': '🇿🇦', 'NG': '🇳🇬',
+    'United States': '🇺🇸', 'United Kingdom': '🇬🇧', 'Australia': '🇦🇺',
+    'Canada': '🇨🇦', 'India': '🇮🇳', 'Germany': '🇩🇪', 'France': '🇫🇷',
+  };
+  const countryCode = ad.country || ad._raw?.country || 'US';
+  const countryFlag = COUNTRY_FLAGS[countryCode] || '🌐';
+  const countryLabel = countryCode.length === 2 ? countryCode : countryCode.slice(0, 2).toUpperCase();
   const mtAdId = ad.id || ad.ad_archive_id || ad._raw?.library_id || String(Math.random());
 
   const title     = isMeta ? mtTitle  : ttTitle;
@@ -268,9 +312,9 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
           {isMeta ? (
             <>
               <div style={s.stat}><span style={s.statIcon}>👁</span><span style={s.statVal}>{mtImpressions}</span><span style={s.statKey}>Impressions</span></div>
-              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{mtSpend}</span><span style={s.statKey}>Spend</span></div>
+              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{mtSpend}</span><span style={s.statKey}>Est. Spend</span></div>
               <div style={s.stat}><span style={s.statIcon}>📅</span><span style={s.statVal}>{mtStartDate}</span><span style={s.statKey}>Started</span></div>
-              <div style={s.stat}><span style={s.statIcon}>🌐</span><span style={s.statVal}>{mtCurrency}</span><span style={s.statKey}>Currency</span></div>
+              <div style={s.stat}><span style={s.statIcon}>{countryFlag}</span><span style={s.statVal}>{countryLabel}</span><span style={s.statKey}>Country</span></div>
             </>
           ) : (
             <>
