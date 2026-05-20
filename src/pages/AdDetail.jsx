@@ -807,7 +807,7 @@ export default function AdDetail() {
   const impFmt      = impression > 0
     ? (isEstImp ? '~' : '') + (impression >= 1000000 ? (impression/1000000).toFixed(1)+'M' : impression >= 1000 ? (impression/1000).toFixed(1)+'K' : impression.toLocaleString())
     : '—';
-  const industry    = ad.estimated_industry || null;
+  const industry    = ad.estimated_industry || ad.industry_key?.replace('label_','') || null;
   const rawCountries = ad.country_code || ad.country_codes || ad.countries || [];
   const countries    = Array.isArray(rawCountries) ? rawCountries : (rawCountries ? [rawCountries] : []);
   const rawStart    = ad.first_shown_date || ad.start_date || ad.create_time || null;
@@ -818,7 +818,6 @@ export default function AdDetail() {
   const runningDays = startDate ? Math.floor((Date.now()/1000 - startDate) / 86400) : null;
   const transcript  = ad.ad_text || ad.description || ad.caption || ad.ad_title || '';
   const objective   = ad.objective_key?.replace('campaign_objective_','') || ad.objective || '';
-  const industry    = ad.industry_key?.replace('label_','') || '';
   const fmtDate     = (ts)=>ts?new Date(ts*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
 
   if (loading && !passedAd) return (
