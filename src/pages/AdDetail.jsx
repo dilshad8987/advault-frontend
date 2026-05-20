@@ -794,14 +794,20 @@ export default function AdDetail() {
   const tiktokItemUrl = ad.tiktok_item_url || ad.share_url || ad.item_url || '';
   const isVideo = isMeta ? !!(metaVideoUrl) : !!(tiktokVideoUrl || ad.video_info || ad.isVideo);
 
-  const likes       = Number(ad.like || 0);
-  const comments    = Number(ad.comment || 0);
+  const likes       = Number(ad.like || ad.likes || 0);
+  const comments    = Number(ad.comment || ad.comments || 0);
   const favorite    = Number(ad.favorite || 0);
   const share       = Number(ad.share || 0);
   const ctr         = ad.ctr ? (Number(ad.ctr) * 100).toFixed(2) + '%' : '—';
-  const cost        = Number(ad.cost || 0);
-  const costFmt     = cost ? '$' + cost.toLocaleString() : '—';
-  const impression  = Number(ad.impression || ad.reach || 0);
+  const cost        = Number(ad.cost || ad.spend || ad.estimated_spend || 0);
+  const isEstSpend  = !ad.cost && !ad.spend && !!ad.estimated_spend;
+  const costFmt     = cost ? (isEstSpend ? '~$' : '$') + cost.toLocaleString() : '—';
+  const impression  = Number(ad.impression || ad.impressions || ad.estimated_impressions || ad.reach || 0);
+  const isEstImp    = !ad.impression && !ad.impressions && !!ad.estimated_impressions;
+  const impFmt      = impression > 0
+    ? (isEstImp ? '~' : '') + (impression >= 1000000 ? (impression/1000000).toFixed(1)+'M' : impression >= 1000 ? (impression/1000).toFixed(1)+'K' : impression.toLocaleString())
+    : '—';
+  const industry    = ad.estimated_industry || null;
   const rawCountries = ad.country_code || ad.country_codes || ad.countries || [];
   const countries    = Array.isArray(rawCountries) ? rawCountries : (rawCountries ? [rawCountries] : []);
   const rawStart    = ad.first_shown_date || ad.start_date || ad.create_time || null;
@@ -882,13 +888,14 @@ export default function AdDetail() {
               <div style={S.runRow}><span style={S.runKey}>📅 Running Time</span><span style={S.runVal}>{fmtDate(startDate)} → {endDate?fmtDate(endDate):'Today'}</span></div>
               {runningDays!==null && <div style={S.runRow}><span style={S.runKey}>⏱ Days Running</span><span style={S.runVal}>{runningDays} days</span></div>}
               <div style={S.runRow}><span style={S.runKey}>🌍 Countries</span><span style={S.runVal}>{countries.length>0?countries.slice(0,6).map(c=>`${countryFlag(c)} ${c}`).join('  '):'—'}</span></div>
-              <div style={S.runRow}><span style={S.runKey}>💰 Spend</span><span style={S.runVal}>{costFmt}</span></div>
+              <div style={S.runRow}><span style={S.runKey}>💰 Est. Spend</span><span style={S.runVal}>{costFmt}</span></div>
+              {industry && <div style={S.runRow}><span style={S.runKey}>🏭 Industry</span><span style={{...S.runVal,textTransform:'capitalize',color:'#8b6bff'}}>{industry.replace(/_/g,' ')}</span></div>}
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:'.6rem'}}>
-              <StatBox icon="❤️" label="Likes"    value={likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString()} />
-              <StatBox icon="💬" label="Comments" value={comments.toLocaleString()} />
+              <StatBox icon="❤️" label="Likes"       value={likes > 0 ? (likes >= 1000 ? (likes/1000).toFixed(1)+'K' : likes.toLocaleString()) : '—'} />
+              <StatBox icon="👁️" label="Impressions" value={impFmt} />
               <StatBox icon="📊" label="CTR"      value={ctr} />
-              <StatBox icon="💰" label="Spend"    value={costFmt} />
+              <StatBox icon="💰" label="Est. Spend"   value={costFmt} />
               {favorite>0 && <StatBox icon="⭐" label="Saves" value={favorite>=1000?(favorite/1000).toFixed(1)+'K':favorite.toLocaleString()} />}
               {share>0    && <StatBox icon="↗️" label="Share" value={share>=1000?(share/1000).toFixed(1)+'K':share.toLocaleString()} />}
             </div>
@@ -949,7 +956,7 @@ export default function AdDetail() {
             <div style={S.card}>
               <h3 style={S.cardTitle}>📈 Performance</h3>
               <div style={{display:'flex',flexWrap:'wrap',gap:'.75rem'}}>
-                <StatBox icon="❤️" label="Likes"     value={likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString()} />
+              <StatBox icon="❤️" label="Likes"       value={likes > 0 ? (likes >= 1000 ? (likes/1000).toFixed(1)+'K' : likes.toLocaleString()) : '—'} />
                 <StatBox icon="💬" label="Comments"  value={comments.toLocaleString()} />
                 <StatBox icon="📊" label="CTR"       value={ctr} />
                 <StatBox icon="💰" label="Spend"     value={costFmt} />
