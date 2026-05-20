@@ -72,7 +72,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   // ── TikTok fields ──────────────────────────────────────────────────────────
   const ttTitle    = ad.ad_title || ad.title || 'No Title';
   const ttBrand    = ad.brand_name || 'Unknown Brand';
-  const ttLikes    = Number(ad.like || 0);
+  const ttLikes    = Number(ad.like || ad.likes || 0);
   const ttComments = Number(ad.comment || 0);
   const ttCtr      = ad.ctr ? (ad.ctr * 100).toFixed(1) + '%' : '—';
   const ttCost     = ad.cost ? '$' + Number(ad.cost).toLocaleString() : '—';
@@ -96,7 +96,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
   // ── Estimated Spend ────────────────────────────────────────────────────────
   const mtSpend = (() => {
-    // Pehle actual spend check karo
     const sp = ad.spend;
     if (sp && typeof sp === 'object') {
       const lo = sp.lower_bound, hi = sp.upper_bound;
@@ -104,25 +103,18 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
       if (lo) return '$' + Number(lo).toLocaleString() + '+';
     }
     if (sp && Number(sp) > 0) return '$' + Number(sp).toLocaleString();
-    // Estimated spend from scraper
     const est = ad.estimated_spend || ad._raw?.estimated_spend;
     if (est && Number(est) > 0) return '~$' + Number(est).toLocaleString();
-    // Khud calculate karo from impressions
-    const imp = ad.impression_count || ad._raw?.impression_count;
-    if (imp && Number(imp) > 0) return '~$' + Math.round(Number(imp) * 0.012).toLocaleString();
     return '—';
   })();
 
   // ── Impressions ────────────────────────────────────────────────────────────
   const mtImpressions = (() => {
-    const imp = ad.impressions || ad.impression_count || ad._raw?.impression_count;
-    if (!imp) return '—';
-    if (typeof imp === 'object') {
-      const lo = imp.lower_bound, hi = imp.upper_bound;
-      if (lo && hi) return '~' + fmtNum((Number(lo)+Number(hi))/2);
-      if (lo) return fmtNum(Number(lo)) + '+';
-    }
-    return fmtNum(Number(imp));
+    const imp = ad.impressions || ad.impression || ad.impression_count || ad._raw?.impression_count;
+    const estImp = ad.estimated_impressions || ad._raw?.estimated_impressions;
+    if (imp && Number(imp) > 0) return fmtNum(Number(imp));
+    if (estImp && Number(estImp) > 0) return '~' + fmtNum(Number(estImp));
+    return '—';
   })();
 
   // ── Relative Time (24h / 2 days / 1 week / 1 month) ───────────────────────
@@ -319,7 +311,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
           ) : (
             <>
               <div style={s.stat}><span style={s.statIcon}>❤️</span><span style={s.statVal}>{fmtNum(ttLikes)}</span><span style={s.statKey}>Likes</span></div>
-              <div style={s.stat}><span style={s.statIcon}>💬</span><span style={s.statVal}>{fmtNum(ttComments)}</span><span style={s.statKey}>Comments</span></div>
+
               <div style={s.stat}><span style={s.statIcon}>📊</span><span style={s.statVal}>{ttCtr}</span><span style={s.statKey}>CTR</span></div>
               <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttCost}</span><span style={s.statKey}>Spend</span></div>
             </>
