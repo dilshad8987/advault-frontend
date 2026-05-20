@@ -807,7 +807,6 @@ export default function AdDetail() {
   const impFmt      = impression > 0
     ? (isEstImp ? '~' : '') + (impression >= 1000000 ? (impression/1000000).toFixed(1)+'M' : impression >= 1000 ? (impression/1000).toFixed(1)+'K' : impression.toLocaleString())
     : '—';
-  const industry    = ad.estimated_industry || ad.industry_key?.replace('label_','') || null;
   const rawCountries = ad.country_code || ad.country_codes || ad.countries || [];
   const countries    = Array.isArray(rawCountries) ? rawCountries : (rawCountries ? [rawCountries] : []);
   const rawStart    = ad.first_shown_date || ad.start_date || ad.create_time || null;
@@ -818,6 +817,7 @@ export default function AdDetail() {
   const runningDays = startDate ? Math.floor((Date.now()/1000 - startDate) / 86400) : null;
   const transcript  = ad.ad_text || ad.description || ad.caption || ad.ad_title || '';
   const objective   = ad.objective_key?.replace('campaign_objective_','') || ad.objective || '';
+  const industry    = ad.estimated_industry || ad.industry_key?.replace('label_','') || null;
   const fmtDate     = (ts)=>ts?new Date(ts*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
 
   if (loading && !passedAd) return (
@@ -891,9 +891,9 @@ export default function AdDetail() {
               {industry && <div style={S.runRow}><span style={S.runKey}>🏭 Industry</span><span style={{...S.runVal,textTransform:'capitalize',color:'#8b6bff'}}>{industry.replace(/_/g,' ')}</span></div>}
             </div>
             <div style={{display:'flex',flexWrap:'wrap',gap:'.6rem'}}>
-              <StatBox icon="❤️" label="Likes"       value={likes > 0 ? (likes >= 1000 ? (likes/1000).toFixed(1)+'K' : likes.toLocaleString()) : '—'} />
+              <StatBox icon="❤️" label="Likes"       value={likes>0?(likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString()):'—'} />
               <StatBox icon="👁️" label="Impressions" value={impFmt} />
-              <StatBox icon="📊" label="CTR"      value={ctr} />
+              <StatBox icon="📊" label="CTR"          value={ctr} />
               <StatBox icon="💰" label="Est. Spend"   value={costFmt} />
               {favorite>0 && <StatBox icon="⭐" label="Saves" value={favorite>=1000?(favorite/1000).toFixed(1)+'K':favorite.toLocaleString()} />}
               {share>0    && <StatBox icon="↗️" label="Share" value={share>=1000?(share/1000).toFixed(1)+'K':share.toLocaleString()} />}
@@ -955,7 +955,7 @@ export default function AdDetail() {
             <div style={S.card}>
               <h3 style={S.cardTitle}>📈 Performance</h3>
               <div style={{display:'flex',flexWrap:'wrap',gap:'.75rem'}}>
-              <StatBox icon="❤️" label="Likes"       value={likes > 0 ? (likes >= 1000 ? (likes/1000).toFixed(1)+'K' : likes.toLocaleString()) : '—'} />
+                <StatBox icon="❤️" label="Likes"     value={likes>=1000?(likes/1000).toFixed(1)+'K':likes.toLocaleString()} />
                 <StatBox icon="💬" label="Comments"  value={comments.toLocaleString()} />
                 <StatBox icon="📊" label="CTR"       value={ctr} />
                 <StatBox icon="💰" label="Spend"     value={costFmt} />
