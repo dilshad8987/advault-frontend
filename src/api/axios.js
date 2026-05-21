@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://advault-backend-production-c824.up.railway.app/api';
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://advault-backend-production-c824.up.railway.app/api',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' }
 });
 
@@ -19,7 +21,7 @@ api.interceptors.response.use(
       original._retry = true;
       try {
         const refresh = localStorage.getItem('refreshToken');
-        const res = await axios.post((process.env.REACT_APP_API_URL || 'https://advault-backend-production-c824.up.railway.app/api') + '/auth/refresh', { refreshToken: refresh });
+        const res = await axios.post(BASE_URL + '/auth/refresh', { refreshToken: refresh });
         localStorage.setItem('accessToken', res.data.accessToken);
         original.headers.Authorization = 'Bearer ' + res.data.accessToken;
         return api(original);
