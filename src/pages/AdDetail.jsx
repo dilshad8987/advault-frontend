@@ -348,7 +348,7 @@ const SC = {
   analysisBtn: {padding:'.3rem .7rem',background:'rgba(108,71,255,.15)',border:'1px solid rgba(108,71,255,.3)',borderRadius:'6px',color:'#8b6bff',fontSize:'.68rem',fontWeight:700,cursor:'pointer'},
 };
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://advault-backend-production-c824.up.railway.app/api';
 // API_BASE mein /api already ho sakta hai (Railway env) — double /api avoid karo
 const STREAM_BASE = API_BASE.endsWith('/api') ? API_BASE : API_BASE + '/api';
 
