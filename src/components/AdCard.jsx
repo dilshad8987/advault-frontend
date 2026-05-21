@@ -101,70 +101,108 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   })();
 
   // ── TikTok: Smart Estimated Spend ─────────────────────────────────────────
-  // Formula: Use multiple signals — cost field, CTR, likes, plays, days running,
-  // industry CPM benchmarks — to estimate realistic spend
+  // Method: Impressions (play_count) × Country CPM × Industry adj × Engagement adj
+  // Same core logic as Minea/PipiAds — CPMs based on 2026 real market data
   const ttEstSpend = (() => {
     const rawCost = Number(ad.cost || 0);
 
-    // ── Industry CPM benchmarks (USD per 1000 plays) ──────────────────────
-    // Higher competition = higher CPM
-    const INDUSTRY_CPM = {
-      'fashion':        4.5,  'beauty':         5.0,  'health':         6.0,
-      'fitness':        5.5,  'food':           4.0,  'gaming':         3.5,
-      'tech':           7.0,  'finance':        9.0,  'education':      5.0,
-      'travel':         6.5,  'ecommerce':      5.0,  'retail':         4.5,
-      'entertainment':  3.0,  'music':          3.0,  'sports':         5.0,
-      'auto':           8.0,  'real_estate':   10.0,  'software':       8.5,
-      'app':            4.0,  'lifestyle':      4.5,
+    // ── 2026 Country CPM (USD per 1000 impressions) — Tier-based ─────────
+    // Source: TikAdSuite, MegaDigital, insense.pro Q1 2026 benchmarks
+    const COUNTRY_CPM = {
+      // Tier 1 — highest purchasing power
+      'US': 12.0, 'GB': 7.5,  'AU': 8.0,  'CA': 7.0,  'NZ': 6.5,
+      // Tier 2 — mid markets
+      'DE': 7.0,  'FR': 6.0,  'NL': 6.5,  'SE': 6.0,  'NO': 6.5,
+      'DK': 6.0,  'FI': 5.5,  'CH': 7.5,  'AT': 6.0,  'BE': 5.5,
+      'IE': 6.5,  'JP': 6.0,  'KR': 5.0,  'SG': 5.5,  'AE': 5.5,
+      'SA': 4.5,  'QA': 5.0,  'KW': 4.5,  'IL': 5.0,
+      // Tier 3 — emerging/volume markets
+      'BR': 2.5,  'MX': 3.0,  'AR': 2.0,  'CL': 2.5,  'CO': 2.0,
+      'ZA': 2.0,  'EG': 1.5,  'NG': 1.0,  'KE': 1.2,
+      'TH': 2.0,  'MY': 2.5,  'PH': 1.2,  'VN': 1.5,  'ID': 1.5,
+      'TR': 2.0,  'PL': 3.0,  'RO': 2.5,  'HU': 2.5,  'CZ': 3.0,
+      // Tier 4 — lowest CPM
+      'IN': 0.8,  'PK': 0.5,  'BD': 0.6,  'LK': 0.7,  'NP': 0.5,
+    };
+    const baseCpm = COUNTRY_CPM[ttCountryCode] || 4.5; // global avg fallback
+
+    // ── Industry CPM adjustment factor (relative to base) ─────────────────
+    // Finance/Legal highest, Entertainment/Music lowest
+    const INDUSTRY_ADJ = {
+      'finance':       1.8,  'insurance':     1.9,  'legal':         2.0,
+      'real_estate':   1.7,  'software':      1.6,  'saas':          1.6,
+      'tech':          1.5,  'auto':          1.5,  'automotive':    1.5,
+      'health':        1.3,  'pharma':        1.4,  'medical':       1.4,
+      'travel':        1.3,  'luxury':        1.4,  'b2b':           1.5,
+      'education':     1.1,  'fitness':       1.1,  'beauty':        1.0,
+      'fashion':       1.0,  'ecommerce':     1.0,  'retail':        0.95,
+      'food':          0.9,  'beverage':      0.9,  'lifestyle':     0.9,
+      'sports':        1.0,  'gaming':        0.85, 'app':           0.9,
+      'entertainment': 0.75, 'music':         0.75,
     };
     const industryLower = ttIndustry.toLowerCase();
-    let cpm = 4.5; // default TikTok avg CPM
-    for (const [key, val] of Object.entries(INDUSTRY_CPM)) {
-      if (industryLower.includes(key)) { cpm = val; break; }
+    let industryAdj = 1.0;
+    for (const [key, val] of Object.entries(INDUSTRY_ADJ)) {
+      if (industryLower.includes(key)) { industryAdj = val; break; }
     }
 
-    // ── Country CPM multipliers ──────────────────────────────────────────
-    const COUNTRY_CPM_MULT = {
-      'US':1.8, 'GB':1.6, 'AU':1.5, 'CA':1.4, 'DE':1.3,
-      'FR':1.2, 'JP':1.3, 'AE':1.4, 'SA':1.2, 'NL':1.2,
-      'IN':0.4, 'PK':0.3, 'BR':0.6, 'MX':0.7, 'ID':0.5,
-      'SG':1.3, 'KR':1.1, 'TH':0.6, 'NG':0.4, 'ZA':0.7,
-    };
-    const countryMult = COUNTRY_CPM_MULT[ttCountryCode] || 1.0;
-    const effectiveCpm = cpm * countryMult;
+    // ── Effective CPM after industry adjustment ───────────────────────────
+    const effectiveCpm = baseCpm * industryAdj;
 
-    // ── Engagement multiplier (higher engagement = more spend to sustain) ──
-    const engagementRate = ttPlays > 0 ? (ttLikes + ttComments + ttShares) / ttPlays : 0;
-    const engMult = engagementRate > 0.1 ? 1.4 : engagementRate > 0.05 ? 1.2 : 1.0;
+    // ── Engagement quality multiplier ─────────────────────────────────────
+    // High engagement = TikTok charges more (better delivery = higher auction price)
+    // play_count is our impressions proxy on TikTok
+    const engRate = ttPlays > 0
+      ? (ttLikes + ttComments * 2 + ttShares * 3) / ttPlays  // weighted — shares/comments worth more
+      : (ttLikes > 0 ? 0.04 : 0);
+    const engMult = engRate > 0.15 ? 1.5
+                  : engRate > 0.08 ? 1.3
+                  : engRate > 0.04 ? 1.1
+                  : 1.0;
 
-    // ── Longevity multiplier (older ads = more total spend) ────────────────
-    const longevityMult = ttDaysRunning > 30 ? 1.5 : ttDaysRunning > 14 ? 1.2 : 1.0;
+    // ── Longevity multiplier — longer running = passed TikTok's kill switch ─
+    // TikTok auto-kills bad ads in 3-5 days; surviving ads get more budget
+    const longevityMult = ttDaysRunning > 60 ? 1.8
+                        : ttDaysRunning > 30 ? 1.5
+                        : ttDaysRunning > 14 ? 1.2
+                        : ttDaysRunning > 7  ? 1.05
+                        : 1.0;
 
-    // ── Trending multiplier ───────────────────────────────────────────────
-    const trendMult = ttTrending > 80 ? 1.5 : ttTrending > 50 ? 1.2 : 1.0;
+    // ── Trending score multiplier — viral = more impressions per $ ─────────
+    // Counter-intuitively viral ads have LOWER effective CPM (algo rewards them)
+    const trendCpmDiscount = ttTrending > 80 ? 0.75
+                           : ttTrending > 50 ? 0.85
+                           : 1.0;
+    const finalCpm = effectiveCpm * trendCpmDiscount;
 
+    // ── Core calculation ──────────────────────────────────────────────────
     let estimated;
 
     if (rawCost > 0) {
-      // cost field available — multiply by days to get total
-      const dailyCost = rawCost;
-      estimated = dailyCost * ttDaysRunning * longevityMult;
+      // Best signal: cost field directly from TikTok Creative Center
+      // cost = spend in the tracked period; scale by actual days
+      const scaleFactor = ttDaysRunning / Math.max(ttPeriodDays, 1);
+      estimated = rawCost * scaleFactor * longevityMult;
+
     } else if (ttPlays > 0) {
-      // plays-based CPM estimation
-      const playsK = ttPlays / 1000;
-      estimated = playsK * effectiveCpm * engMult * longevityMult * trendMult;
+      // Primary method (same as Minea/PipiAds):
+      // Est Spend = (Impressions / 1000) × CPM × engagement_adj × longevity_adj
+      estimated = (ttPlays / 1000) * finalCpm * engMult * longevityMult;
+
     } else if (ttLikes > 0) {
-      // likes-only fallback: avg TikTok like rate ~3-5% of spend
-      // ~$0.01-0.03 CPC equivalent
-      estimated = ttLikes * 0.015 * ttDaysRunning * countryMult * longevityMult;
+      // Fallback: likes → estimate impressions (avg TikTok like rate ~4%)
+      const estimatedImpressions = ttLikes / 0.04;
+      estimated = (estimatedImpressions / 1000) * finalCpm * longevityMult;
+
     } else {
       return '—';
     }
 
-    // Round to nearest sensible number
-    if (estimated < 100)   return '~$' + Math.round(estimated);
-    if (estimated < 1000)  return '~$' + (Math.round(estimated / 10) * 10).toLocaleString();
-    if (estimated < 10000) return '~$' + (Math.round(estimated / 100) * 100).toLocaleString();
+    // ── Format output ─────────────────────────────────────────────────────
+    if (estimated < 50)    return '~$' + Math.round(estimated);
+    if (estimated < 500)   return '~$' + (Math.round(estimated / 5) * 5).toLocaleString();
+    if (estimated < 5000)  return '~$' + (Math.round(estimated / 50) * 50).toLocaleString();
+    if (estimated < 50000) return '~$' + (Math.round(estimated / 500) * 500).toLocaleString();
     return '~$' + (Math.round(estimated / 1000) * 1000).toLocaleString();
   })();
 
