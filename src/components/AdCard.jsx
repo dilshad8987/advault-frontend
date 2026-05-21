@@ -72,13 +72,113 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   // ── TikTok fields ──────────────────────────────────────────────────────────
   const ttTitle    = ad.ad_title || ad.title || 'No Title';
   const ttBrand    = ad.brand_name || 'Unknown Brand';
-  const ttLikes    = Number(ad.like || ad.likes || 0);
-  const ttComments = Number(ad.comment || 0);
-  const ttCtr      = ad.ctr ? (ad.ctr * 100).toFixed(1) + '%' : '—';
-  const ttCost     = ad.cost ? '$' + Number(ad.cost).toLocaleString() : '—';
+  const ttLikes    = Number(ad.like || ad.likes || ad.like_count || 0);
+  const ttComments = Number(ad.comment || ad.comment_count || 0);
+  const ttShares   = Number(ad.share || ad.share_count || 0);
+  const ttPlays    = Number(ad.play_count || ad.view_count || 0);
+  const ttCtr      = Number(ad.ctr || 0);
   const ttCover    = ad.video_info?.cover || '';
   const ttObjective = ad.objective_key?.replace('campaign_objective_', '') || '';
   const ttAdId     = ad.id || ad.material_id || String(Math.random());
+  const ttIndustry = ad.industry_key || ad.industry || '';
+  const ttTrending = Number(ad.trending_score || 0);
+  const ttIsActive = ad.is_active !== false;
+  const ttPeriodDays = Number(ad.period_days || 7);
+  const ttCountryCode = (ad.country || 'US').toUpperCase();
+
+  // ── TikTok: Days Running ───────────────────────────────────────────────────
+  // first_seen → scraped_at = actual days the ad has been tracked
+  const ttDaysRunning = (() => {
+    const firstSeen = ad.first_seen || ad._raw?.first_seen;
+    const scrapedAt = ad.scraped_at || ad._raw?.scraped_at;
+    if (firstSeen) {
+      const diffMs = Date.now() - new Date(firstSeen).getTime();
+      const d = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (d > 0 && d < 3650) return d;
+    }
+    // fallback: period_days field
+    return ttPeriodDays || 7;
+  })();
+
+  // ── TikTok: Smart Estimated Spend ─────────────────────────────────────────
+  // Formula: Use multiple signals — cost field, CTR, likes, plays, days running,
+  // industry CPM benchmarks — to estimate realistic spend
+  const ttEstSpend = (() => {
+    const rawCost = Number(ad.cost || 0);
+
+    // ── Industry CPM benchmarks (USD per 1000 plays) ──────────────────────
+    // Higher competition = higher CPM
+    const INDUSTRY_CPM = {
+      'fashion':        4.5,  'beauty':         5.0,  'health':         6.0,
+      'fitness':        5.5,  'food':           4.0,  'gaming':         3.5,
+      'tech':           7.0,  'finance':        9.0,  'education':      5.0,
+      'travel':         6.5,  'ecommerce':      5.0,  'retail':         4.5,
+      'entertainment':  3.0,  'music':          3.0,  'sports':         5.0,
+      'auto':           8.0,  'real_estate':   10.0,  'software':       8.5,
+      'app':            4.0,  'lifestyle':      4.5,
+    };
+    const industryLower = ttIndustry.toLowerCase();
+    let cpm = 4.5; // default TikTok avg CPM
+    for (const [key, val] of Object.entries(INDUSTRY_CPM)) {
+      if (industryLower.includes(key)) { cpm = val; break; }
+    }
+
+    // ── Country CPM multipliers ──────────────────────────────────────────
+    const COUNTRY_CPM_MULT = {
+      'US':1.8, 'GB':1.6, 'AU':1.5, 'CA':1.4, 'DE':1.3,
+      'FR':1.2, 'JP':1.3, 'AE':1.4, 'SA':1.2, 'NL':1.2,
+      'IN':0.4, 'PK':0.3, 'BR':0.6, 'MX':0.7, 'ID':0.5,
+      'SG':1.3, 'KR':1.1, 'TH':0.6, 'NG':0.4, 'ZA':0.7,
+    };
+    const countryMult = COUNTRY_CPM_MULT[ttCountryCode] || 1.0;
+    const effectiveCpm = cpm * countryMult;
+
+    // ── Engagement multiplier (higher engagement = more spend to sustain) ──
+    const engagementRate = ttPlays > 0 ? (ttLikes + ttComments + ttShares) / ttPlays : 0;
+    const engMult = engagementRate > 0.1 ? 1.4 : engagementRate > 0.05 ? 1.2 : 1.0;
+
+    // ── Longevity multiplier (older ads = more total spend) ────────────────
+    const longevityMult = ttDaysRunning > 30 ? 1.5 : ttDaysRunning > 14 ? 1.2 : 1.0;
+
+    // ── Trending multiplier ───────────────────────────────────────────────
+    const trendMult = ttTrending > 80 ? 1.5 : ttTrending > 50 ? 1.2 : 1.0;
+
+    let estimated;
+
+    if (rawCost > 0) {
+      // cost field available — multiply by days to get total
+      const dailyCost = rawCost;
+      estimated = dailyCost * ttDaysRunning * longevityMult;
+    } else if (ttPlays > 0) {
+      // plays-based CPM estimation
+      const playsK = ttPlays / 1000;
+      estimated = playsK * effectiveCpm * engMult * longevityMult * trendMult;
+    } else if (ttLikes > 0) {
+      // likes-only fallback: avg TikTok like rate ~3-5% of spend
+      // ~$0.01-0.03 CPC equivalent
+      estimated = ttLikes * 0.015 * ttDaysRunning * countryMult * longevityMult;
+    } else {
+      return '—';
+    }
+
+    // Round to nearest sensible number
+    if (estimated < 100)   return '~$' + Math.round(estimated);
+    if (estimated < 1000)  return '~$' + (Math.round(estimated / 10) * 10).toLocaleString();
+    if (estimated < 10000) return '~$' + (Math.round(estimated / 100) * 100).toLocaleString();
+    return '~$' + (Math.round(estimated / 1000) * 1000).toLocaleString();
+  })();
+
+  // ── TikTok: Days Running display ──────────────────────────────────────────
+  const ttDaysDisplay = ttIsActive
+    ? ttDaysRunning + 'd 🟢'
+    : ttDaysRunning + 'd 🔴';
+
+  // ── TikTok: Reach estimate (plays + likes multiplier) ─────────────────────
+  const ttReach = (() => {
+    if (ttPlays > 0) return fmtNum(ttPlays);
+    if (ttLikes > 0) return '~' + fmtNum(ttLikes * 20); // avg 5% like rate
+    return '—';
+  })();
 
   // ── Meta fields ────────────────────────────────────────────────────────────
   const mtTitle = (
@@ -310,10 +410,10 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             </>
           ) : (
             <>
-              <div style={s.stat}><span style={s.statIcon}>❤️</span><span style={s.statVal}>{fmtNum(ttLikes)}</span><span style={s.statKey}>Likes</span></div>
-              <div style={s.stat}><span style={s.statIcon}>📊</span><span style={s.statVal}>{ttCtr}</span><span style={s.statKey}>CTR</span></div>
-              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttCost}</span><span style={s.statKey}>Est. Spend</span></div>
-              <div style={s.stat}><span style={s.statIcon}>{COUNTRY_FLAGS[ad.country || 'US'] || '🌐'}</span><span style={s.statVal}>{(ad.country || 'US').slice(0,2).toUpperCase()}</span><span style={s.statKey}>Country</span></div>
+              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttEstSpend}</span><span style={s.statKey}>Est. Spend</span></div>
+              <div style={s.stat}><span style={s.statIcon}>👁</span><span style={s.statVal}>{ttReach}</span><span style={s.statKey}>Reach</span></div>
+              <div style={s.stat}><span style={s.statIcon}>📅</span><span style={s.statVal}>{ttDaysDisplay}</span><span style={s.statKey}>Duration</span></div>
+              <div style={s.stat}><span style={s.statIcon}>{COUNTRY_FLAGS[ttCountryCode] || '🌐'}</span><span style={s.statVal}>{ttCountryCode.slice(0,2)}</span><span style={s.statKey}>Country</span></div>
             </>
           )}
         </div>
