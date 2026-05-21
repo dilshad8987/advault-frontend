@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://advault-backend-production-fb35.up.railway.app/api';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://advault-backend-production-c824.up.railway.app/api';
 
 function proxyImageUrl(imageUrl, libraryId) {
   if (!imageUrl && !libraryId) return '';
