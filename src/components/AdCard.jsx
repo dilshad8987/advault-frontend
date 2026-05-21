@@ -311,9 +311,9 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
           ) : (
             <>
               <div style={s.stat}><span style={s.statIcon}>❤️</span><span style={s.statVal}>{fmtNum(ttLikes)}</span><span style={s.statKey}>Likes</span></div>
-
               <div style={s.stat}><span style={s.statIcon}>📊</span><span style={s.statVal}>{ttCtr}</span><span style={s.statKey}>CTR</span></div>
-              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttCost}</span><span style={s.statKey}>Spend</span></div>
+              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttCost}</span><span style={s.statKey}>Est. Spend</span></div>
+              <div style={s.stat}><span style={s.statIcon}>{COUNTRY_FLAGS[ad.country || 'US'] || '🌐'}</span><span style={s.statVal}>{(ad.country || 'US').slice(0,2).toUpperCase()}</span><span style={s.statKey}>Country</span></div>
             </>
           )}
         </div>
