@@ -219,15 +219,9 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   })();
 
   // ── Meta fields ────────────────────────────────────────────────────────────
-  const mtTitle = (
-    ad.ad_creative_bodies?.[0] ||
-    ad.ad_creative_link_titles?.[0] ||
-    ad._raw?.body ||
-    ad._raw?.page_name ||
-    ad.page_name ||
-    ad.title ||
-    'No Title'
-  ).slice(0, 120);
+  const mtBody     = ad.ad_body || ad._raw?.body || ad.ad_creative_bodies?.[0] || '';
+  const mtHeadline = ad.ad_title || ad._raw?.title || ad.ad_creative_link_titles?.[0] || '';
+  const mtTitle    = (mtBody || mtHeadline || ad.page_name || 'No Title').slice(0, 120);
 
   const mtBrand  = ad.page_name || ad._raw?.page_name || ad._raw?.brand || ad.bylines || 'Unknown Page';
   const mtStatus = ad.active === false ? 'Inactive' : 'Active';
