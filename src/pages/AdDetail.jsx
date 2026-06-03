@@ -283,46 +283,67 @@ const AI = {
 };
 
 function ShopAdCard({ ad, onClick }) {
-  const cover     = ad.video_info?.cover || ad.imageUrl || '';
-  const title     = ad.ad_title || ad.title || 'No Title';
-  const startDate = ad.first_shown_date || ad.start_date;
-  const endDate   = ad.last_shown_date  || ad.end_date;
-  const isActive  = !endDate || new Date(endDate * 1000) > new Date();
-  const runDays   = startDate ? Math.floor((Date.now()/1000 - startDate)/86400) : null;
-  const likes     = ad.like || ad.metrics?.likes || 0;
-  const countries = ad.country_code ? (Array.isArray(ad.country_code) ? ad.country_code : [ad.country_code]) : [];
-  const lowImp    = (ad.impression||ad.reach||0) > 0 && (ad.impression||ad.reach||0) < 1000;
-  const fmt = (ts) => ts ? new Date(ts*1000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
+  const isMeta    = !!(ad.page_name || ad.library_id || ad._source === 'mongodb_scraped');
+  // Cover image — Meta ya TikTok dono handle
+  const cover     = isMeta
+    ? (ad.r2_image_url || ad.image || ad.ad_snapshot_url || '')
+    : (ad.video_info?.cover || ad.imageUrl || '');
+  const title     = isMeta
+    ? (ad.ad_title || ad.ad_body || ad.page_name || 'No Title')
+    : (ad.ad_title || ad.title || 'No Title');
+  const isActive  = isMeta
+    ? (ad.active === true || ad.status === 'Active')
+    : (!ad.end_date || new Date(ad.end_date * 1000) > new Date());
+  const startDate = ad.ad_delivery_start_time || ad.first_shown_date || ad.start_date;
+  const endDate   = ad.ad_delivery_stop_time  || ad.last_shown_date  || ad.end_date;
+  const runDays   = startDate ? Math.floor((Date.now()/1000 - (typeof startDate==='string'?new Date(startDate).getTime()/1000:startDate))/86400) : null;
+  const likes     = ad.likes || ad.like || ad.metrics?.likes || 0;
+  const spend     = ad.estimated_spend || ad.spend || null;
+  const impressions = ad.estimated_impressions || ad.impressions || ad.impression || null;
+  const lowImp    = impressions > 0 && impressions < 1000;
+  const fmt = (ts) => {
+    if (!ts) return '—';
+    const d = typeof ts === 'string' ? new Date(ts) : new Date(ts * 1000);
+    return isNaN(d) ? '—' : d.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'2-digit'});
+  };
 
   return (
     <div onClick={onClick} className="shop-ad-card" style={SC.card}>
       <div style={SC.thumb}>
         {cover
-          ? <img src={cover} alt={title} style={{width:'100%',height:'100%',objectFit:'contain',display:'block',background:'#0f0f1a'}} />
-          : <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',fontSize:'2rem',background:'#161625'}}>🎵</div>
-        }
+          ? <img src={cover} alt={title} style={{width:'100%',height:'100%',objectFit:'contain',display:'block',background:'#0f0f1a'}} onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} />
+          : null}
+        <div style={{display:'none',alignItems:'center',justifyContent:'center',height:'100%',fontSize:'2rem',background:'#161625',position:'absolute',inset:0}}>
+          {isMeta ? '📣' : '🎵'}
+        </div>
+        {!cover && <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100%',fontSize:'2rem',background:'#161625'}}>{isMeta ? '📣' : '🎵'}</div>}
         <span style={{...SC.badge,...(isActive?SC.badgeGreen:SC.badgeGray)}}>{isActive?'● Active':'● Ended'}</span>
         {lowImp && <span style={SC.badgeLow}>⚠️ Low</span>}
+        {isMeta && (ad.format==='video'||ad.is_video) && (
+          <span style={SC.badgeVideo}>▶ Video</span>
+        )}
       </div>
       <div style={SC.body}>
         <div style={SC.dateRow}>
           <span style={SC.dateChip}>{fmt(startDate)}</span>
           <span style={{color:'#555',fontSize:'.6rem'}}>→</span>
-          <span style={SC.dateChip}>{endDate ? fmt(endDate) : 'Today'}</span>
-          {runDays!==null && <span style={SC.daysBadge}>{runDays}d</span>}
+          <span style={SC.dateChip}>{isActive ? 'Today' : fmt(endDate)}</span>
+          {runDays!==null && runDays >= 0 && <span style={SC.daysBadge}>{runDays}d</span>}
         </div>
         <p style={SC.title}>{title}</p>
-        {countries.length > 0 && (
-          <div style={SC.countriesRow}>
-            {countries.slice(0,4).map(c => (
-              <span key={c} style={SC.flag}>{c.toUpperCase().replace(/./g,ch=>String.fromCodePoint(127397+ch.charCodeAt(0)))}</span>
-            ))}
-            {countries.length > 4 && <span style={{color:'#8888aa',fontSize:'.65rem'}}>+{countries.length-4}</span>}
+        {spend && (
+          <div style={{fontSize:'.65rem',color:'#8b6bff',fontWeight:700}}>
+            💰 ~${typeof spend==='number'?spend.toLocaleString():spend}
+          </div>
+        )}
+        {impressions && impressions > 0 && (
+          <div style={{fontSize:'.65rem',color:'#8888aa'}}>
+            👁 {impressions > 999999 ? (impressions/1000000).toFixed(1)+'M' : impressions > 999 ? (impressions/1000).toFixed(0)+'K' : impressions}
           </div>
         )}
         <div style={SC.footer}>
           <span style={SC.likes}>❤️ {likes>999?(likes/1000).toFixed(1)+'k':likes}</span>
-          <button onClick={onClick} style={SC.analysisBtn}>🔍 Ad Analysis</button>
+          <button onClick={onClick} style={SC.analysisBtn}>🔍 View Ad</button>
         </div>
       </div>
     </div>
@@ -336,6 +357,7 @@ const SC = {
   badgeGreen:  {background:'rgba(74,222,128,.12)',color:'#4ade80',borderColor:'rgba(74,222,128,.3)'},
   badgeGray:   {background:'rgba(255,255,255,.06)',color:'#8888aa',borderColor:'rgba(255,255,255,.1)'},
   badgeLow:    {position:'absolute',top:'7px',right:'7px',background:'rgba(251,146,60,.12)',border:'1px solid rgba(251,146,60,.3)',color:'#fb923c',borderRadius:'20px',padding:'.2rem .5rem',fontSize:'.6rem',fontWeight:700},
+  badgeVideo:  {position:'absolute',bottom:'7px',right:'7px',background:'rgba(108,71,255,.18)',border:'1px solid rgba(108,71,255,.35)',color:'#a78bfa',borderRadius:'20px',padding:'.2rem .5rem',fontSize:'.6rem',fontWeight:700},
   body:        {padding:'.75rem',display:'flex',flexDirection:'column',gap:'.5rem',flex:1},
   dateRow:     {display:'flex',alignItems:'center',gap:'.3rem',flexWrap:'wrap'},
   dateChip:    {background:'#161625',borderRadius:'5px',padding:'.15rem .45rem',fontSize:'.62rem',color:'#8888aa',fontWeight:600},
@@ -667,8 +689,14 @@ export default function AdDetail() {
   useEffect(() => {
     if (passedAd) {
       setDetail(passedAd);
-      const advId = passedAd?.advertiser_id || passedAd?.brand_id;
-      if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
+      const isMetaAd = !!(passedAd?.page_name || passedAd?.library_id || passedAd?.snapshot_url || passedAd?._source === 'mongodb_scraped');
+      if (isMetaAd) {
+        const brandName = passedAd?.page_name || passedAd?.brand;
+        if (brandName) fetchMetaBrandAds(brandName, passedAd?.id || passedAd?.library_id);
+      } else {
+        const advId = passedAd?.advertiser_id || passedAd?.brand_id;
+        if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
+      }
       fetchRelatedAds(passedAd);
       setLoading(false);
     } else {
@@ -682,8 +710,14 @@ export default function AdDetail() {
       const res  = await api.get(`/ads/tiktok/${adId}`);
       const data = res.data?.data?.data || res.data?.data || res.data || {};
       setDetail(data);
-      const advId = data.advertiser_id || data.brand_id || passedAd?.advertiser_id;
-      if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
+      const isMetaAd = !!(data?.page_name || data?.library_id || data?.snapshot_url || data?._source === 'mongodb_scraped');
+      if (isMetaAd) {
+        const brandName = data?.page_name || data?.brand;
+        if (brandName) fetchMetaBrandAds(brandName, data?.id || data?.library_id);
+      } else {
+        const advId = data.advertiser_id || data.brand_id || passedAd?.advertiser_id;
+        if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
+      }
       fetchRelatedAds(data);
     } catch {
       if (passedAd) {
@@ -720,6 +754,19 @@ export default function AdDetail() {
       const ads = res.data?.data || [];
       setBrandAds(ads.filter(a=>(a.id||a.ad_id)!==adId).slice(0,8));
     } catch(e) { console.error(e); }
+    setBrandLoading(false);
+  };
+
+  // Meta ads ke liye — same brand ke ads MongoDB se fetch karo
+  const fetchMetaBrandAds = async (brandName, excludeLibraryId) => {
+    setBrandLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: 20 });
+      if (excludeLibraryId) params.append('exclude', excludeLibraryId);
+      const res = await api.get(`/ads/meta/brand/${encodeURIComponent(brandName)}?${params}`);
+      const ads = res.data?.data || [];
+      setBrandAds(ads.slice(0, 20));
+    } catch(e) { console.error('Meta brand ads fetch error:', e); }
     setBrandLoading(false);
   };
 
@@ -1061,7 +1108,10 @@ export default function AdDetail() {
         ) : brandAds.length>0 ? (
           <div style={SS.grid}>
             {brandAds.map((a,i)=>(
-              <ShopAdCard key={a.id||a.ad_id||i} ad={a} onClick={()=>navigate(`/ad/${a.id||a.ad_id}`,{state:{ad:a}})} />
+              <ShopAdCard key={a.id||a.ad_id||a.library_id||i} ad={a} onClick={()=>{
+                const adRouteId = a.library_id || a.id || a.ad_id;
+                navigate(`/ad/${adRouteId}`,{state:{ad:a}});
+              }} />
             ))}
           </div>
         ) : (
