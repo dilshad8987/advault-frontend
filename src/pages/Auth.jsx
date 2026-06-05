@@ -94,9 +94,14 @@ export default function Auth() {
         : { name: form.name, email: form.email, password: form.password };
 
       const res = await api.post(endpoint, payload);
-      localStorage.setItem('accessToken', res.data.accessToken);
-      localStorage.setItem('refreshToken', res.data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+
+      // Fix 4: Token existence check — agar undefined aaya toh silently dashboard pe mat bhejo
+      const { accessToken, refreshToken, user } = res.data;
+      if (!accessToken) throw new Error('Server se token nahi mila. Dobara try karo.');
+
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
       toast.success(isLogin ? 'Login ho gaye!' : 'Account ban gaya!');
       navigate('/dashboard');
     } catch (err) {
