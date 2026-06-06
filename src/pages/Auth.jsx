@@ -57,26 +57,26 @@ export default function Auth() {
     const newErrors = {};
 
     if (!form.email) {
-      newErrors.email = 'Email daalna zaroori hai.';
+      newErrors.email = 'Email is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = 'Valid email format daalo.';
+      newErrors.email = 'Enter a valid email address.';
     } else if (isTempEmail(form.email)) {
-      newErrors.email = 'Temporary email allowed nahi hai. Real email use karo.';
+      newErrors.email = 'Invalid email.';
     }
 
     if (!isLogin) {
       if (!form.name || form.name.trim().length < 2) {
-        newErrors.name = 'Naam kam se kam 2 characters ka hona chahiye.';
+        newErrors.name = 'Too short.';
       }
 
       const { checks } = getPasswordStrength(form.password);
-      if (!checks.length)   newErrors.password = 'Password kam se kam 8 characters ka hona chahiye.';
-      else if (!checks.upper)   newErrors.password = 'Ek uppercase letter zaroori hai (A-Z).';
-      else if (!checks.lower)   newErrors.password = 'Ek lowercase letter zaroori hai (a-z).';
-      else if (!checks.number)  newErrors.password = 'Ek number zaroori hai (0-9).';
-      else if (!checks.special) newErrors.password = 'Ek special character zaroori hai (!@#$%^&* etc).';
+      if (!checks.length)   newErrors.password = 'Password must be at least 8 characters.';
+      else if (!checks.upper)   newErrors.password = '';
+      else if (!checks.lower)   newErrors.password = 'Include at least one lowercase letter (a-z).';
+      else if (!checks.number)  newErrors.password = '';
+      else if (!checks.special) newErrors.password = '';
     } else {
-      if (!form.password) newErrors.password = 'Password daalna zaroori hai.';
+      if (!form.password) newErrors.password = 'Password is required.';
     }
 
     setErrors(newErrors);
@@ -97,12 +97,12 @@ export default function Auth() {
 
       // Fix 4: Token existence check — agar undefined aaya toh silently dashboard pe mat bhejo
       const { accessToken, refreshToken, user } = res.data;
-      if (!accessToken) throw new Error('Server se token nahi mila. Dobara try karo.');
+      if (!accessToken) throw new Error('Authentication failed. Please try again.');
 
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
-      toast.success(isLogin ? 'Login ho gaye!' : 'Account ban gaya!');
+      toast.success(isLogin ? `Welcome back, ${user?.name || ''}!` : 'Welcome to AdVault!');
       navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message;
@@ -111,7 +111,7 @@ export default function Auth() {
       } else if (msg?.toLowerCase().includes('vpn') || msg?.toLowerCase().includes('proxy')) {
         toast.error(msg, { duration: 6000, icon: '🚫' });
       } else {
-        toast.error(msg || (isLogin ? 'Login fail' : 'Register fail'));
+        toast.error(msg || (isLogin ? 'Login failed. Please try again.' : 'Registration failed. Please try again.'));
       }
     }
     setLoading(false);
@@ -119,7 +119,7 @@ export default function Auth() {
 
   // ─── Password Strength Bar ──────────────────────────────────────────────────
   const strengthColors = ['', '#ff4444', '#ff8800', '#ffcc00', '#88cc00', '#00cc66'];
-  const strengthLabels = ['', 'Bahut Kamzor', 'Kamzor', 'Theek Hai', 'Acha', 'Strong'];
+  const strengthLabels = ['', 'Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
 
   return (
     <div style={s.page}>
@@ -128,11 +128,11 @@ export default function Auth() {
           🔍 Ad<span style={{ color: '#8b6bff' }}>Vault</span>
         </Link>
 
-        <h2 style={s.title}>{isLogin ? 'Welcome Back' : 'Account Banao'}</h2>
+        <h2 style={s.title}>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
         <p style={s.sub}>
           {isLogin
-            ? 'Apne account mein login karo'
-            : 'Free mein shuru karo — no credit card required'}
+            ? 'Sign in to your account'
+            : 'Start free — no credit card required'}
         </p>
 
         {/* Name Field */}
@@ -141,7 +141,8 @@ export default function Auth() {
             <input
               style={{ ...s.input, ...(errors.name ? s.inputError : {}) }}
               name="name"
-              placeholder="Full Name"
+              placeholder="Name"
+              maxLength={8}
               value={form.name}
               onChange={handle}
             />
@@ -169,7 +170,7 @@ export default function Auth() {
               style={{ ...s.input, marginBottom: 0, paddingRight: '2.8rem', ...(errors.password ? s.inputError : {}) }}
               name="password"
               type={showPw ? 'text' : 'password'}
-              placeholder={isLogin ? 'Password' : 'Password (Strong chahiye)'}
+              placeholder={isLogin ? 'Password' : 'Password'}
               value={form.password}
               onChange={handle}
               onKeyDown={e => e.key === 'Enter' && submit()}
@@ -230,26 +231,18 @@ export default function Auth() {
             </Link>
           </div>
         )}
-
-        {/* Security Notice */}
-        {!isLogin && (
-          <div style={s.securityNotice}>
-            🔒 Ek account sirf ek device pe chalega. VPN/Proxy allowed nahi.
-          </div>
-        )}
-
         <button
           style={{ ...s.btn, opacity: loading ? 0.7 : 1 }}
           onClick={submit}
           disabled={loading}
         >
-          {loading ? 'Loading...' : isLogin ? 'Login' : '🚀 Create Account'}
+          {loading ? isLogin ? 'Signing in...' : 'Creating account...' : isLogin ? 'Login' : '🚀 Create Account'}
         </button>
 
         <p style={s.link}>
-          {isLogin ? 'Account nahi hai? ' : 'Pehle se account hai? '}
+          {isLogin ? "Don't have an account? " : 'Already have an account? '}
           <Link to={isLogin ? '/register' : '/login'} style={{ color: '#8b6bff' }}>
-            {isLogin ? 'Register karo' : 'Login karo'}
+            {isLogin ? 'Sign up' : 'Sign in'}
           </Link>
         </p>
 
