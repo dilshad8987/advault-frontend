@@ -7,9 +7,22 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' }
 });
 
+// Device ID generate karo — ek baar localStorage mein save hota hai
+// VPN on/off karne se yeh nahi badlega, reliable device identifier hai
+function getDeviceId() {
+  let id = localStorage.getItem('x-device-id');
+  if (!id) {
+    id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('x-device-id', id);
+  }
+  return id;
+}
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) config.headers['Authorization'] = 'Bearer ' + token;
+  // Har request ke saath device ID bhejo — server fingerprint mein use hoti hai
+  config.headers['x-device-id'] = getDeviceId();
   return config;
 });
 
