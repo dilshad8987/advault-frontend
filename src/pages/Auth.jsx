@@ -16,19 +16,6 @@ function getPasswordStrength(password) {
   return { checks, score };
 }
 
-const TEMP_DOMAINS = new Set([
-  'mailinator.com','guerrillamail.com','tempmail.com','yopmail.com',
-  'trashmail.com','10minutemail.com','maildrop.cc','dispostable.com',
-  'temp-mail.org','temp-mail.io','fakeinbox.com','mailnesia.com',
-  'throwam.com','tempr.email','mohmal.com','emailondeck.com',
-  'getairmail.com','spamgourmet.com','spamcorpse.com',
-]);
-
-function isTempEmail(email) {
-  const domain = email?.split('@')[1]?.toLowerCase();
-  return domain ? TEMP_DOMAINS.has(domain) : false;
-}
-
 export default function Auth() {
   const location  = useLocation();
   const isLogin   = location.pathname === '/login';
@@ -58,9 +45,7 @@ export default function Auth() {
 
     if (!form.email) {
       newErrors.email = 'Email is required.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = 'Enter a valid email address.';
-    } else if (isTempEmail(form.email)) {
+    } else if (!/^[a-zA-Z0-9]+@gmail\.com$/.test(form.email?.trim())) {
       newErrors.email = 'Invalid email.';
     }
 
@@ -111,7 +96,7 @@ export default function Auth() {
       } else if (msg?.toLowerCase().includes('vpn') || msg?.toLowerCase().includes('proxy')) {
         toast.error(msg, { duration: 6000, icon: '🚫' });
       } else {
-        toast.error(msg || (isLogin ? 'Login failed. Please try again.' : 'Registration failed. Please try again.'));
+        toast.error(msg || (isLogin ? 'Login failed.' : 'Registration failed.'));
       }
     }
     setLoading(false);
@@ -240,7 +225,7 @@ export default function Auth() {
         </button>
 
         <p style={s.link}>
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
+          {isLogin ? "New here? " : 'Have an account? '}
           <Link to={isLogin ? '/register' : '/login'} style={{ color: '#8b6bff' }}>
             {isLogin ? 'Sign up' : 'Sign in'}
           </Link>
