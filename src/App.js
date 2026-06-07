@@ -15,7 +15,18 @@ function PrivateRoute({ children }) {
 
 function PublicRoute({ children }) {
   const token = localStorage.getItem('accessToken');
-  return token ? <Navigate to="/dashboard" /> : children;
+  // Token exist karta hai but expired ho sakta hai — sirf valid JWT check karo
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.exp * 1000 > Date.now()) return <Navigate to="/dashboard" />;
+    } catch (e) {}
+    // Expired/invalid token — clear karo
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+  }
+  return children;
 }
 
 function App() {
