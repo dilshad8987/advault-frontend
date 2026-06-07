@@ -16,29 +16,24 @@ function getPasswordStrength(password) {
   return { checks, score };
 }
 
-const TEMP_DOMAINS = new Set([
-  'mailinator.com','guerrillamail.com','tempmail.com','yopmail.com',
-  'trashmail.com','10minutemail.com','maildrop.cc','dispostable.com',
-  'temp-mail.org','temp-mail.io','fakeinbox.com','mailnesia.com',
-  'throwam.com','tempr.email','mohmal.com','emailondeck.com',
-  'getairmail.com','spamgourmet.com','spamcorpse.com',
-]);
-
-function isTempEmail(email) {
-  const domain = email?.split('@')[1]?.toLowerCase();
-  return domain ? TEMP_DOMAINS.has(domain) : false;
-}
 
 export default function Auth() {
   const location  = useLocation();
   const isLogin   = location.pathname === '/login';
   const navigate  = useNavigate();
 
-  const [form, setForm]     = useState({ name: '', email: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw] = useState(false);
+  const [form,     setForm]     = useState({ name: '', email: '', password: '' });
+  const [loading,  setLoading]  = useState(false);
+  const [showPw,   setShowPw]   = useState(false);
   const [pwStrength, setPwStrength] = useState({ checks: {}, score: 0 });
-  const [errors, setErrors] = useState({});
+  const [errors,   setErrors]   = useState({});
+  // screen: 'auth' | 'forgot' | 'reset'
+  const [screen,   setScreen]   = useState('auth');
+  const [fpEmail,  setFpEmail]  = useState('');
+  const [fpSent,   setFpSent]   = useState(false);
+  const [rpToken,  setRpToken]  = useState('');
+  const [rpPass,   setRpPass]   = useState('');
+
 
   // Real-time password strength
   useEffect(() => {
@@ -58,9 +53,7 @@ export default function Auth() {
 
     if (!form.email) {
       newErrors.email = 'Email is required.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = 'Enter a valid email address.';
-    } else if (isTempEmail(form.email)) {
+    } else if (!/^[a-zA-Z0-9]+@gmail\.com$/.test(form.email?.trim())) {
       newErrors.email = 'Invalid email.';
     }
 
@@ -83,125 +76,144 @@ export default function Auth() {
     return Object.keys(newErrors).length === 0;
   }
 
-  // Register Step 1 — send OTP
   const submit = async () => {
     if (!validateForm()) return;
     setLoading(true);
     try {
-      if (isLogin) {
-        // Login — direct
-        const res = await api.post('/auth/login', { email: form.email, password: form.password });
-        const { accessToken, refreshToken, user } = res.data;
-        if (!accessToken) throw new Error('Authentication failed.');
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', JSON.stringify(user));
-        toast.success(`Welcome back, ${user?.name || ''}!`);
-        navigate('/dashboard');
-      } else {
-        // Register — send OTP first
-        const res = await api.post('/auth/register', {
-          name: form.name, email: form.email, password: form.password
-        });
-        if (res.data.step === 'verify_otp') {
-          setOtpEmail(res.data.email);
-          setOtpStep(true);
-          toast.success('Verification code sent to your email.');
-        }
-      }
-    } catch (err) {
-      const msg = err.response?.data?.message;
-      if (msg?.toLowerCase().includes('device')) {
-        toast.error(msg, { duration: 6000 });
-      } else if (msg?.toLowerCase().includes('vpn') || msg?.toLowerCase().includes('proxy')) {
-        toast.error(msg, { duration: 6000, icon: '🚫' });
-      } else {
-        toast.error(msg || (isLogin ? 'Login failed.' : 'Registration failed.'));
-      }
-    }
-    setLoading(false);
-  };
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
+      const payload  = isLogin
+        ? { email: form.email, password: form.password }
+        : { name: form.name, email: form.email, password: form.password };
 
-  // Register Step 2 — verify OTP
-  const verifyOtp = async () => {
-    if (!otp || otp.length !== 6) return toast.error('Enter the 6-digit code.');
-    setLoading(true);
-    try {
-      const res = await api.post('/auth/verify-otp', { email: otpEmail, otp });
+      const res = await api.post(endpoint, payload);
       const { accessToken, refreshToken, user } = res.data;
-      if (!accessToken) throw new Error('Verification failed.');
+      if (!accessToken) throw new Error('Authentication failed.');
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
-      toast.success('Welcome to AdVault!');
+      toast.success(isLogin ? `Welcome back, ${user?.name || ''}!` : 'Welcome to AdVault!');
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Verification failed.');
+      const msg = err.response?.data?.message;
+      if (msg?.toLowerCase().includes('device')) toast.error(msg, { duration: 6000 });
+      else if (msg?.toLowerCase().includes('vpn') || msg?.toLowerCase().includes('proxy')) toast.error(msg, { duration: 6000, icon: '🚫' });
+      else toast.error(msg || (isLogin ? 'Login failed.' : 'Registration failed.'));
     }
     setLoading(false);
   };
 
-  // Resend OTP
-  const resendOtp = async () => {
-    setLoading(true);
-    try {
-      await api.post('/auth/register', {
-        name: form.name, email: form.email, password: form.password
-      });
-      toast.success('New code sent.');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to resend.');
-    }
-    setLoading(false);
-  };
+
 
   // ─── Password Strength Bar ──────────────────────────────────────────────────
   const strengthColors = ['', '#ff4444', '#ff8800', '#ffcc00', '#88cc00', '#00cc66'];
   const strengthLabels = ['', 'Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
 
-  // ─── OTP Verification Screen ──────────────────────────────────────────────────
-  if (otpStep) return (
-    <div style={s.page}>
-      <div style={s.card}>
-        <Link to="/" style={s.logo}>🔍 Ad<span style={{ color: '#8b6bff' }}>Vault</span></Link>
-        <h2 style={s.title}>Check your email</h2>
-        <p style={s.sub}>We sent a 6-digit code to <strong>{otpEmail}</strong></p>
 
-        <input
-          style={{ ...s.input, textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.5rem', fontWeight: '700' }}
-          type="text"
-          inputMode="numeric"
-          maxLength={6}
-          placeholder="------"
-          value={otp}
-          onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-          onKeyDown={e => e.key === 'Enter' && verifyOtp()}
-        />
+  // Forgot Password — send reset link
+  const sendReset = async () => {
+    if (!fpEmail) return toast.error('Email is required.');
+    if (!/^[a-zA-Z0-9]+@gmail\.com$/.test(fpEmail.trim())) return toast.error('Invalid email.');
+    setLoading(true);
+    try {
+      await api.post('/auth/forgot-password', { email: fpEmail.trim() });
+      setFpSent(true);
+      toast.success('Reset link sent!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Something went wrong.');
+    }
+    setLoading(false);
+  };
 
-        <button style={{ ...s.btn, marginBottom: '0.75rem', opacity: loading ? 0.7 : 1 }}
-          onClick={verifyOtp} disabled={loading}>
-          {loading ? 'Verifying...' : 'Verify Email'}
-        </button>
+  // Reset Password — set new password
+  const resetPassword = async () => {
+    if (!rpPass || rpPass.length < 8) return toast.error('Min 8 characters.');
+    setLoading(true);
+    try {
+      const params  = new URLSearchParams(window.location.search);
+      const token   = params.get('token') || rpToken;
+      const email   = params.get('email') || fpEmail;
+      await api.post('/auth/reset-password', { email, token, newPassword: rpPass });
+      toast.success('Password updated! Please sign in.');
+      navigate('/login');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Reset failed.');
+    }
+    setLoading(false);
+  };
 
-        <p style={{ ...s.link, textAlign: 'center' }}>
-          Didn't receive it?{' '}
-          <span style={{ color: '#8b6bff', cursor: 'pointer' }} onClick={resendOtp}>Resend code</span>
-        </p>
-        <p style={{ ...s.link, textAlign: 'center' }}>
-          <span style={{ color: '#8888aa', fontSize: '.8rem', cursor: 'pointer' }}
-            onClick={() => { setOtpStep(false); setOtp(''); }}>← Back</span>
-        </p>
-      </div>
-    </div>
-  );
+  // Check if landing on /reset-password route
+  const isResetPage = window.location.pathname === '/reset-password';
 
   return (
+
     <div style={s.page}>
       <div style={s.card}>
         <Link to="/" style={s.logo}>
           🔍 Ad<span style={{ color: '#8b6bff' }}>Vault</span>
         </Link>
 
+        {/* ── Forgot Password Screen ─────────────────────────── */}
+        {(screen === 'forgot' && !isResetPage) && (
+          <>
+            {!fpSent ? (
+              <>
+                <h2 style={s.title}>Forgot Password?</h2>
+                <p style={s.sub}>Enter your email — we'll send a reset link.</p>
+                <input style={s.input} type="email" placeholder="Email"
+                  value={fpEmail} onChange={e => setFpEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendReset()} />
+                <button style={{ ...s.btn, opacity: loading ? 0.7 : 1 }}
+                  onClick={sendReset} disabled={loading}>
+                  {loading ? 'Sending...' : 'Send Reset Link'}
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '1rem' }}>✅</div>
+                <h2 style={s.title}>Check your email</h2>
+                <p style={s.sub}>
+                  Reset link sent to <b style={{ color: '#8b6bff' }}>{fpEmail}</b>.
+                  Expires in <strong>10 minutes</strong>.
+                </p>
+                <p style={{ color: '#8888aa', fontSize: '.8rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+                  Check spam if you don't see it.
+                </p>
+                <button style={s.btn} onClick={() => navigate('/login')}>Back to Login</button>
+                <p style={s.link}>
+                  <span style={{ color: '#8b6bff', cursor: 'pointer' }}
+                    onClick={() => { setFpSent(false); setFpEmail(''); }}>Resend link</span>
+                </p>
+              </>
+            )}
+            <p style={{ ...s.link, marginTop: '1rem' }}>
+              <span style={{ color: '#8888aa', fontSize: '.8rem', cursor: 'pointer' }}
+                onClick={() => setScreen('auth')}>← Back to Login</span>
+            </p>
+          </>
+        )}
+
+        {/* ── Reset Password Screen (from email link) ────────── */}
+        {isResetPage && (
+          <>
+            <h2 style={s.title}>Set New Password</h2>
+            <p style={s.sub}>Choose a strong password for your account.</p>
+            <input style={s.input} type="password" placeholder="New password"
+              value={rpPass} onChange={e => setRpPass(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && resetPassword()} />
+            <button style={{ ...s.btn, opacity: loading ? 0.7 : 1 }}
+              onClick={resetPassword} disabled={loading}>
+              {loading ? 'Updating...' : 'Update Password'}
+            </button>
+            <p style={{ ...s.link, marginTop: '1rem' }}>
+              <span style={{ color: '#8888aa', fontSize: '.8rem', cursor: 'pointer' }}
+                onClick={() => navigate('/login')}>← Back to Login</span>
+            </p>
+          </>
+        )}
+
+        {/* ── Login / Register Screen ───────────────────────── */}
+        {screen === 'auth' && !isResetPage && (
+          <>
         <h2 style={s.title}>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
         <p style={s.sub}>
           {isLogin
@@ -300,9 +312,10 @@ export default function Auth() {
         {/* Forgot Password */}
         {isLogin && (
           <div style={{ textAlign: 'right', marginBottom: '.75rem', marginTop: '-.25rem' }}>
-            <Link to="/forgot-password" style={{ color: '#8b6bff', fontSize: '.82rem' }}>
+            <span style={{ color: '#8b6bff', fontSize: '.82rem', cursor: 'pointer' }}
+              onClick={() => setScreen('forgot')}>
               Forgot Password?
-            </Link>
+            </span>
           </div>
         )}
         <button
@@ -323,6 +336,8 @@ export default function Auth() {
         <p style={s.link}>
           <Link to="/" style={{ color: '#8888aa', fontSize: '.8rem' }}>← Back to Home</Link>
         </p>
+          </>
+        )}
       </div>
     </div>
   );
