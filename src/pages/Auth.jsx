@@ -16,6 +16,19 @@ function getPasswordStrength(password) {
   return { checks, score };
 }
 
+const TEMP_DOMAINS = new Set([
+  'mailinator.com','guerrillamail.com','tempmail.com','yopmail.com',
+  'trashmail.com','10minutemail.com','maildrop.cc','dispostable.com',
+  'temp-mail.org','temp-mail.io','fakeinbox.com','mailnesia.com',
+  'throwam.com','tempr.email','mohmal.com','emailondeck.com',
+  'getairmail.com','spamgourmet.com','spamcorpse.com',
+]);
+
+function isTempEmail(email) {
+  const domain = email?.split('@')[1]?.toLowerCase();
+  return domain ? TEMP_DOMAINS.has(domain) : false;
+}
+
 export default function Auth() {
   const location  = useLocation();
   const isLogin   = location.pathname === '/login';
@@ -45,7 +58,9 @@ export default function Auth() {
 
     if (!form.email) {
       newErrors.email = 'Email is required.';
-    } else if (!/^[a-zA-Z0-9]+@gmail\.com$/.test(form.email?.trim())) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = 'Enter a valid email address.';
+    } else if (isTempEmail(form.email)) {
       newErrors.email = 'Invalid email.';
     }
 
@@ -68,27 +83,32 @@ export default function Auth() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // Register Step 1 — send OTP
   const submit = async () => {
     if (!validateForm()) return;
-
     setLoading(true);
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const payload  = isLogin
-        ? { email: form.email, password: form.password }
-        : { name: form.name, email: form.email, password: form.password };
-
-      const res = await api.post(endpoint, payload);
-
-      // Fix 4: Token existence check — agar undefined aaya toh silently dashboard pe mat bhejo
-      const { accessToken, refreshToken, user } = res.data;
-      if (!accessToken) throw new Error('Authentication failed. Please try again.');
-
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      toast.success(isLogin ? `Welcome back, ${user?.name || ''}!` : 'Welcome to AdVault!');
-      navigate('/dashboard');
+      if (isLogin) {
+        // Login — direct
+        const res = await api.post('/auth/login', { email: form.email, password: form.password });
+        const { accessToken, refreshToken, user } = res.data;
+        if (!accessToken) throw new Error('Authentication failed.');
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user', JSON.stringify(user));
+        toast.success(`Welcome back, ${user?.name || ''}!`);
+        navigate('/dashboard');
+      } else {
+        // Register — send OTP first
+        const res = await api.post('/auth/register', {
+          name: form.name, email: form.email, password: form.password
+        });
+        if (res.data.step === 'verify_otp') {
+          setOtpEmail(res.data.email);
+          setOtpStep(true);
+          toast.success('Verification code sent to your email.');
+        }
+      }
     } catch (err) {
       const msg = err.response?.data?.message;
       if (msg?.toLowerCase().includes('device')) {
@@ -102,9 +122,78 @@ export default function Auth() {
     setLoading(false);
   };
 
+  // Register Step 2 — verify OTP
+  const verifyOtp = async () => {
+    if (!otp || otp.length !== 6) return toast.error('Enter the 6-digit code.');
+    setLoading(true);
+    try {
+      const res = await api.post('/auth/verify-otp', { email: otpEmail, otp });
+      const { accessToken, refreshToken, user } = res.data;
+      if (!accessToken) throw new Error('Verification failed.');
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      toast.success('Welcome to AdVault!');
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Verification failed.');
+    }
+    setLoading(false);
+  };
+
+  // Resend OTP
+  const resendOtp = async () => {
+    setLoading(true);
+    try {
+      await api.post('/auth/register', {
+        name: form.name, email: form.email, password: form.password
+      });
+      toast.success('New code sent.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend.');
+    }
+    setLoading(false);
+  };
+
   // ─── Password Strength Bar ──────────────────────────────────────────────────
   const strengthColors = ['', '#ff4444', '#ff8800', '#ffcc00', '#88cc00', '#00cc66'];
   const strengthLabels = ['', 'Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+
+  // ─── OTP Verification Screen ──────────────────────────────────────────────────
+  if (otpStep) return (
+    <div style={s.page}>
+      <div style={s.card}>
+        <Link to="/" style={s.logo}>🔍 Ad<span style={{ color: '#8b6bff' }}>Vault</span></Link>
+        <h2 style={s.title}>Check your email</h2>
+        <p style={s.sub}>We sent a 6-digit code to <strong>{otpEmail}</strong></p>
+
+        <input
+          style={{ ...s.input, textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.5rem', fontWeight: '700' }}
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          placeholder="------"
+          value={otp}
+          onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          onKeyDown={e => e.key === 'Enter' && verifyOtp()}
+        />
+
+        <button style={{ ...s.btn, marginBottom: '0.75rem', opacity: loading ? 0.7 : 1 }}
+          onClick={verifyOtp} disabled={loading}>
+          {loading ? 'Verifying...' : 'Verify Email'}
+        </button>
+
+        <p style={{ ...s.link, textAlign: 'center' }}>
+          Didn't receive it?{' '}
+          <span style={{ color: '#8b6bff', cursor: 'pointer' }} onClick={resendOtp}>Resend code</span>
+        </p>
+        <p style={{ ...s.link, textAlign: 'center' }}>
+          <span style={{ color: '#8888aa', fontSize: '.8rem', cursor: 'pointer' }}
+            onClick={() => { setOtpStep(false); setOtp(''); }}>← Back</span>
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <div style={s.page}>
@@ -225,7 +314,7 @@ export default function Auth() {
         </button>
 
         <p style={s.link}>
-          {isLogin ? "New here? " : 'Have an account? '}
+          {isLogin ? "Don't have an account? " : 'Already have an account? '}
           <Link to={isLogin ? '/register' : '/login'} style={{ color: '#8b6bff' }}>
             {isLogin ? 'Sign up' : 'Sign in'}
           </Link>
