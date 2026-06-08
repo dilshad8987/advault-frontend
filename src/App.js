@@ -3,11 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Landing from './pages/Landing';
 import Auth from './pages/Auth';
-import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import AdDetail from './pages/AdDetail';
 import Profile from './pages/Profile';
-import ResetPassword from './pages/ResetPassword';
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('accessToken');
@@ -82,8 +80,8 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<PublicRoute><Auth /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Auth /></PublicRoute>} />
-        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-        <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><Auth /></PublicRoute>} />
+        <Route path="/reset-password" element={<PublicRoute><Auth /></PublicRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/ad/:adId" element={<PrivateRoute><AdDetail /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
