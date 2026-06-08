@@ -28,6 +28,7 @@ export default function Auth() {
   const [pwStrength, setPwStrength] = useState({ checks: {}, score: 0 });
   const [errors,   setErrors]   = useState({});
   // screen: 'auth' | 'forgot' | 'reset'
+  const isForgotInit = typeof window !== 'undefined' && window.location.pathname === '/forgot-password';
   const [screen,   setScreen]   = useState('auth');
   const [fpEmail,  setFpEmail]  = useState('');
   const [fpSent,   setFpSent]   = useState(false);
@@ -41,6 +42,12 @@ export default function Auth() {
       setPwStrength(getPasswordStrength(form.password));
     }
   }, [form.password, isLogin]);
+
+  // Auto-switch screen based on route
+  useEffect(() => {
+    if (location.pathname === '/forgot-password') setScreen('forgot');
+    else setScreen('auth');
+  }, [location.pathname]);
 
   const handle = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -141,8 +148,9 @@ export default function Auth() {
     setLoading(false);
   };
 
-  // Check if landing on /reset-password route
-  const isResetPage = window.location.pathname === '/reset-password';
+  // Check if landing on /reset-password or /forgot-password route
+  const isResetPage  = location.pathname === '/reset-password';
+  const isForgotPage = location.pathname === '/forgot-password';
 
   return (
 
