@@ -9,60 +9,50 @@ const PLANS = [
     id: 'free',
     name: 'Free',
     price: '$0',
-    period: '/mo',
-    badge: null,
-    accent: '#555577',
-    glowColor: 'transparent',
-    bgGradient: 'linear-gradient(160deg, rgba(255,255,255,.025) 0%, rgba(255,255,255,.01) 100%)',
-    borderColor: 'rgba(255,255,255,.08)',
-    features: ['200 Credits / month', 'TikTok Ads — limited', '3 Saved collections', 'Basic search filters'],
-    cta: 'Current Plan',
-    disabled: true,
+    period: 'forever',
+    accent: '#55557a',
+    features: ['200 credits / month', 'TikTok Ads (limited)', '3 Collections', 'Basic filters'],
+    cta: null,
   },
   {
     id: 'pro',
     name: 'Pro',
     price: '$29',
-    period: '/mo',
-    badge: 'Most Popular',
+    period: 'per month',
     accent: '#7c5cff',
-    glowColor: 'rgba(108,71,255,.18)',
-    bgGradient: 'linear-gradient(160deg, rgba(108,71,255,.09) 0%, rgba(108,71,255,.03) 100%)',
-    borderColor: 'rgba(108,71,255,.4)',
-    features: ['Unlimited Credits', 'TikTok + Facebook + Instagram', 'Unlimited collections', 'AliExpress products', 'Advanced filters', 'Priority support'],
+    glow: '0 0 60px rgba(108,71,255,.15)',
+    badge: 'Most Popular',
+    features: ['Unlimited credits', 'TikTok + Facebook + Instagram', 'Unlimited collections', 'AliExpress products', 'Advanced filters', 'Priority support'],
     cta: 'Upgrade to Pro',
-    disabled: false,
   },
   {
     id: 'elite',
     name: 'Elite',
     price: '$79',
-    period: '/mo',
+    period: 'per month',
+    accent: '#c8970a',
+    glow: '0 0 60px rgba(200,151,10,.1)',
     badge: 'Best Value',
-    accent: '#e8a000',
-    glowColor: 'rgba(232,160,0,.15)',
-    bgGradient: 'linear-gradient(160deg, rgba(232,160,0,.07) 0%, rgba(232,160,0,.02) 100%)',
-    borderColor: 'rgba(232,160,0,.35)',
-    features: ['Everything in Pro', 'Team access — 5 seats', 'API access', 'Custom exports', 'Dedicated manager', 'White-label reports'],
+    features: ['Everything in Pro', '5 team seats', 'API access', 'Custom exports', 'Dedicated manager', 'White-label reports'],
     cta: 'Get Elite',
-    disabled: false,
   },
 ];
 
-const PLAN_LABEL_MAP = { free: 'Free', pro: 'Pro', elite: 'Elite' };
-const PLAN_COLOR_MAP  = { free: '#555577', pro: '#7c5cff', elite: '#e8a000' };
+const PLAN_META = {
+  free:  { label: 'Free',  color: '#55557a' },
+  pro:   { label: 'Pro',   color: '#7c5cff' },
+  elite: { label: 'Elite', color: '#c8970a' },
+};
 
 export default function Profile() {
-  const navigate  = useNavigate();
-  const user      = JSON.parse(localStorage.getItem('user') || '{}');
-  const [tab, setTab]           = useState('plans');
-  const [name, setName]         = useState(user.name || '');
-  const [savingName, setSaving] = useState(false);
-  const [hoveredPlan, setHoveredPlan] = useState(null);
+  const navigate = useNavigate();
+  const user     = JSON.parse(localStorage.getItem('user') || '{}');
+  const plan     = PLAN_META[user.plan] || PLAN_META.free;
 
-  const currentPlan = user.plan || 'free';
-  const planLabel   = PLAN_LABEL_MAP[currentPlan] || 'Free';
-  const planColor   = PLAN_COLOR_MAP[currentPlan]  || '#555577';
+  const [tab,        setTab]    = useState('plans');
+  const [name,       setName]   = useState(user.name || '');
+  const [saving,     setSaving] = useState(false);
+  const [focusField, setFocus]  = useState(null);
 
   const saveName = async () => {
     if (!name.trim()) return toast.error('Name daalo');
@@ -71,221 +61,250 @@ export default function Profile() {
       const res = await api.patch('/auth/update-profile', { name });
       const updated = { ...user, name: res.data?.user?.name || name };
       localStorage.setItem('user', JSON.stringify(updated));
-      toast.success('Name update ho gaya!');
+      toast.success('Saved!');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Update fail hua');
+      toast.error(err.response?.data?.message || 'Failed');
     }
     setSaving(false);
   };
 
+  const initial = (user.name || 'U').charAt(0).toUpperCase();
+
   return (
-    <div style={{ minHeight: '100vh', background: '#07070e', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .prof-tab:hover { color: var(--text) !important; }
+        .plan-card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+        .plan-card:hover { transform: translateY(-3px); }
+        .upgrade-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .upgrade-btn { transition: filter .15s, transform .15s, box-shadow .15s; }
+        .save-btn:hover:not(:disabled) { filter: brightness(1.1); }
+        .save-btn { transition: filter .15s, opacity .15s; }
+        .back-btn:hover { color: var(--text) !important; }
+        .back-btn { transition: color .15s; }
+      `}</style>
+
       <Navbar />
 
-      <div style={s.page}>
+      <div style={pg.wrap}>
 
-        {/* ── USER IDENTITY HEADER ── */}
-        <div style={s.identityBar}>
-          <button style={s.backBtn} onClick={() => navigate(-1)}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Back
-          </button>
+        {/* ── BACK ── */}
+        <button className="back-btn" style={pg.back} onClick={() => navigate(-1)}>
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M9.5 12.5L4.5 7.5l5-5" stroke="currentColor" strokeWidth="1.7"
+              strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back
+        </button>
 
-          <div style={s.identityContent}>
-            <div style={s.avatarWrap}>
-              <div style={s.avatar}>{(user.name || 'U').charAt(0).toUpperCase()}</div>
-              <div style={{ ...s.planDot, background: planColor }} />
-            </div>
-            <div style={s.identityText}>
-              <div style={s.identityName}>{user.name || 'User'}</div>
-              <div style={s.identityMeta}>
-                <span style={s.identityEmail}>{user.email}</span>
-                <span style={s.identitySep}>·</span>
-                <span style={{ ...s.planPill, color: planColor, borderColor: planColor + '55', background: planColor + '15' }}>
-                  {planLabel} plan
-                </span>
-              </div>
+        {/* ── PROFILE HERO ── */}
+        <div style={pg.hero}>
+          {/* Avatar */}
+          <div style={pg.avatarShell}>
+            <div style={pg.avatarRing} />
+            <div style={pg.avatar}>{initial}</div>
+          </div>
+
+          {/* Info */}
+          <div style={pg.heroInfo}>
+            <div style={pg.heroName}>{user.name || 'User'}</div>
+            <div style={pg.heroMeta}>
+              <span style={pg.heroEmail}>{user.email}</span>
+              <span style={pg.heroDot} />
+              <span style={{ ...pg.heroPlan, color: plan.color }}>{plan.label}</span>
             </div>
           </div>
         </div>
 
-        {/* ── TAB STRIP ── */}
-        <div style={s.tabStrip}>
+        {/* ── TABS ── */}
+        <div style={pg.tabWrap}>
           {[
             { id: 'plans',   label: 'Plans & Billing' },
-            { id: 'profile', label: 'Profile' },
+            { id: 'profile', label: 'My Profile' },
           ].map(t => (
             <button
               key={t.id}
-              style={{ ...s.tabItem, ...(tab === t.id ? s.tabItemActive : s.tabItemInactive) }}
+              className="prof-tab"
               onClick={() => setTab(t.id)}
+              style={{
+                ...pg.tab,
+                color: tab === t.id ? 'var(--text)' : 'var(--muted)',
+                borderBottom: tab === t.id ? '2px solid #7c5cff' : '2px solid transparent',
+              }}
             >
               {t.label}
-              {tab === t.id && <div style={s.tabUnderline} />}
             </button>
           ))}
         </div>
 
         {/* ── PLANS TAB ── */}
         {tab === 'plans' && (
-          <div style={s.section}>
-            <div style={s.sectionHead}>
-              <div style={s.sectionTitle}>Choose a plan</div>
-              <div style={s.sectionSub}>Upgrade anytime. Cancel anytime.</div>
-            </div>
+          <div style={{ animation: 'fadeUp .25s ease' }}>
 
-            <div style={s.plansStack}>
-              {PLANS.map(plan => {
-                const isCurrent = currentPlan === plan.id;
-                const isHovered = hoveredPlan === plan.id && !plan.disabled;
+            <div style={pg.planGrid}>
+              {PLANS.map(p => {
+                const isCurrent = (user.plan || 'free') === p.id;
                 return (
                   <div
-                    key={plan.id}
-                    onMouseEnter={() => setHoveredPlan(plan.id)}
-                    onMouseLeave={() => setHoveredPlan(null)}
+                    key={p.id}
+                    className="plan-card"
                     style={{
-                      ...s.planCard,
-                      background: plan.bgGradient,
-                      borderColor: isHovered || isCurrent ? plan.borderColor : 'rgba(255,255,255,.07)',
-                      boxShadow: isHovered ? `0 8px 40px ${plan.glowColor}` : isCurrent ? `0 4px 24px ${plan.glowColor}` : 'none',
-                      transform: isHovered && !plan.disabled ? 'translateY(-2px)' : 'none',
-                      transition: 'all .2s ease',
+                      ...pg.planCard,
+                      borderColor: isCurrent ? p.accent : 'rgba(255,255,255,.07)',
+                      boxShadow: isCurrent ? p.glow || 'none' : 'none',
                     }}
                   >
-                    {/* Left: name + price */}
-                    <div style={s.planLeft}>
-                      {plan.badge && (
-                        <div style={{ ...s.planBadge, color: plan.accent, background: plan.accent + '18', borderColor: plan.accent + '40' }}>
-                          {plan.badge}
-                        </div>
-                      )}
-                      <div style={{ ...s.planName, color: plan.accent }}>{plan.name}</div>
-                      <div style={s.priceRow}>
-                        <span style={{ ...s.priceNum, color: isCurrent || isHovered ? plan.accent : '#d0d0e8' }}>{plan.price}</span>
-                        <span style={s.pricePer}>{plan.period}</span>
+                    {/* Top */}
+                    <div style={pg.planTop}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ ...pg.planName, color: p.accent }}>{p.name}</span>
+                        {p.badge && (
+                          <span style={{ ...pg.planBadge, color: p.accent, borderColor: p.accent + '50', background: p.accent + '18' }}>
+                            {p.badge}
+                          </span>
+                        )}
+                        {isCurrent && (
+                          <span style={{ ...pg.activeBadge, color: p.accent, borderColor: p.accent + '50', background: p.accent + '18' }}>
+                            ✓ Active
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={pg.priceRow}>
+                        <span style={{ ...pg.priceAmt, color: isCurrent ? p.accent : '#d0d0e8' }}>{p.price}</span>
+                        <span style={pg.pricePer}>/{p.period}</span>
                       </div>
                     </div>
 
-                    {/* Middle: features */}
-                    <div style={s.planFeatures}>
-                      {plan.features.map(f => (
-                        <div key={f} style={s.featureRow}>
-                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0, marginTop: '1px' }}>
-                            <circle cx="6.5" cy="6.5" r="6" fill={plan.accent + '22'} />
-                            <path d="M4 6.5l2 2 3-3" stroke={plan.accent} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    {/* Divider */}
+                    <div style={{ height: '1px', background: 'rgba(255,255,255,.06)', margin: '1rem 0' }} />
+
+                    {/* Features */}
+                    <div style={pg.featureList}>
+                      {p.features.map(f => (
+                        <div key={f} style={pg.featureItem}>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: '1px' }}>
+                            <circle cx="7" cy="7" r="6.5" fill={p.accent + '22'} stroke={p.accent + '40'} strokeWidth=".5"/>
+                            <path d="M4.5 7l2 2L9.5 5.5" stroke={p.accent} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                           <span>{f}</span>
                         </div>
                       ))}
                     </div>
 
-                    {/* Right: CTA */}
-                    <div style={s.planCta}>
-                      {isCurrent ? (
-                        <div style={{ ...s.currentBadge, color: plan.accent, borderColor: plan.accent + '50' }}>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M2.5 6l2.5 2.5 4.5-5" stroke={plan.accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          Active
-                        </div>
-                      ) : (
-                        <button
-                          disabled={plan.disabled}
-                          style={{
-                            ...s.upgradeBtn,
-                            background: plan.id === 'elite'
-                              ? (isHovered ? 'linear-gradient(135deg,#e8a000,#ff9d00)' : 'linear-gradient(135deg,#c88800,#e8a000)')
-                              : (isHovered ? 'linear-gradient(135deg,#7c5cff,#9b7fff)' : 'linear-gradient(135deg,#6c47ff,#7c5cff)'),
-                            boxShadow: isHovered
-                              ? plan.id === 'elite' ? '0 4px 20px rgba(232,160,0,.4)' : '0 4px 20px rgba(108,71,255,.45)'
-                              : 'none',
-                          }}
-                        >
-                          {plan.cta}
-                        </button>
-                      )}
-                    </div>
+                    {/* CTA */}
+                    {p.cta && !isCurrent && (
+                      <button
+                        className="upgrade-btn"
+                        style={{
+                          ...pg.upgradeBtn,
+                          background: p.id === 'elite'
+                            ? 'linear-gradient(135deg,#b8870a,#d4a012)'
+                            : 'linear-gradient(135deg,#6c47ff,#8b6bff)',
+                          boxShadow: p.id === 'elite'
+                            ? '0 4px 18px rgba(200,151,10,.3)'
+                            : '0 4px 18px rgba(108,71,255,.35)',
+                          marginTop: '1.25rem',
+                        }}
+                      >
+                        {p.cta}
+                      </button>
+                    )}
                   </div>
                 );
               })}
             </div>
 
-            <p style={s.billingNote}>All plans billed monthly. Secure checkout via Stripe.</p>
+            <p style={pg.billingNote}>
+              Secure payments via Stripe · Cancel anytime
+            </p>
           </div>
         )}
 
         {/* ── PROFILE TAB ── */}
         {tab === 'profile' && (
-          <div style={s.section}>
-            <div style={s.sectionHead}>
-              <div style={s.sectionTitle}>Personal Information</div>
-              <div style={s.sectionSub}>Apni profile details update karo</div>
-            </div>
+          <div style={{ animation: 'fadeUp .25s ease' }}>
+            <div style={pg.formCard}>
 
-            <div style={s.formCard}>
-              <div style={s.formField}>
-                <label style={s.formLabel}>Full Name</label>
+              {/* Name field */}
+              <div style={pg.field}>
+                <label style={pg.label}>Full Name</label>
                 <input
-                  style={s.formInput}
+                  style={{
+                    ...pg.input,
+                    borderColor: focusField === 'name'
+                      ? 'rgba(108,71,255,.6)'
+                      : 'rgba(255,255,255,.09)',
+                    boxShadow: focusField === 'name'
+                      ? '0 0 0 3px rgba(108,71,255,.1)'
+                      : 'none',
+                  }}
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="Your name"
-                  onFocus={e => { e.target.style.borderColor = 'rgba(108,71,255,.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(108,71,255,.1)'; }}
-                  onBlur={e  => { e.target.style.borderColor = 'rgba(255,255,255,.09)'; e.target.style.boxShadow = 'none'; }}
+                  onFocus={() => setFocus('name')}
+                  onBlur={() => setFocus(null)}
                 />
               </div>
 
-              <div style={s.formField}>
-                <label style={s.formLabel}>Email Address</label>
-                <div style={s.emailRow}>
-                  <input
-                    style={{ ...s.formInput, flex: 1, opacity: .45, cursor: 'not-allowed' }}
-                    value={user.email || ''}
-                    disabled
-                  />
-                  <div style={s.lockedTag}>Locked</div>
-                </div>
-                <span style={s.formHint}>Email address change nahi ho sakta</span>
+              {/* Email field */}
+              <div style={pg.field}>
+                <label style={pg.label}>
+                  Email Address
+                  <span style={pg.lockedTag}>Locked</span>
+                </label>
+                <input
+                  style={{ ...pg.input, opacity: .4, cursor: 'not-allowed' }}
+                  value={user.email || ''}
+                  disabled
+                />
               </div>
 
-              <div style={s.formDivider} />
+              {/* Divider */}
+              <div style={{ height: '1px', background: 'rgba(255,255,255,.05)', margin: '.25rem 0 .5rem' }} />
 
-              <div style={s.formField}>
-                <label style={s.formLabel}>Member Since</label>
-                <div style={s.metaValue}>
-                  {user.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
-                    : '—'}
+              {/* Meta info */}
+              <div style={pg.metaGrid}>
+                <div style={pg.metaCell}>
+                  <div style={pg.metaLabel}>Member Since</div>
+                  <div style={pg.metaValue}>
+                    {user.createdAt
+                      ? new Date(user.createdAt).toLocaleDateString('en-IN', { year:'numeric', month:'short', day:'numeric' })
+                      : '—'}
+                  </div>
+                </div>
+                <div style={pg.metaCell}>
+                  <div style={pg.metaLabel}>Current Plan</div>
+                  <div style={{ ...pg.metaValue, color: plan.color, fontWeight: 700 }}>
+                    {plan.label}
+                    {user.plan === 'free' && (
+                      <button
+                        style={pg.upgradeInline}
+                        onClick={() => setTab('plans')}
+                      >Upgrade →</button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div style={s.formField}>
-                <label style={s.formLabel}>Current Plan</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                  <div style={{ ...s.metaValue, color: planColor }}>{planLabel}</div>
-                  {currentPlan === 'free' && (
-                    <button
-                      style={s.inlineUpgrade}
-                      onClick={() => setTab('plans')}
-                    >
-                      Upgrade →
-                    </button>
-                  )}
-                </div>
-              </div>
-
+              {/* Save */}
               <button
-                style={{ ...s.saveBtn, opacity: savingName ? .65 : 1 }}
+                className="save-btn"
+                style={{ ...pg.saveBtn, opacity: saving ? .6 : 1 }}
                 onClick={saveName}
-                disabled={savingName}
+                disabled={saving}
               >
-                {savingName
-                  ? <><span style={s.spinner} /> Saving...</>
+                {saving
+                  ? <><span style={pg.spinner} /> Saving...</>
                   : 'Save Changes'
                 }
               </button>
+
             </div>
           </div>
         )}
@@ -295,179 +314,159 @@ export default function Profile() {
   );
 }
 
-const s = {
-  page: {
-    padding: '80px 1rem 4rem',
-    maxWidth: '560px',
+/* ─── Styles ───────────────────────────────────────────────────────────────── */
+const pg = {
+  wrap: {
+    maxWidth: '600px',
     margin: '0 auto',
+    padding: '80px 1.25rem 5rem',
   },
 
-  /* Identity header */
-  backBtn: {
+  back: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '.35rem',
+    gap: '.3rem',
     background: 'none',
     border: 'none',
-    color: '#666688',
-    cursor: 'pointer',
+    color: 'var(--muted)',
     fontSize: '.82rem',
     fontWeight: 500,
-    padding: '0',
-    marginBottom: '1.5rem',
-    fontFamily: 'inherit',
-    transition: 'color .15s',
+    padding: 0,
+    marginBottom: '1.75rem',
+    cursor: 'pointer',
   },
-  identityBar: { marginBottom: '2rem' },
-  identityContent: { display: 'flex', alignItems: 'center', gap: '1rem' },
-  avatarWrap: { position: 'relative', flexShrink: 0 },
+
+  /* Hero */
+  hero: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1.1rem',
+    marginBottom: '2rem',
+    padding: '1.25rem',
+    background: 'rgba(255,255,255,.02)',
+    border: '1px solid rgba(255,255,255,.06)',
+    borderRadius: '16px',
+  },
+  avatarShell: { position: 'relative', flexShrink: 0 },
+  avatarRing: {
+    position: 'absolute',
+    inset: '-3px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg,#6c47ff,#8b6bff,#b06bff)',
+    zIndex: 0,
+  },
   avatar: {
+    position: 'relative',
+    zIndex: 1,
     width: '52px',
     height: '52px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg,#4a30c8,#7c5cff)',
+    background: '#14141f',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#fff',
-    fontWeight: 700,
-    fontSize: '1.15rem',
+    fontWeight: 800,
+    fontSize: '1.2rem',
     letterSpacing: '-.01em',
   },
-  planDot: {
-    position: 'absolute',
-    bottom: '1px',
-    right: '1px',
-    width: '12px',
-    height: '12px',
-    borderRadius: '50%',
-    border: '2px solid #07070e',
-  },
-  identityText: { flex: 1, minWidth: 0 },
-  identityName: { fontSize: '1.1rem', fontWeight: 700, color: '#eeeef8', letterSpacing: '-.01em' },
-  identityMeta: { display: 'flex', alignItems: 'center', gap: '.4rem', marginTop: '.2rem', flexWrap: 'wrap' },
-  identityEmail: { color: '#666688', fontSize: '.8rem' },
-  identitySep: { color: '#333355', fontSize: '.8rem' },
-  planPill: {
-    fontSize: '.72rem',
-    fontWeight: 700,
-    padding: '.15rem .55rem',
-    borderRadius: '999px',
-    border: '1px solid',
-    letterSpacing: '.01em',
-  },
+  heroInfo: { flex: 1, minWidth: 0 },
+  heroName: { fontSize: '1.1rem', fontWeight: 700, letterSpacing: '-.01em', color: 'var(--text)' },
+  heroMeta: { display: 'flex', alignItems: 'center', gap: '.45rem', marginTop: '.3rem', flexWrap: 'wrap' },
+  heroEmail: { color: 'var(--muted)', fontSize: '.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  heroDot: { width: '3px', height: '3px', borderRadius: '50%', background: '#333355', flexShrink: 0 },
+  heroPlan: { fontSize: '.76rem', fontWeight: 700 },
 
-  /* Tab strip */
-  tabStrip: {
+  /* Tabs */
+  tabWrap: {
     display: 'flex',
-    gap: '0',
+    gap: 0,
     borderBottom: '1px solid rgba(255,255,255,.07)',
-    marginBottom: '2rem',
+    marginBottom: '1.75rem',
   },
-  tabItem: {
-    position: 'relative',
+  tab: {
     background: 'none',
     border: 'none',
-    padding: '.7rem 1.1rem',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
+    borderBottom: '2px solid transparent',
+    padding: '.65rem 1.1rem',
     fontSize: '.88rem',
     fontWeight: 600,
+    cursor: 'pointer',
+    marginBottom: '-1px',
     letterSpacing: '-.01em',
-    transition: 'color .15s',
-  },
-  tabItemActive: { color: '#eeeef8' },
-  tabItemInactive: { color: '#555577' },
-  tabUnderline: {
-    position: 'absolute',
-    bottom: '-1px',
-    left: 0,
-    right: 0,
-    height: '2px',
-    background: 'linear-gradient(90deg,#6c47ff,#9b7fff)',
-    borderRadius: '2px 2px 0 0',
+    fontFamily: 'inherit',
+    transition: 'color .15s, border-color .15s',
   },
 
-  section: {},
-  sectionHead: { marginBottom: '1.5rem' },
-  sectionTitle: { fontSize: '1rem', fontWeight: 700, color: '#eeeef8', letterSpacing: '-.01em' },
-  sectionSub: { color: '#555577', fontSize: '.8rem', marginTop: '.2rem' },
-
-  /* Plan cards */
-  plansStack: { display: 'flex', flexDirection: 'column', gap: '.75rem' },
-  planCard: {
-    borderRadius: '14px',
-    border: '1px solid',
-    padding: '1.1rem 1.25rem',
+  /* Plans */
+  planGrid: {
     display: 'grid',
-    gridTemplateColumns: '90px 1fr auto',
-    gap: '1rem',
-    alignItems: 'center',
-    cursor: 'default',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: '.85rem',
   },
-  planLeft: { display: 'flex', flexDirection: 'column', gap: '.3rem' },
+  planCard: {
+    background: 'rgba(255,255,255,.025)',
+    border: '1px solid',
+    borderRadius: '16px',
+    padding: '1.25rem',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  planTop: { display: 'flex', flexDirection: 'column', gap: '.5rem' },
+  planName: { fontSize: '1rem', fontWeight: 800, letterSpacing: '-.01em' },
   planBadge: {
-    display: 'inline-block',
-    fontSize: '.6rem',
+    fontSize: '.62rem',
     fontWeight: 800,
-    textTransform: 'uppercase',
-    letterSpacing: '.06em',
-    padding: '.18rem .5rem',
+    padding: '.2rem .55rem',
     borderRadius: '999px',
     border: '1px solid',
-    width: 'fit-content',
-    marginBottom: '.1rem',
+    letterSpacing: '.04em',
+    textTransform: 'uppercase',
   },
-  planName: { fontSize: '.95rem', fontWeight: 800, letterSpacing: '-.01em' },
-  priceRow: { display: 'flex', alignItems: 'baseline', gap: '.15rem' },
-  priceNum: { fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-.03em', transition: 'color .2s' },
-  pricePer: { fontSize: '.75rem', color: '#555577' },
+  activeBadge: {
+    fontSize: '.62rem',
+    fontWeight: 800,
+    padding: '.2rem .55rem',
+    borderRadius: '999px',
+    border: '1px solid',
+    letterSpacing: '.04em',
+  },
+  priceRow: { display: 'flex', alignItems: 'baseline', gap: '.25rem', marginTop: '.15rem' },
+  priceAmt: { fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-.04em', transition: 'color .2s' },
+  pricePer: { fontSize: '.75rem', color: 'var(--muted)', fontWeight: 500 },
 
-  planFeatures: { display: 'flex', flexDirection: 'column', gap: '.3rem' },
-  featureRow: {
+  featureList: { display: 'flex', flexDirection: 'column', gap: '.45rem', flex: 1 },
+  featureItem: {
     display: 'flex',
     alignItems: 'flex-start',
     gap: '.45rem',
-    fontSize: '.76rem',
+    fontSize: '.78rem',
     color: '#9999bb',
     lineHeight: 1.4,
   },
 
-  planCta: { display: 'flex', justifyContent: 'flex-end' },
-  currentBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '.3rem',
-    fontSize: '.72rem',
-    fontWeight: 700,
-    padding: '.4rem .75rem',
-    borderRadius: '8px',
-    border: '1px solid',
-    whiteSpace: 'nowrap',
-    background: 'rgba(255,255,255,.03)',
-  },
   upgradeBtn: {
-    padding: '.55rem 1rem',
+    width: '100%',
+    padding: '.75rem',
     border: 'none',
-    borderRadius: '9px',
+    borderRadius: '10px',
     color: '#fff',
     fontWeight: 700,
-    fontSize: '.78rem',
+    fontSize: '.85rem',
     cursor: 'pointer',
-    whiteSpace: 'nowrap',
     fontFamily: 'inherit',
     letterSpacing: '-.01em',
-    transition: 'all .2s ease',
   },
 
   billingNote: {
     textAlign: 'center',
-    color: '#3a3a55',
+    color: 'rgba(255,255,255,.18)',
     fontSize: '.74rem',
     marginTop: '1.25rem',
+    letterSpacing: '.01em',
   },
 
-  /* Profile form */
+  /* Form */
   formCard: {
     background: 'rgba(255,255,255,.02)',
     border: '1px solid rgba(255,255,255,.06)',
@@ -475,22 +474,35 @@ const s = {
     padding: '1.5rem',
     display: 'flex',
     flexDirection: 'column',
-    gap: '1.1rem',
+    gap: '1.15rem',
   },
-  formField: { display: 'flex', flexDirection: 'column', gap: '.4rem' },
-  formLabel: {
+  field: { display: 'flex', flexDirection: 'column', gap: '.4rem' },
+  label: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '.5rem',
     fontSize: '.7rem',
     fontWeight: 700,
-    color: '#555577',
+    color: 'var(--muted)',
     textTransform: 'uppercase',
     letterSpacing: '.07em',
   },
-  formInput: {
+  lockedTag: {
+    fontSize: '.65rem',
+    fontWeight: 700,
+    padding: '.15rem .45rem',
+    borderRadius: '5px',
+    background: 'rgba(255,255,255,.05)',
+    color: '#444466',
+    border: '1px solid rgba(255,255,255,.06)',
+    letterSpacing: '.03em',
+  },
+  input: {
     padding: '.75rem 1rem',
     background: '#0d0d1a',
-    border: '1px solid rgba(255,255,255,.09)',
+    border: '1px solid',
     borderRadius: '10px',
-    color: '#eeeef8',
+    color: 'var(--text)',
     fontSize: '.9rem',
     outline: 'none',
     boxSizing: 'border-box',
@@ -498,34 +510,36 @@ const s = {
     fontFamily: 'inherit',
     transition: 'border-color .15s, box-shadow .15s',
   },
-  emailRow: { display: 'flex', alignItems: 'center', gap: '.6rem' },
-  lockedTag: {
-    fontSize: '.68rem',
-    fontWeight: 700,
-    color: '#444466',
-    background: 'rgba(255,255,255,.04)',
-    border: '1px solid rgba(255,255,255,.06)',
-    borderRadius: '6px',
-    padding: '.3rem .6rem',
-    whiteSpace: 'nowrap',
-    letterSpacing: '.03em',
+
+  metaGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '.75rem',
   },
-  formHint: { fontSize: '.73rem', color: '#444466' },
-  formDivider: { height: '1px', background: 'rgba(255,255,255,.05)' },
-  metaValue: { fontSize: '.88rem', color: '#9999bb', fontWeight: 500 },
-  inlineUpgrade: {
+  metaCell: {
+    background: 'rgba(255,255,255,.025)',
+    border: '1px solid rgba(255,255,255,.05)',
+    borderRadius: '10px',
+    padding: '.8rem 1rem',
+  },
+  metaLabel: { fontSize: '.66rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '.3rem' },
+  metaValue: { fontSize: '.9rem', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' },
+
+  upgradeInline: {
     background: 'none',
     border: 'none',
     color: '#7c5cff',
-    fontSize: '.8rem',
     fontWeight: 700,
+    fontSize: '.78rem',
     cursor: 'pointer',
     padding: 0,
     fontFamily: 'inherit',
   },
+
   saveBtn: {
-    padding: '.82rem 1.5rem',
-    background: 'linear-gradient(135deg,#6c47ff,#7c5cff)',
+    alignSelf: 'flex-start',
+    padding: '.78rem 1.6rem',
+    background: 'linear-gradient(135deg,#6c47ff,#8b6bff)',
     color: '#fff',
     border: 'none',
     borderRadius: '10px',
@@ -536,12 +550,8 @@ const s = {
     fontFamily: 'inherit',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: '.5rem',
     boxShadow: '0 4px 20px rgba(108,71,255,.3)',
-    alignSelf: 'flex-start',
-    minWidth: '140px',
-    transition: 'opacity .15s',
   },
   spinner: {
     width: '13px',
@@ -551,5 +561,6 @@ const s = {
     borderRadius: '50%',
     display: 'inline-block',
     animation: 'spin .6s linear infinite',
+    flexShrink: 0,
   },
 };
