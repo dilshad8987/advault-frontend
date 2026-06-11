@@ -11,9 +11,8 @@ const PLANS = [
     name: 'Free',
     price: '$0',
     period: 'forever',
-    color: '#6e6e8a',
-    border: 'rgba(255,255,255,.08)',
-    glow: 'none',
+    accentColor: '#4a5568',
+    glowColor: 'rgba(74,85,104,0)',
     features: [
       '200 credits / month',
       'TikTok Ads — limited',
@@ -28,9 +27,8 @@ const PLANS = [
     name: 'Pro',
     price: '$29',
     period: '/ month',
-    color: '#7c5cff',
-    border: 'rgba(124,92,255,.5)',
-    glow: '0 0 40px rgba(108,71,255,.18)',
+    accentColor: '#a855f7',
+    glowColor: 'rgba(168,85,247,0.25)',
     badge: 'Most Popular',
     features: [
       'Unlimited credits',
@@ -41,17 +39,14 @@ const PLANS = [
       'Priority support',
     ],
     cta: 'Upgrade to Pro',
-    ctaBg: 'linear-gradient(135deg, #5535e0, #7c5cff)',
-    ctaShadow: '0 6px 24px rgba(108,71,255,.4)',
   },
   {
     id: 'elite',
     name: 'Elite',
     price: '$79',
     period: '/ month',
-    color: '#c8920a',
-    border: 'rgba(200,146,10,.45)',
-    glow: '0 0 40px rgba(200,146,10,.15)',
+    accentColor: '#f59e0b',
+    glowColor: 'rgba(245,158,11,0.2)',
     badge: 'Best Value',
     features: [
       'Everything in Pro',
@@ -62,15 +57,13 @@ const PLANS = [
       'White-label reports',
     ],
     cta: 'Get Elite',
-    ctaBg: 'linear-gradient(135deg, #a87208, #c8920a)',
-    ctaShadow: '0 6px 24px rgba(200,146,10,.35)',
   },
 ];
 
 const PLAN_MAP = {
-  free:  { label: 'Free',  color: '#6e6e8a' },
-  pro:   { label: 'Pro',   color: '#7c5cff' },
-  elite: { label: 'Elite', color: '#c8920a' },
+  free:  { label: 'Free',  color: '#4a5568',  bg: 'rgba(74,85,104,0.15)'  },
+  pro:   { label: 'Pro',   color: '#a855f7',  bg: 'rgba(168,85,247,0.15)' },
+  elite: { label: 'Elite', color: '#f59e0b',  bg: 'rgba(245,158,11,0.15)' },
 };
 
 /* ─── Component ───────────────────────────────────────────────────────────── */
@@ -80,10 +73,10 @@ export default function Profile() {
   const currentPlan = user.plan || 'free';
   const pm          = PLAN_MAP[currentPlan] || PLAN_MAP.free;
 
-  const [tab,    setTab]    = useState('plans');
-  const [name,   setName]   = useState(user.name || '');
-  const [saving, setSaving] = useState(false);
-  const [nameFocus, setNF]  = useState(false);
+  const [tab,      setTab]    = useState('plans');
+  const [name,     setName]   = useState(user.name || '');
+  const [saving,   setSaving] = useState(false);
+  const [nameFocus, setNF]    = useState(false);
 
   const saveName = async () => {
     if (!name.trim()) return toast.error('Name daalo');
@@ -98,491 +91,650 @@ export default function Profile() {
     setSaving(false);
   };
 
+  const initials = (user.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
   return (
-    <div style={{ minHeight: '100vh', background: '#08080f' }}>
+    <div style={{ minHeight: '100vh', background: '#050912', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+
+        * { box-sizing: border-box; }
+
         @keyframes spin    { to { transform: rotate(360deg); } }
-        @keyframes rise    { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-        .p-tab { transition: background .15s, color .15s, border-color .15s; }
-        .p-tab:hover { color: #f0f0f8 !important; }
-        .p-card { transition: border-color .2s, box-shadow .2s, transform .2s; }
-        .p-card:hover { transform: translateY(-2px); }
-        .p-cta  { transition: filter .15s, transform .15s, box-shadow .15s; }
-        .p-cta:hover  { filter: brightness(1.1); transform: translateY(-1px); }
-        .p-back { transition: background .15s, border-color .15s; }
-        .p-back:hover { background: rgba(255,255,255,.08) !important; }
+        @keyframes fadeUp  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse   { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+        @keyframes avatarRing {
+          0%   { transform: rotate(0deg);   }
+          100% { transform: rotate(360deg); }
+        }
+
+        .pf-back:hover  { background: rgba(15,244,198,0.08) !important; border-color: rgba(15,244,198,0.3) !important; }
+        .pf-tab-btn:hover { color: #e2e8f0 !important; }
+        .pf-plan-card { transition: transform .25s, box-shadow .25s; }
+        .pf-plan-card:hover { transform: translateY(-3px); }
+        .pf-cta-btn { transition: filter .15s, transform .1s; }
+        .pf-cta-btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .pf-save-btn { transition: opacity .15s, transform .1s; }
+        .pf-save-btn:hover { opacity: .9 !important; transform: translateY(-1px); }
+        .pf-info-row:hover { background: rgba(255,255,255,.03) !important; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
       `}</style>
 
       <Navbar />
 
-      <div style={c.page}>
+      {/* ── Hero Banner ── */}
+      <div style={{
+        position:   'relative',
+        height:     '180px',
+        overflow:   'hidden',
+        marginTop:  '60px',
+        background: 'linear-gradient(135deg, #0a0f1e 0%, #0d1730 40%, #120a24 100%)',
+      }}>
+        {/* Mesh grid */}
+        <svg style={{ position:'absolute', inset:0, width:'100%', height:'100%', opacity:.12 }} preserveAspectRatio="none">
+          <defs>
+            <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+              <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#0ff4c6" strokeWidth=".5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)"/>
+        </svg>
+        {/* Glow orbs */}
+        <div style={{ position:'absolute', top:'-40px', left:'20%', width:'200px', height:'200px', background:'radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 70%)', borderRadius:'50%' }}/>
+        <div style={{ position:'absolute', top:'-20px', right:'15%', width:'160px', height:'160px', background:'radial-gradient(circle, rgba(15,244,198,0.12) 0%, transparent 70%)', borderRadius:'50%' }}/>
+        {/* Bottom fade */}
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'60px', background:'linear-gradient(to bottom, transparent, #050912)' }}/>
+      </div>
 
-        {/* Back */}
-        <button className="p-back" style={c.back} onClick={() => navigate(-1)}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M9.5 13L4 8l5.5-5" stroke="#9090aa" strokeWidth="1.75"
-              strokeLinecap="round" strokeLinejoin="round"/>
+      {/* ── Main Layout ── */}
+      <div style={{ maxWidth: '920px', margin: '0 auto', padding: '0 1rem 4rem', marginTop: '-64px', position: 'relative', zIndex: 1 }}>
+
+        {/* Back button */}
+        <button className="pf-back" onClick={() => navigate(-1)} style={{
+          display:        'inline-flex',
+          alignItems:     'center',
+          gap:            '.4rem',
+          padding:        '.4rem .85rem',
+          background:     'rgba(255,255,255,.04)',
+          border:         '1px solid rgba(255,255,255,.1)',
+          borderRadius:   '8px',
+          color:          '#6b7280',
+          fontSize:       '.78rem',
+          fontWeight:     600,
+          cursor:         'pointer',
+          marginBottom:   '1.25rem',
+          transition:     'all .15s',
+          letterSpacing:  '.01em',
+        }}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M7 2L3 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
+          Back
         </button>
 
-        {/* ── Identity card ── */}
-        <div style={c.idCard}>
-          <div style={c.idAvatar}>
-            {(user.name || 'U').charAt(0).toUpperCase()}
-          </div>
-          <div style={c.idBody}>
-            <div style={c.idName}>{user.name || 'User'}</div>
-            <div style={c.idEmail}>{user.email}</div>
-          </div>
-          <div style={{ ...c.idBadge, color: pm.color, borderColor: pm.color + '60', background: pm.color + '18' }}>
-            {pm.label}
-          </div>
-        </div>
+        {/* ── Two-column layout ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.25rem', alignItems: 'start' }}>
 
-        {/* ── Tabs ── */}
-        <div style={c.tabRow}>
-          {[
-            { id: 'plans',   label: 'Plans & Billing' },
-            { id: 'profile', label: 'My Profile' },
-          ].map(t => {
-            const on = tab === t.id;
-            return (
-              <button key={t.id} className="p-tab" onClick={() => setTab(t.id)} style={{
-                ...c.tab,
-                background:  on ? '#ffffff' : 'transparent',
-                color:       on ? '#0a0a12' : '#6e6e8a',
-                fontWeight:  on ? 700 : 500,
-                borderColor: on ? 'transparent' : 'rgba(255,255,255,.1)',
+          {/* ── LEFT: Identity Panel ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+            {/* Avatar Card */}
+            <div style={{
+              background:   'rgba(255,255,255,.03)',
+              border:       '1px solid rgba(255,255,255,.07)',
+              borderRadius: '20px',
+              padding:      '1.75rem 1.25rem',
+              display:      'flex',
+              flexDirection:'column',
+              alignItems:   'center',
+              textAlign:    'center',
+              gap:          '.75rem',
+              backdropFilter: 'blur(12px)',
+            }}>
+              {/* Avatar with spinning ring */}
+              <div style={{ position: 'relative', width: '80px', height: '80px', marginBottom: '.25rem' }}>
+                {/* Spinning gradient ring */}
+                <div style={{
+                  position:     'absolute',
+                  inset:        '-3px',
+                  borderRadius: '50%',
+                  background:   `conic-gradient(${pm.color}, transparent 60%, ${pm.color})`,
+                  animation:    'avatarRing 3s linear infinite',
+                  opacity:      0.7,
+                }}/>
+                {/* White mask ring to create gap */}
+                <div style={{
+                  position:     'absolute',
+                  inset:        '-1px',
+                  borderRadius: '50%',
+                  background:   '#050912',
+                }}/>
+                {/* Avatar */}
+                <div style={{
+                  position:       'absolute',
+                  inset:          '2px',
+                  borderRadius:   '50%',
+                  background:     `linear-gradient(135deg, ${pm.color}40, ${pm.color}80)`,
+                  display:        'flex',
+                  alignItems:     'center',
+                  justifyContent: 'center',
+                  fontSize:       '1.5rem',
+                  fontWeight:     900,
+                  color:          '#fff',
+                  letterSpacing:  '-.02em',
+                }}>
+                  {initials}
+                </div>
+              </div>
+
+              {/* Name */}
+              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-.02em', lineHeight: 1.2 }}>
+                {user.name || 'User'}
+              </div>
+
+              {/* Email */}
+              <div style={{ fontSize: '.75rem', color: '#4b5563', wordBreak: 'break-all', lineHeight: 1.4 }}>
+                {user.email}
+              </div>
+
+              {/* Plan badge */}
+              <div style={{
+                display:      'inline-flex',
+                alignItems:   'center',
+                gap:          '.35rem',
+                padding:      '.3rem .85rem',
+                borderRadius: '999px',
+                background:   pm.bg,
+                border:       `1px solid ${pm.color}40`,
+                color:        pm.color,
+                fontSize:     '.72rem',
+                fontWeight:   700,
+                letterSpacing:'.04em',
+                textTransform:'uppercase',
               }}>
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+                <span style={{ width:'6px', height:'6px', borderRadius:'50%', background: pm.color, display:'inline-block', animation: 'pulse 2s ease infinite' }}/>
+                {pm.label} Plan
+              </div>
+            </div>
 
-        {/* ════ PLANS ════ */}
-        {tab === 'plans' && (
-          <div style={{ animation: 'rise .22s ease' }}>
-
-            <div style={c.eyebrow}>Choose a plan</div>
-
-            <div style={c.planStack}>
-              {PLANS.map(plan => {
-                const active = currentPlan === plan.id;
-                return (
-                  <div key={plan.id} className="p-card" style={{
-                    ...c.planCard,
-                    borderColor: active ? plan.border : 'rgba(255,255,255,.07)',
-                    boxShadow:   active ? plan.glow : 'none',
+            {/* Quick Stats */}
+            <div style={{
+              background:    'rgba(255,255,255,.025)',
+              border:        '1px solid rgba(255,255,255,.06)',
+              borderRadius:  '16px',
+              overflow:      'hidden',
+            }}>
+              {[
+                {
+                  icon: (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" stroke="#0ff4c6" strokeWidth="1.5"/>
+                      <path d="M12 6v6l4 2" stroke="#0ff4c6" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  ),
+                  label: 'Member Since',
+                  value: user.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short' })
+                    : '—',
+                  mono: true,
+                },
+                {
+                  icon: (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#a855f7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ),
+                  label: 'Credits Used',
+                  value: '—',
+                  mono: true,
+                },
+                {
+                  icon: (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#f59e0b" strokeWidth="1.5"/>
+                      <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#f59e0b" strokeWidth="1.5"/>
+                      <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#f59e0b" strokeWidth="1.5"/>
+                      <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="#f59e0b" strokeWidth="1.5"/>
+                    </svg>
+                  ),
+                  label: 'Saved Collections',
+                  value: '—',
+                  mono: true,
+                },
+              ].map((stat, i) => (
+                <div key={i} className="pf-info-row" style={{
+                  display:       'flex',
+                  alignItems:    'center',
+                  gap:           '.85rem',
+                  padding:       '.85rem 1rem',
+                  borderBottom:  i < 2 ? '1px solid rgba(255,255,255,.045)' : 'none',
+                  transition:    'background .15s',
+                }}>
+                  <div style={{
+                    width:          '30px',
+                    height:         '30px',
+                    borderRadius:   '8px',
+                    background:     'rgba(255,255,255,.04)',
+                    display:        'flex',
+                    alignItems:     'center',
+                    justifyContent: 'center',
+                    flexShrink:     0,
                   }}>
-
-                    {/* ── Card top: name / badge / price ── */}
-                    <div style={c.cardTop}>
-                      <div style={c.cardTopLeft}>
-                        <span style={{ ...c.planName, color: plan.color }}>{plan.name}</span>
-                        {plan.badge && (
-                          <span style={{ ...c.chip, color: plan.color, borderColor: plan.color + '50', background: plan.color + '16' }}>
-                            {plan.badge}
-                          </span>
-                        )}
-                      </div>
-                      <div style={c.priceBlock}>
-                        <span style={{ ...c.priceAmt, color: active ? plan.color : '#e0e0f0' }}>
-                          {plan.price}
-                        </span>
-                        <span style={c.pricePer}>{plan.period}</span>
-                      </div>
-                    </div>
-
-                    {/* ── Divider ── */}
-                    <div style={c.hr} />
-
-                    {/* ── Features 2-col ── */}
-                    <div style={c.featGrid}>
-                      {plan.features.map(f => (
-                        <div key={f} style={c.featItem}>
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-                            <circle cx="7" cy="7" r="6.5" fill={plan.color + '20'} stroke={plan.color + '35'} strokeWidth=".5"/>
-                            <path d="M4.5 7l2 2L9.5 5" stroke={plan.color} strokeWidth="1.5"
-                              strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span>{f}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* ── CTA — always shown for consistent height ── */}
-                    {active ? (
-                      <div style={c.activeCta}>
-                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                          <path d="M3 6.5l2.5 2.5 4.5-5" stroke={plan.color} strokeWidth="1.6"
-                            strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        Current plan
-                      </div>
-                    ) : (
-                      <button className="p-cta" style={{ ...c.cta, background: plan.ctaBg, boxShadow: plan.ctaShadow }}>
-                        {plan.cta}
-                      </button>
-                    )}
-
+                    {stat.icon}
                   </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '.63rem', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 600, marginBottom: '.1rem' }}>
+                      {stat.label}
+                    </div>
+                    <div style={{ fontSize: '.82rem', fontWeight: 700, color: '#cbd5e1', fontFamily: stat.mono ? "'JetBrains Mono', monospace" : 'inherit' }}>
+                      {stat.value}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+          {/* ── RIGHT: Tabs + Content ── */}
+          <div>
+
+            {/* Tab Row */}
+            <div style={{
+              display:      'flex',
+              gap:          '.25rem',
+              background:   'rgba(255,255,255,.03)',
+              border:       '1px solid rgba(255,255,255,.07)',
+              borderRadius: '12px',
+              padding:      '.3rem',
+              marginBottom: '1.25rem',
+            }}>
+              {[
+                { id: 'plans',   label: 'Plans & Billing', icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )},
+                { id: 'profile', label: 'My Account', icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                )},
+              ].map(t => {
+                const on = tab === t.id;
+                return (
+                  <button key={t.id} className="pf-tab-btn" onClick={() => setTab(t.id)} style={{
+                    flex:          1,
+                    display:       'flex',
+                    alignItems:    'center',
+                    justifyContent:'center',
+                    gap:           '.4rem',
+                    padding:       '.6rem 1rem',
+                    borderRadius:  '9px',
+                    border:        'none',
+                    background:    on ? 'rgba(255,255,255,.07)' : 'transparent',
+                    color:         on ? '#e2e8f0' : '#4b5563',
+                    fontWeight:    on ? 700 : 500,
+                    fontSize:      '.82rem',
+                    cursor:        'pointer',
+                    fontFamily:    'inherit',
+                    letterSpacing: '-.01em',
+                    transition:    'all .15s',
+                    boxShadow:     on ? '0 1px 3px rgba(0,0,0,.4)' : 'none',
+                  }}>
+                    {t.icon}
+                    {t.label}
+                  </button>
                 );
               })}
             </div>
 
-            <p style={c.billingNote}>Billed monthly · Secure checkout via Stripe</p>
+            {/* ════ PLANS TAB ════ */}
+            {tab === 'plans' && (
+              <div style={{ animation: 'fadeUp .25s ease' }}>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+                  {PLANS.map(plan => {
+                    const active = currentPlan === plan.id;
+                    return (
+                      <div key={plan.id} className="pf-plan-card" style={{
+                        background:    active
+                          ? `linear-gradient(135deg, rgba(${plan.id==='pro'?'168,85,247':plan.id==='elite'?'245,158,11':'74,85,104'},.08) 0%, rgba(5,9,18,.9) 100%)`
+                          : 'rgba(255,255,255,.025)',
+                        border:        `1px solid ${active ? plan.accentColor + '45' : 'rgba(255,255,255,.065)'}`,
+                        borderRadius:  '18px',
+                        padding:       '1.2rem 1.35rem',
+                        boxShadow:     active ? `0 0 30px ${plan.glowColor}, inset 0 1px 0 ${plan.accentColor}20` : 'none',
+                        position:      'relative',
+                        overflow:      'hidden',
+                      }}>
+
+                        {/* Active plan top stripe */}
+                        {active && (
+                          <div style={{
+                            position:  'absolute',
+                            top:       0,
+                            left:      '10%',
+                            right:     '10%',
+                            height:    '1px',
+                            background:`linear-gradient(90deg, transparent, ${plan.accentColor}, transparent)`,
+                          }}/>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '.9rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                              <span style={{ fontSize: '1.05rem', fontWeight: 900, color: active ? plan.accentColor : '#94a3b8', letterSpacing: '-.02em' }}>
+                                {plan.name}
+                              </span>
+                              {plan.badge && (
+                                <span style={{
+                                  fontSize:     '.6rem',
+                                  fontWeight:   700,
+                                  padding:      '.18rem .55rem',
+                                  borderRadius: '999px',
+                                  background:   plan.accentColor + '18',
+                                  border:       `1px solid ${plan.accentColor}40`,
+                                  color:        plan.accentColor,
+                                  letterSpacing:'.04em',
+                                  textTransform:'uppercase',
+                                }}>
+                                  {plan.badge}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.3rem .75rem' }}>
+                              {plan.features.map(f => (
+                                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.73rem', color: '#6b7280' }}>
+                                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
+                                    <circle cx="5" cy="5" r="4.5" fill={plan.accentColor + '15'} stroke={plan.accentColor + '30'} strokeWidth=".5"/>
+                                    <path d="M3 5l1.5 1.5L7 3.5" stroke={plan.accentColor} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                  {f}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Price + CTA column */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '.6rem', flexShrink: 0, marginLeft: '1rem' }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '1.65rem', fontWeight: 900, color: active ? plan.accentColor : '#e2e8f0', letterSpacing: '-.04em', lineHeight: 1, fontFamily: "'JetBrains Mono', monospace" }}>
+                                {plan.price}
+                              </div>
+                              <div style={{ fontSize: '.65rem', color: '#4b5563', marginTop: '.15rem' }}>
+                                {plan.period}
+                              </div>
+                            </div>
+
+                            {active ? (
+                              <div style={{
+                                display:       'flex',
+                                alignItems:    'center',
+                                gap:           '.3rem',
+                                padding:       '.45rem .85rem',
+                                borderRadius:  '8px',
+                                background:    'rgba(255,255,255,.04)',
+                                border:        '1px solid rgba(255,255,255,.08)',
+                                color:         plan.accentColor,
+                                fontSize:      '.72rem',
+                                fontWeight:    700,
+                                whiteSpace:    'nowrap',
+                              }}>
+                                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                                  <path d="M2.5 5.5l2 2 4-4" stroke={plan.accentColor} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                Current Plan
+                              </div>
+                            ) : (
+                              <button className="pf-cta-btn" style={{
+                                padding:       '.5rem 1.15rem',
+                                borderRadius:  '9px',
+                                border:        'none',
+                                background:    `linear-gradient(135deg, ${plan.accentColor}cc, ${plan.accentColor})`,
+                                color:         '#fff',
+                                fontWeight:    700,
+                                fontSize:      '.78rem',
+                                cursor:        'pointer',
+                                fontFamily:    'inherit',
+                                letterSpacing: '-.01em',
+                                whiteSpace:    'nowrap',
+                                boxShadow:     `0 4px 16px ${plan.glowColor}`,
+                              }}>
+                                {plan.cta}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <p style={{ textAlign: 'center', color: '#1e293b', fontSize: '.7rem', marginTop: '1.25rem', letterSpacing: '.01em' }}>
+                  Billed monthly · Secure checkout via Stripe
+                </p>
+              </div>
+            )}
+
+            {/* ════ PROFILE TAB ════ */}
+            {tab === 'profile' && (
+              <div style={{ animation: 'fadeUp .25s ease', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+                {/* Edit Profile Form */}
+                <div style={{
+                  background:    'rgba(255,255,255,.025)',
+                  border:        '1px solid rgba(255,255,255,.07)',
+                  borderRadius:  '18px',
+                  padding:       '1.5rem',
+                  display:       'flex',
+                  flexDirection: 'column',
+                  gap:           '1.25rem',
+                }}>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ fontSize: '.92rem', fontWeight: 800, color: '#e2e8f0', letterSpacing: '-.02em' }}>
+                        Edit Profile
+                      </div>
+                      <div style={{ fontSize: '.73rem', color: '#4b5563', marginTop: '.2rem' }}>
+                        Update your display name
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ height: '1px', background: 'rgba(255,255,255,.06)' }}/>
+
+                  {/* Name Field */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                    <label style={{ fontSize: '.67rem', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+                      Display Name
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        position:  'absolute',
+                        left:      '.9rem',
+                        top:       '50%',
+                        transform: 'translateY(-50%)',
+                        pointerEvents: 'none',
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="8" r="4" stroke={nameFocus ? '#0ff4c6' : '#374151'} strokeWidth="1.5"/>
+                          <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke={nameFocus ? '#0ff4c6' : '#374151'} strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <input
+                        style={{
+                          width:         '100%',
+                          padding:       '.72rem .9rem .72rem 2.4rem',
+                          background:    '#050912',
+                          border:        `1px solid ${nameFocus ? '#0ff4c620' : 'rgba(255,255,255,.09)'}`,
+                          borderRadius:  '11px',
+                          color:         '#f1f5f9',
+                          fontSize:      '.88rem',
+                          outline:       'none',
+                          fontFamily:    'inherit',
+                          transition:    'border-color .15s, box-shadow .15s',
+                          boxShadow:     nameFocus ? '0 0 0 3px rgba(15,244,198,.08)' : 'none',
+                          boxSizing:     'border-box',
+                        }}
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        placeholder="Your display name"
+                        onFocus={() => setNF(true)}
+                        onBlur={() => setNF(false)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email Field */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ fontSize: '.67rem', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+                        Email Address
+                      </label>
+                      <span style={{
+                        display:      'inline-flex',
+                        alignItems:   'center',
+                        gap:          '.28rem',
+                        fontSize:     '.62rem',
+                        fontWeight:   600,
+                        color:        '#374151',
+                        background:   'rgba(255,255,255,.03)',
+                        border:       '1px solid rgba(255,255,255,.06)',
+                        borderRadius: '6px',
+                        padding:      '.15rem .45rem',
+                      }}>
+                        <svg width="8" height="9" viewBox="0 0 8 9" fill="none">
+                          <rect x="0.5" y="3.5" width="7" height="5" rx="1.2" stroke="#374151" strokeWidth="1"/>
+                          <path d="M2 3.5V2.5a2 2 0 014 0v1" stroke="#374151" strokeWidth="1"/>
+                        </svg>
+                        Cannot be changed
+                      </span>
+                    </div>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{ position:'absolute', left:'.9rem', top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z" stroke="#1f2937" strokeWidth="1.5"/>
+                          <path d="M22 6l-10 7L2 6" stroke="#1f2937" strokeWidth="1.5"/>
+                        </svg>
+                      </div>
+                      <input
+                        style={{
+                          width:       '100%',
+                          padding:     '.72rem .9rem .72rem 2.4rem',
+                          background:  'rgba(255,255,255,.02)',
+                          border:      '1px solid rgba(255,255,255,.05)',
+                          borderRadius:'11px',
+                          color:       '#374151',
+                          fontSize:    '.88rem',
+                          outline:     'none',
+                          fontFamily:  'inherit',
+                          cursor:      'not-allowed',
+                          boxSizing:   'border-box',
+                        }}
+                        value={user.email || ''}
+                        disabled
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    className="pf-save-btn"
+                    style={{
+                      alignSelf:     'flex-start',
+                      display:       'inline-flex',
+                      alignItems:    'center',
+                      gap:           '.4rem',
+                      padding:       '.65rem 1.5rem',
+                      background:    'linear-gradient(135deg, #0cc9a8, #0ff4c6)',
+                      color:         '#050912',
+                      border:        'none',
+                      borderRadius:  '10px',
+                      fontWeight:    800,
+                      fontSize:      '.82rem',
+                      cursor:        saving ? 'not-allowed' : 'pointer',
+                      fontFamily:    'inherit',
+                      letterSpacing: '-.01em',
+                      opacity:       saving ? .6 : 1,
+                      boxShadow:     '0 4px 18px rgba(15,244,198,.25)',
+                    }}
+                    onClick={saveName}
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <span style={{
+                          width:          '11px',
+                          height:         '11px',
+                          border:         '2px solid rgba(5,9,18,.3)',
+                          borderTopColor: '#050912',
+                          borderRadius:   '50%',
+                          animation:      'spin .6s linear infinite',
+                          flexShrink:     0,
+                          display:        'inline-block',
+                        }}/>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Danger Zone */}
+                <div style={{
+                  background:    'rgba(239,68,68,.04)',
+                  border:        '1px solid rgba(239,68,68,.15)',
+                  borderRadius:  '18px',
+                  padding:       '1.25rem 1.5rem',
+                  display:       'flex',
+                  alignItems:    'center',
+                  justifyContent:'space-between',
+                  gap:           '1rem',
+                }}>
+                  <div>
+                    <div style={{ fontSize: '.85rem', fontWeight: 700, color: '#ef4444', letterSpacing: '-.01em', marginBottom: '.2rem' }}>
+                      Delete Account
+                    </div>
+                    <div style={{ fontSize: '.72rem', color: '#4b5563', lineHeight: 1.5 }}>
+                      Permanently remove your account and all data. This cannot be undone.
+                    </div>
+                  </div>
+                  <button style={{
+                    padding:       '.5rem 1.1rem',
+                    background:    'transparent',
+                    border:        '1px solid rgba(239,68,68,.35)',
+                    borderRadius:  '9px',
+                    color:         '#ef4444',
+                    fontSize:      '.75rem',
+                    fontWeight:    700,
+                    cursor:        'pointer',
+                    fontFamily:    'inherit',
+                    whiteSpace:    'nowrap',
+                    flexShrink:    0,
+                  }}>
+                    Delete
+                  </button>
+                </div>
+
+              </div>
+            )}
+
           </div>
-        )}
-
-        {/* ════ PROFILE ════ */}
-        {tab === 'profile' && (
-          <div style={{ animation: 'rise .22s ease' }}>
-
-            <div style={c.eyebrow}>Account Details</div>
-
-            {/* Stat tiles */}
-            <div style={c.tiles}>
-              <div style={c.tile}>
-                <div style={c.tileLabel}>Member since</div>
-                <div style={c.tileVal}>
-                  {user.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short' })
-                    : '—'}
-                </div>
-              </div>
-              <div style={c.tile}>
-                <div style={c.tileLabel}>Plan</div>
-                <div style={{ ...c.tileVal, color: pm.color }}>
-                  {pm.label}
-                  {currentPlan === 'free' && (
-                    <button style={c.tileLink} onClick={() => setTab('plans')}>
-                      Upgrade →
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Form */}
-            <div style={c.formBox}>
-
-              <div style={c.formTitle}>Edit Profile</div>
-
-              {/* Name */}
-              <div style={c.field}>
-                <label style={c.label}>Full name</label>
-                <input
-                  style={{
-                    ...c.input,
-                    borderColor: nameFocus ? 'rgba(108,71,255,.65)' : 'rgba(255,255,255,.1)',
-                    boxShadow:   nameFocus ? '0 0 0 3px rgba(108,71,255,.12)' : 'none',
-                  }}
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Your full name"
-                  onFocus={() => setNF(true)}
-                  onBlur={() => setNF(false)}
-                />
-              </div>
-
-              {/* Email */}
-              <div style={c.field}>
-                <div style={c.labelRow}>
-                  <label style={c.label}>Email address</label>
-                  <span style={c.locked}>
-                    <svg width="9" height="10" viewBox="0 0 9 10" fill="none">
-                      <rect x="1" y="4.5" width="7" height="5" rx="1.2" stroke="#555577" strokeWidth="1"/>
-                      <path d="M2.5 4.5V3a2 2 0 014 0v1.5" stroke="#555577" strokeWidth="1"/>
-                    </svg>
-                    Locked
-                  </span>
-                </div>
-                <input
-                  style={{ ...c.input, opacity: .35, cursor: 'not-allowed', borderColor: 'rgba(255,255,255,.07)' }}
-                  value={user.email || ''}
-                  disabled
-                />
-              </div>
-
-              <button
-                style={{ ...c.saveBtn, opacity: saving ? .55 : 1 }}
-                onClick={saveName}
-                disabled={saving}
-              >
-                {saving
-                  ? <><span style={c.spinner} /> Saving...</>
-                  : 'Save changes'
-                }
-              </button>
-
-            </div>
-          </div>
-        )}
-
+        </div>
       </div>
     </div>
   );
 }
-
-/* ─── Styles ─────────────────────────────────────────────────────────────── */
-const c = {
-  page: {
-    maxWidth: '520px',
-    margin: '0 auto',
-    padding: '72px 1rem 5rem',
-  },
-
-  back: {
-    display:        'inline-flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    width:          '36px',
-    height:         '36px',
-    background:     'rgba(255,255,255,.04)',
-    border:         '1px solid rgba(255,255,255,.09)',
-    borderRadius:   '10px',
-    cursor:         'pointer',
-    marginBottom:   '1.25rem',
-  },
-
-  /* Identity */
-  idCard: {
-    display:      'flex',
-    alignItems:   'center',
-    gap:          '1rem',
-    padding:      '1rem 1.25rem',
-    background:   '#0f0f1a',
-    border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '14px',
-    marginBottom: '1.25rem',
-  },
-  idAvatar: {
-    width:          '44px',
-    height:         '44px',
-    borderRadius:   '50%',
-    background:     'linear-gradient(135deg,#4a30c8,#7c5cff)',
-    display:        'flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    color:          '#fff',
-    fontWeight:     800,
-    fontSize:       '1.1rem',
-    flexShrink:     0,
-  },
-  idBody:  { flex: 1, minWidth: 0 },
-  idName:  { fontSize: '.92rem', fontWeight: 700, color: '#f0f0f8', letterSpacing: '-.01em' },
-  idEmail: { fontSize: '.77rem', color: '#555577', marginTop: '.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  idBadge: {
-    flexShrink:   0,
-    fontSize:     '.7rem',
-    fontWeight:   700,
-    padding:      '.28rem .75rem',
-    borderRadius: '999px',
-    border:       '1px solid',
-    letterSpacing:'.02em',
-  },
-
-  /* Tabs */
-  tabRow: {
-    display:      'flex',
-    gap:          '.45rem',
-    marginBottom: '1.75rem',
-  },
-  tab: {
-    padding:      '.52rem 1.1rem',
-    borderRadius: '999px',
-    border:       '1px solid',
-    fontSize:     '.84rem',
-    cursor:       'pointer',
-    fontFamily:   'inherit',
-    letterSpacing:'-.01em',
-  },
-
-  eyebrow: {
-    fontSize:     '.67rem',
-    fontWeight:   700,
-    color:        '#555577',
-    textTransform:'uppercase',
-    letterSpacing:'.09em',
-    marginBottom: '.9rem',
-  },
-
-  /* Plans */
-  planStack: { display: 'flex', flexDirection: 'column', gap: '.7rem' },
-  planCard: {
-    padding:      '1.2rem',
-    background:   '#0f0f1a',
-    border:       '1px solid',
-    borderRadius: '16px',
-    display:      'flex',
-    flexDirection:'column',
-    gap:          '.85rem',
-  },
-
-  cardTop: {
-    display:        'flex',
-    justifyContent: 'space-between',
-    alignItems:     'flex-start',
-  },
-  cardTopLeft: {
-    display:    'flex',
-    alignItems: 'center',
-    gap:        '.45rem',
-    flexWrap:   'wrap',
-  },
-  planName: { fontSize: '.98rem', fontWeight: 800, letterSpacing: '-.01em' },
-  chip: {
-    fontSize:     '.6rem',
-    fontWeight:   700,
-    padding:      '.18rem .5rem',
-    borderRadius: '999px',
-    border:       '1px solid',
-    letterSpacing:'.03em',
-  },
-  priceBlock: {
-    display:    'flex',
-    alignItems: 'baseline',
-    gap:        '.25rem',
-    flexShrink: 0,
-  },
-  priceAmt: { fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-.04em', transition: 'color .2s' },
-  pricePer: { fontSize: '.72rem', color: '#555577' },
-
-  hr: { height: '1px', background: 'rgba(255,255,255,.06)' },
-
-  featGrid: {
-    display:             'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap:                 '.38rem .7rem',
-  },
-  featItem: {
-    display:    'flex',
-    alignItems: 'center',
-    gap:        '.4rem',
-    fontSize:   '.76rem',
-    color:      '#8888aa',
-    lineHeight: 1.3,
-  },
-
-  activeCta: {
-    display:        'flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    gap:            '.4rem',
-    padding:        '.75rem',
-    borderRadius:   '11px',
-    background:     'rgba(255,255,255,.04)',
-    border:         '1px solid rgba(255,255,255,.09)',
-    color:          '#666688',
-    fontSize:       '.84rem',
-    fontWeight:     600,
-    letterSpacing:  '-.01em',
-  },
-  cta: {
-    width:        '100%',
-    padding:      '.75rem',
-    border:       'none',
-    borderRadius: '11px',
-    color:        '#fff',
-    fontWeight:   700,
-    fontSize:     '.88rem',
-    cursor:       'pointer',
-    fontFamily:   'inherit',
-    letterSpacing:'-.01em',
-  },
-
-  billingNote: {
-    textAlign:  'center',
-    color:      '#2e2e48',
-    fontSize:   '.72rem',
-    marginTop:  '1rem',
-    letterSpacing: '.01em',
-  },
-
-  /* Profile */
-  tiles: {
-    display:             'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap:                 '.65rem',
-    marginBottom:        '1.2rem',
-  },
-  tile: {
-    padding:      '.9rem 1rem',
-    background:   '#0f0f1a',
-    border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '13px',
-  },
-  tileLabel: { fontSize: '.65rem', fontWeight: 700, color: '#555577', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '.32rem' },
-  tileVal:   { fontSize: '.9rem', fontWeight: 700, color: '#d0d0e8', display: 'flex', alignItems: 'center', gap: '.45rem', flexWrap: 'wrap' },
-  tileLink:  { background: 'none', border: 'none', color: '#7c5cff', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', padding: 0, fontFamily: 'inherit' },
-
-  formBox: {
-    padding:      '1.25rem',
-    background:   '#0f0f1a',
-    border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '16px',
-    display:      'flex',
-    flexDirection:'column',
-    gap:          '1rem',
-  },
-  formTitle: { fontSize: '.67rem', fontWeight: 700, color: '#555577', textTransform: 'uppercase', letterSpacing: '.09em' },
-
-  field:    { display: 'flex', flexDirection: 'column', gap: '.38rem' },
-  labelRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-  label: { fontSize: '.68rem', fontWeight: 700, color: '#555577', textTransform: 'uppercase', letterSpacing: '.07em' },
-  locked: {
-    display:      'inline-flex',
-    alignItems:   'center',
-    gap:          '.3rem',
-    fontSize:     '.65rem',
-    fontWeight:   600,
-    color:        '#444466',
-    background:   'rgba(255,255,255,.04)',
-    border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '5px',
-    padding:      '.15rem .45rem',
-  },
-  input: {
-    padding:      '.72rem .95rem',
-    background:   '#08080f',
-    border:       '1px solid',
-    borderRadius: '10px',
-    color:        '#f0f0f8',
-    fontSize:     '.9rem',
-    outline:      'none',
-    width:        '100%',
-    fontFamily:   'inherit',
-    transition:   'border-color .15s, box-shadow .15s',
-    boxSizing:    'border-box',
-  },
-
-  saveBtn: {
-    alignSelf:      'flex-start',
-    display:        'inline-flex',
-    alignItems:     'center',
-    gap:            '.45rem',
-    padding:        '.72rem 1.5rem',
-    background:     'linear-gradient(135deg,#5535e0,#7c5cff)',
-    color:          '#fff',
-    border:         'none',
-    borderRadius:   '10px',
-    fontWeight:     700,
-    fontSize:       '.88rem',
-    cursor:         'pointer',
-    fontFamily:     'inherit',
-    letterSpacing:  '-.01em',
-    boxShadow:      '0 4px 18px rgba(108,71,255,.3)',
-    transition:     'opacity .15s',
-  },
-  spinner: {
-    width:         '13px',
-    height:        '13px',
-    border:        '2px solid rgba(255,255,255,.3)',
-    borderTopColor:'#fff',
-    borderRadius:  '50%',
-    display:       'inline-block',
-    animation:     'spin .6s linear infinite',
-    flexShrink:    0,
-  },
-};
