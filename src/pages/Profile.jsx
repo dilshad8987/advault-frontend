@@ -5,10 +5,8 @@ import toast from 'react-hot-toast';
 import api from '../api/axios';
 
 const TABS = [
-  { id: 'plans',    icon: '⚡', label: 'Plans' },
-  { id: 'profile',  icon: '👤', label: 'Personal Info' },
-  { id: 'security', icon: '🔒', label: 'Security' },
-  { id: 'referral', icon: '🎁', label: 'Referral' },
+  { id: 'plans',   icon: '⚡', label: 'Plans' },
+  { id: 'profile', icon: '👤', label: 'Personal Info' },
 ];
 
 const PLANS = [
@@ -64,14 +62,6 @@ export default function Profile() {
   const [name, setName] = useState(user.name || '');
   const [savingName, setSavingName] = useState(false);
 
-  const [oldPass, setOldPass] = useState('');
-  const [newPass, setNewPass] = useState('');
-  const [confirmPass, setConfirmPass] = useState('');
-  const [showOld, setShowOld] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [savingPass, setSavingPass] = useState(false);
-
   const saveName = async () => {
     if (!name.trim()) return toast.error('Name daalo');
     setSavingName(true);
@@ -84,41 +74,6 @@ export default function Profile() {
       toast.error(err.response?.data?.message || 'Update fail hua');
     }
     setSavingName(false);
-  };
-
-  // Fix: Password strength check — sirf length nahi, sab rules apply honge
-  function checkPasswordStrength(password) {
-    if (!password || password.length < 8) return 'Password kam se kam 8 characters ka hona chahiye.';
-    if (!/[A-Z]/.test(password)) return 'Ek uppercase letter zaroori hai (A-Z).';
-    if (!/[a-z]/.test(password)) return 'Ek lowercase letter zaroori hai (a-z).';
-    if (!/[0-9]/.test(password)) return 'Ek number zaroori hai (0-9).';
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password))
-      return 'Ek special character zaroori hai (!@#$%^&* etc).';
-    return null;
-  }
-
-  const savePassword = async () => {
-    if (!oldPass || !newPass || !confirmPass) return toast.error('Sab fields bharo');
-    const strengthErr = checkPasswordStrength(newPass);
-    if (strengthErr) return toast.error(strengthErr);
-    if (newPass !== confirmPass) return toast.error('Passwords match nahi karte');
-    setSavingPass(true);
-    try {
-      await api.patch('/auth/change-password', { oldPassword: oldPass, newPassword: newPass });
-      toast.success('Password change ho gaya!');
-      setOldPass(''); setNewPass(''); setConfirmPass('');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Password change fail');
-    }
-    setSavingPass(false);
-  };
-
-  const referralCode = user.referralCode || ('AV-' + (user._id || 'USER').toString().slice(-6).toUpperCase());
-  const referralLink = `https://advault.io/register?ref=${referralCode}`;
-
-  const copyRef = () => {
-    navigator.clipboard.writeText(referralLink);
-    toast.success('Referral link copy ho gaya!');
   };
 
   return (
@@ -250,103 +205,6 @@ export default function Profile() {
           </div>
         )}
 
-        {/* ── SECURITY TAB ── */}
-        {tab === 'security' && (
-          <div style={s.section}>
-            <div style={s.sectionTitle}>Security</div>
-            <div style={s.sectionSub}>Password aur account security manage karo</div>
-
-            <div style={s.card}>
-              <div style={s.cardSectionHead}>🔑 Change Password</div>
-
-              <div style={s.field}>
-                <label style={s.label}>Old Password</label>
-                <div style={s.passWrap}>
-                  <input style={s.passInput} type={showOld ? 'text' : 'password'} value={oldPass}
-                    onChange={e => setOldPass(e.target.value)} placeholder="Purana password" />
-                  <button style={s.eyeBtn} onClick={() => setShowOld(!showOld)}>{showOld ? '🙈' : '👁'}</button>
-                </div>
-              </div>
-
-              <div style={s.field}>
-                <label style={s.label}>New Password</label>
-                <div style={s.passWrap}>
-                  <input style={s.passInput} type={showNew ? 'text' : 'password'} value={newPass}
-                    onChange={e => setNewPass(e.target.value)} placeholder="Naya password (min 8)" />
-                  <button style={s.eyeBtn} onClick={() => setShowNew(!showNew)}>{showNew ? '🙈' : '👁'}</button>
-                </div>
-              </div>
-
-              <div style={s.field}>
-                <label style={s.label}>Confirm New Password</label>
-                <div style={s.passWrap}>
-                  <input style={s.passInput} type={showConfirm ? 'text' : 'password'} value={confirmPass}
-                    onChange={e => setConfirmPass(e.target.value)} placeholder="Password dobara likhao" />
-                  <button style={s.eyeBtn} onClick={() => setShowConfirm(!showConfirm)}>{showConfirm ? '🙈' : '👁'}</button>
-                </div>
-                {newPass && confirmPass && (
-                  <span style={{ ...s.hint, color: newPass === confirmPass ? '#4cff8f' : '#ff4f87' }}>
-                    {newPass === confirmPass ? '✓ Match karte hain' : '⚠ Match nahi karte'}
-                  </span>
-                )}
-              </div>
-
-              <button style={{ ...s.saveBtn, opacity: savingPass ? .7 : 1 }} onClick={savePassword} disabled={savingPass}>
-                {savingPass ? 'Saving...' : '🔒 Update Password'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── REFERRAL TAB ── */}
-        {tab === 'referral' && (
-          <div style={s.section}>
-            <div style={s.sectionTitle}>Referral Program</div>
-            <div style={s.sectionSub}>Dosto ko refer karo aur dono ko reward milega</div>
-
-            <div style={s.refStats}>
-              {[
-                { label: 'Total Referrals', value: user.referralCount || '0', icon: '👥' },
-                { label: 'Credits Earned',  value: (user.referralCredits || 0) + ' cr', icon: '💎' },
-                { label: 'Active Refs',     value: user.activeReferrals || '0', icon: '✅' },
-              ].map(stat => (
-                <div key={stat.label} style={s.refStatCard}>
-                  <div style={s.refStatIcon}>{stat.icon}</div>
-                  <div style={s.refStatValue}>{stat.value}</div>
-                  <div style={s.refStatLabel}>{stat.label}</div>
-                </div>
-              ))}
-            </div>
-
-            <div style={s.card}>
-              <div style={s.cardSectionHead}>🔗 Your Referral Link</div>
-              <div style={s.refLinkRow}>
-                <div style={s.refLinkBox}>{referralLink}</div>
-                <button style={s.copyBtn} onClick={copyRef}>📋 Copy</button>
-              </div>
-
-              <div style={{ marginTop: '1.5rem' }}>
-                <div style={s.cardSectionHead}>🎟 Your Referral Code</div>
-                <div style={s.refCodeBox}>{referralCode}</div>
-              </div>
-
-              <div style={s.refHow}>
-                <div style={s.refHowTitle}>How it works</div>
-                {[
-                  ['1️⃣', 'Apna referral link share karo dosto ke saath'],
-                  ['2️⃣', 'Dost sign up kare aur plan buy kare'],
-                  ['3️⃣', 'Dono ko extra credits milenge automatically'],
-                ].map(([icon, text]) => (
-                  <div key={text} style={s.refStep}>
-                    <span style={s.refStepIcon}>{icon}</span>
-                    <span style={s.refStepText}>{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
   );
@@ -359,7 +217,6 @@ const s = {
   title: { fontSize: '1.75rem', fontWeight: 900, color: '#f0f0f8', letterSpacing: '-.02em', margin: 0 },
   sub: { color: '#8888aa', fontSize: '.85rem', marginTop: '.25rem' },
 
-  /* ── Tab grid: 2x2 pill boxes ── */
   tabGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
