@@ -326,28 +326,7 @@ export default function Profile() {
 
             <div style={c.eyebrow}>Account Details</div>
 
-            {/* Stat tiles */}
-            <div className="pf-tiles" style={c.tiles}>
-              <div style={c.tile}>
-                <div style={c.tileLabel}>Member since</div>
-                <div style={c.tileVal}>
-                  {user.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short' })
-                    : '—'}
-                </div>
-              </div>
-              <div style={c.tile}>
-                <div style={c.tileLabel}>Plan</div>
-                <div style={{ ...c.tileVal, color: pm.color }}>
-                  {pm.label}
-                  {currentPlan === 'free' && (
-                    <button style={c.tileLink} onClick={() => setTab('plans')}>
-                      Upgrade →
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+
 
             {/* Form */}
             <div style={c.formBox}>
@@ -355,7 +334,7 @@ export default function Profile() {
 
               {/* Name */}
               <div style={c.field}>
-                <label style={c.label}>Full name</label>
+                <label style={c.label}>Name</label>
                 <input
                   style={{
                     ...c.input,
