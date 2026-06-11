@@ -170,25 +170,24 @@ export default function Profile() {
 
         {/* ── Tabs ── */}
         <div className="pf-tabs" style={c.tabRow}>
-          <div style={c.tabBox}>
-            {[
-              { id: 'plans',   label: 'Plans & Billing' },
-              { id: 'profile', label: 'My Profile' },
-            ].map(t => {
-              const on = tab === t.id;
-              return (
-                <button key={t.id} className="p-tab pf-tab" onClick={() => setTab(t.id)} style={{
-                  ...c.tab,
-                  background: on ? '#ffffff' : 'transparent',
-                  color:      on ? '#0a0a14' : '#5e5e7a',
-                  fontWeight: on ? 700 : 500,
-                  boxShadow:  on ? '0 2px 10px rgba(0,0,0,.4)' : 'none',
-                }}>
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
+          {[
+            { id: 'plans',   label: 'Plans & Billing' },
+            { id: 'profile', label: 'My Profile' },
+          ].map(t => {
+            const on = tab === t.id;
+            return (
+              <button key={t.id} className="p-tab pf-tab" onClick={() => setTab(t.id)} style={{
+                ...c.tab,
+                background:  on ? '#18182a' : 'transparent',
+                color:       on ? '#e0e0f8' : '#4a4a66',
+                fontWeight:  on ? 700 : 500,
+                borderColor: on ? 'rgba(124,92,255,.45)' : 'rgba(255,255,255,.07)',
+                boxShadow:   on ? '0 0 16px rgba(108,71,255,.12)' : 'none',
+              }}>
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* ════ PLANS ════ */}
@@ -445,26 +444,19 @@ const c = {
 
   /* Tabs */
   tabRow: {
+    display:      'flex',
+    gap:          '.55rem',
     marginBottom: '1.6rem',
   },
-  tabBox: {
-    display:       'inline-flex',
-    alignItems:    'center',
-    gap:           '.25rem',
-    padding:       '.28rem',
-    background:    '#1a1a28',
-    border:        '1px solid rgba(255,255,255,.08)',
-    borderRadius:  '12px',
-  },
   tab: {
-    padding:       '.48rem 1.1rem',
-    borderRadius:  '8px',
-    border:        'none',
+    padding:       '.52rem 1.15rem',
+    borderRadius:  '10px',
+    border:        '1px solid',
     fontSize:      '.83rem',
     cursor:        'pointer',
     fontFamily:    'inherit',
     letterSpacing: '-.01em',
-    transition:    'background .15s, color .15s, box-shadow .15s',
+    transition:    'background .15s, color .15s, border-color .15s, box-shadow .15s',
   },
 
   eyebrow: {
