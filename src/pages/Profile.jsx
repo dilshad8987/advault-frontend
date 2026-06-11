@@ -220,6 +220,17 @@ export default function Profile() {
                       }}/>
                     )}
 
+                    {/* Left border stripe */}
+                    {active && (
+                      <div style={{
+                        position:     'absolute',
+                        left:         0, top: '18%', bottom: '18%',
+                        width:        '3px',
+                        background:   `linear-gradient(180deg, transparent, ${plan.color}cc, transparent)`,
+                        borderRadius: '0 3px 3px 0',
+                      }}/>
+                    )}
+
                     {/* ── Card top ── */}
                     <div className="pf-cardtop" style={c.cardTop}>
                       <div className="pf-cardtop-left" style={c.cardTopLeft}>
@@ -256,6 +267,34 @@ export default function Profile() {
                         </div>
                       ))}
                     </div>
+
+                    {/* ── Credits progress bar (free plan only) ── */}
+                    {plan.id === 'free' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em' }}>
+                            Credits Used
+                          </span>
+                          <span style={{ fontSize: '.7rem', fontWeight: 700, color: plan.color }}>
+                            0 / 200
+                          </span>
+                        </div>
+                        <div style={{
+                          height:       '5px',
+                          background:   'rgba(255,255,255,.06)',
+                          borderRadius: '999px',
+                          overflow:     'hidden',
+                        }}>
+                          <div style={{
+                            height:       '100%',
+                            width:        '0%',
+                            background:   `linear-gradient(90deg, ${plan.color}88, ${plan.color})`,
+                            borderRadius: '999px',
+                            transition:   'width .6s ease',
+                          }}/>
+                        </div>
+                      </div>
+                    )}
 
                     {/* ── CTA ── */}
                     {active ? (
