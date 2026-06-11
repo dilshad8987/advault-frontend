@@ -125,7 +125,7 @@ export default function Profile() {
           .pf-idcard  { padding: .85rem 1rem !important; }
           .pf-avatar  { width: 40px !important; height: 40px !important; font-size: 1rem !important; }
           .pf-tabs    { margin-bottom: 1.4rem !important; }
-          .pf-tab     { padding: .48rem .85rem !important; font-size: .81rem !important; flex: 1; text-align: center; }
+          .pf-tab     { padding: .44rem .7rem !important; font-size: .79rem !important; flex: 1; text-align: center; }
           .pf-cardtop { flex-direction: column !important; gap: .55rem !important; }
           .pf-cardtop-left { flex-direction: row !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; }
           .pf-featgrid { grid-template-columns: 1fr !important; gap: .35rem !important; }
@@ -170,24 +170,25 @@ export default function Profile() {
 
         {/* ── Tabs ── */}
         <div className="pf-tabs" style={c.tabRow}>
-          {[
-            { id: 'plans',   label: 'Plans & Billing' },
-            { id: 'profile', label: 'My Profile' },
-          ].map(t => {
-            const on = tab === t.id;
-            return (
-              <button key={t.id} className="p-tab pf-tab" onClick={() => setTab(t.id)} style={{
-                ...c.tab,
-                background:  on ? '#ffffff' : 'transparent',
-                color:       on ? '#0a0a14' : '#5e5e7a',
-                fontWeight:  on ? 700 : 500,
-                borderColor: on ? 'transparent' : 'rgba(255,255,255,.1)',
-                boxShadow:   on ? '0 2px 12px rgba(0,0,0,.35)' : 'none',
-              }}>
-                {t.label}
-              </button>
-            );
-          })}
+          <div style={c.tabBox}>
+            {[
+              { id: 'plans',   label: 'Plans & Billing' },
+              { id: 'profile', label: 'My Profile' },
+            ].map(t => {
+              const on = tab === t.id;
+              return (
+                <button key={t.id} className="p-tab pf-tab" onClick={() => setTab(t.id)} style={{
+                  ...c.tab,
+                  background: on ? '#ffffff' : 'transparent',
+                  color:      on ? '#0a0a14' : '#5e5e7a',
+                  fontWeight: on ? 700 : 500,
+                  boxShadow:  on ? '0 2px 10px rgba(0,0,0,.4)' : 'none',
+                }}>
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* ════ PLANS ════ */}
@@ -444,18 +445,26 @@ const c = {
 
   /* Tabs */
   tabRow: {
-    display:       'flex',
-    gap:           '.4rem',
-    marginBottom:  '1.6rem',
+    marginBottom: '1.6rem',
+  },
+  tabBox: {
+    display:       'inline-flex',
+    alignItems:    'center',
+    gap:           '.25rem',
+    padding:       '.28rem',
+    background:    '#1a1a28',
+    border:        '1px solid rgba(255,255,255,.08)',
+    borderRadius:  '12px',
   },
   tab: {
-    padding:       '.52rem 1.15rem',
-    borderRadius:  '999px',
-    border:        '1px solid',
+    padding:       '.48rem 1.1rem',
+    borderRadius:  '8px',
+    border:        'none',
     fontSize:      '.83rem',
     cursor:        'pointer',
     fontFamily:    'inherit',
     letterSpacing: '-.01em',
+    transition:    'background .15s, color .15s, box-shadow .15s',
   },
 
   eyebrow: {
