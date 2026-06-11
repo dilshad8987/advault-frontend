@@ -9,13 +9,18 @@ import api from '../api/axios';
 export default function Navbar() {
   const navigate  = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const user  = JSON.parse(localStorage.getItem('user') || 'null');
   const isPro = user?.plan && user.plan !== 'free';
 
-  const logout = async () => {
+  const confirmLogout = () => {
     setMenuOpen(false);
+    setShowLogoutConfirm(true);
+  };
+
+  const logout = async () => {
+    setShowLogoutConfirm(false);
     try {
-      // Server pe logout call — refreshToken invalidate + device session remove
       const refreshToken = localStorage.getItem('refreshToken');
       await api.post('/auth/logout', { refreshToken });
     } catch {
@@ -65,7 +70,7 @@ export default function Navbar() {
 
                   <div style={s.divider} />
 
-                  <button style={s.dropLogout} onClick={logout}>🚪 Logout</button>
+                  <button style={s.dropLogout} onClick={confirmLogout}>🚪 Logout</button>
                 </div>
               )}
             </div>
@@ -79,6 +84,21 @@ export default function Navbar() {
       </nav>
 
       {menuOpen && <div style={s.backdrop} onClick={() => setMenuOpen(false)} />}
+
+      {/* ── Logout Confirm Modal ─────────────────────────────────────── */}
+      {showLogoutConfirm && (
+        <div style={s.modalOverlay}>
+          <div style={s.modal}>
+            <div style={{ fontSize: '2rem', marginBottom: '.5rem' }}>🚪</div>
+            <h3 style={s.modalTitle}>Logout karo?</h3>
+            <p style={s.modalSub}>Are you sure you want to sign out?</p>
+            <div style={s.modalBtns}>
+              <button style={s.modalCancel} onClick={() => setShowLogoutConfirm(false)}>Cancel</button>
+              <button style={s.modalConfirm} onClick={logout}>Yes, Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -105,4 +125,11 @@ const s = {
   loginBtn: { padding: '.45rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,.12)', borderRadius: '8px', color: '#fff', textDecoration: 'none' },
   registerBtn: { padding: '.45rem 1rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', borderRadius: '8px', color: '#fff', textDecoration: 'none' },
   backdrop: { position: 'fixed', inset: 0, zIndex: 99 },
+  modalOverlay: { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' },
+  modal: { background: '#0f0f1a', border: '1px solid rgba(255,255,255,.1)', borderRadius: '16px', padding: '2rem 1.75rem', width: '100%', maxWidth: '320px', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,.6)' },
+  modalTitle: { fontSize: '1.1rem', fontWeight: 800, color: '#f0f0f8', marginBottom: '.4rem' },
+  modalSub: { color: '#8888aa', fontSize: '.88rem', marginBottom: '1.5rem' },
+  modalBtns: { display: 'flex', gap: '.75rem' },
+  modalCancel: { flex: 1, padding: '.7rem', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#c8c8e0', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer' },
+  modalConfirm: { flex: 1, padding: '.7rem', background: 'rgba(255,79,135,.12)', border: '1px solid rgba(255,79,135,.25)', borderRadius: '8px', color: '#ff4f87', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer' },
 };
