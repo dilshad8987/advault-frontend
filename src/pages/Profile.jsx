@@ -29,8 +29,8 @@ const PLANS = [
     price: '$29',
     period: '/ month',
     color: '#7c5cff',
-    border: 'rgba(124,92,255,.5)',
-    glow: '0 0 40px rgba(108,71,255,.18)',
+    border: 'rgba(124,92,255,.45)',
+    glow: '0 0 32px rgba(108,71,255,.15)',
     badge: 'Most Popular',
     features: [
       'Unlimited credits',
@@ -42,7 +42,7 @@ const PLANS = [
     ],
     cta: 'Upgrade to Pro',
     ctaBg: 'linear-gradient(135deg, #5535e0, #7c5cff)',
-    ctaShadow: '0 6px 24px rgba(108,71,255,.4)',
+    ctaShadow: '0 6px 20px rgba(108,71,255,.38)',
   },
   {
     id: 'elite',
@@ -50,8 +50,8 @@ const PLANS = [
     price: '$79',
     period: '/ month',
     color: '#c8920a',
-    border: 'rgba(200,146,10,.45)',
-    glow: '0 0 40px rgba(200,146,10,.15)',
+    border: 'rgba(200,146,10,.4)',
+    glow: '0 0 32px rgba(200,146,10,.12)',
     badge: 'Best Value',
     features: [
       'Everything in Pro',
@@ -63,7 +63,7 @@ const PLANS = [
     ],
     cta: 'Get Elite',
     ctaBg: 'linear-gradient(135deg, #a87208, #c8920a)',
-    ctaShadow: '0 6px 24px rgba(200,146,10,.35)',
+    ctaShadow: '0 6px 20px rgba(200,146,10,.3)',
   },
 ];
 
@@ -80,10 +80,10 @@ export default function Profile() {
   const currentPlan = user.plan || 'free';
   const pm          = PLAN_MAP[currentPlan] || PLAN_MAP.free;
 
-  const [tab,    setTab]    = useState('plans');
-  const [name,   setName]   = useState(user.name || '');
-  const [saving, setSaving] = useState(false);
-  const [nameFocus, setNF]  = useState(false);
+  const [tab,       setTab]  = useState('plans');
+  const [name,      setName] = useState(user.name || '');
+  const [saving,  setSaving] = useState(false);
+  const [nameFocus,  setNF]  = useState(false);
 
   const saveName = async () => {
     if (!name.trim()) return toast.error('Name daalo');
@@ -101,34 +101,37 @@ export default function Profile() {
   return (
     <div style={{ minHeight: '100vh', background: '#08080f' }}>
       <style>{`
-        @keyframes spin  { to { transform: rotate(360deg); } }
-        @keyframes rise  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-        .p-tab  { transition: background .15s, color .15s, border-color .15s; }
-        .p-tab:hover  { color: #f0f0f8 !important; }
-        .p-card { transition: border-color .2s, box-shadow .2s, transform .2s; }
-        .p-card:hover { transform: translateY(-2px); }
-        .p-cta  { transition: filter .15s, transform .15s; }
-        .p-cta:hover  { filter: brightness(1.1); transform: translateY(-1px); }
-        .p-back { transition: background .15s, border-color .15s; }
-        .p-back:hover { background: rgba(255,255,255,.08) !important; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-        /* ── Mobile ── */
+        .p-back { transition: background .15s, border-color .15s, color .15s; }
+        .p-back:hover { background: rgba(255,255,255,.07) !important; border-color: rgba(255,255,255,.18) !important; color: #c0c0d8 !important; }
+
+        .p-tab { transition: background .18s, color .18s, border-color .18s; }
+        .p-tab:hover { color: #e8e8f8 !important; }
+
+        .p-card { transition: border-color .22s, box-shadow .22s, transform .22s; }
+        .p-card:hover { transform: translateY(-3px); }
+
+        .p-cta { transition: filter .15s, transform .12s, box-shadow .15s; }
+        .p-cta:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
+        .p-save { transition: opacity .15s, transform .12s; }
+        .p-save:hover:not(:disabled) { opacity: .88 !important; transform: translateY(-1px); }
+
+        /* Mobile */
         @media (max-width: 480px) {
-          .pf-page     { padding: 64px .85rem 4rem !important; }
-          .pf-idcard   { padding: .85rem 1rem !important; gap: .75rem !important; }
-          .pf-idavatar { width: 38px !important; height: 38px !important; font-size: .95rem !important; }
-          .pf-tabrow   { gap: .3rem !important; }
-          .pf-tab      { padding: .48rem .75rem !important; font-size: .8rem !important; }
-          .pf-plancard { padding: 1rem !important; }
-          .pf-cardtop  { flex-direction: column !important; gap: .6rem !important; }
-          .pf-pricetopleft { flex-direction: row !important; justify-content: space-between; align-items: center; width: 100%; }
-          .pf-priceblock   { margin-top: 0 !important; }
-          .pf-priceamt { font-size: 1.3rem !important; }
-          .pf-featgrid { grid-template-columns: 1fr !important; }
-          .pf-tiles    { grid-template-columns: 1fr 1fr !important; }
-          .pf-formbox  { padding: 1rem !important; }
-          .pf-savebtn  { width: 100% !important; justify-content: center !important; }
-          .pf-eyebrow  { display: none !important; }
+          .pf-page    { padding: 62px .9rem 4rem !important; }
+          .pf-idcard  { padding: .85rem 1rem !important; }
+          .pf-avatar  { width: 40px !important; height: 40px !important; font-size: 1rem !important; }
+          .pf-tabs    { margin-bottom: 1.4rem !important; }
+          .pf-tab     { padding: .48rem .85rem !important; font-size: .81rem !important; flex: 1; text-align: center; }
+          .pf-cardtop { flex-direction: column !important; gap: .55rem !important; }
+          .pf-cardtop-left { flex-direction: row !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; }
+          .pf-featgrid { grid-template-columns: 1fr !important; gap: .35rem !important; }
+          .pf-tiles   { grid-template-columns: 1fr 1fr !important; }
+          .pf-savebtn { width: 100% !important; justify-content: center !important; }
+          .pf-priceamt { font-size: 1.35rem !important; }
         }
       `}</style>
 
@@ -136,30 +139,37 @@ export default function Profile() {
 
       <div className="pf-page" style={c.page}>
 
-        {/* Back */}
-        <button className="p-back" style={c.back} onClick={() => navigate(-1)}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M9.5 13L4 8l5.5-5" stroke="#9090aa" strokeWidth="1.75"
+        {/* ── Back ── */}
+        <button className="p-back" onClick={() => navigate(-1)} style={c.back}>
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M9 12.5L4 7.5 9 2.5" stroke="currentColor" strokeWidth="1.6"
               strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
+          <span>Back</span>
         </button>
 
         {/* ── Identity card ── */}
         <div className="pf-idcard" style={c.idCard}>
-          <div className="pf-idavatar" style={c.idAvatar}>
-            {(user.name || 'U').charAt(0).toUpperCase()}
+          {/* Avatar with subtle glow ring matching plan */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div className="pf-avatar" style={{
+              ...c.idAvatar,
+              boxShadow: `0 0 0 2px #08080f, 0 0 0 3.5px ${pm.color}55`,
+            }}>
+              {(user.name || 'U').charAt(0).toUpperCase()}
+            </div>
           </div>
           <div style={c.idBody}>
             <div style={c.idName}>{user.name || 'User'}</div>
             <div style={c.idEmail}>{user.email}</div>
           </div>
-          <div style={{ ...c.idBadge, color: pm.color, borderColor: pm.color + '60', background: pm.color + '18' }}>
-            {pm.label}
+          <div style={{ ...c.idBadge, color: pm.color, borderColor: pm.color + '55', background: pm.color + '14' }}>
+            ✦ {pm.label}
           </div>
         </div>
 
         {/* ── Tabs ── */}
-        <div className="pf-tabrow" style={c.tabRow}>
+        <div className="pf-tabs" style={c.tabRow}>
           {[
             { id: 'plans',   label: 'Plans & Billing' },
             { id: 'profile', label: 'My Profile' },
@@ -169,9 +179,10 @@ export default function Profile() {
               <button key={t.id} className="p-tab pf-tab" onClick={() => setTab(t.id)} style={{
                 ...c.tab,
                 background:  on ? '#ffffff' : 'transparent',
-                color:       on ? '#0a0a12' : '#6e6e8a',
+                color:       on ? '#0a0a14' : '#5e5e7a',
                 fontWeight:  on ? 700 : 500,
                 borderColor: on ? 'transparent' : 'rgba(255,255,255,.1)',
+                boxShadow:   on ? '0 2px 12px rgba(0,0,0,.35)' : 'none',
               }}>
                 {t.label}
               </button>
@@ -183,29 +194,45 @@ export default function Profile() {
         {tab === 'plans' && (
           <div style={{ animation: 'rise .22s ease' }}>
 
-            <div className="pf-eyebrow" style={c.eyebrow}>Choose a plan</div>
+            <div style={c.eyebrow}>Choose a plan</div>
 
             <div style={c.planStack}>
               {PLANS.map(plan => {
                 const active = currentPlan === plan.id;
                 return (
-                  <div key={plan.id} className="p-card pf-plancard" style={{
+                  <div key={plan.id} className="p-card" style={{
                     ...c.planCard,
                     borderColor: active ? plan.border : 'rgba(255,255,255,.07)',
                     boxShadow:   active ? plan.glow : 'none',
+                    background:  active
+                      ? `linear-gradient(160deg, ${plan.color}0a 0%, #0f0f1a 55%)`
+                      : '#0f0f1a',
                   }}>
 
-                    {/* ── Card top: name / badge / price ── */}
+                    {/* Active top accent line */}
+                    {active && (
+                      <div style={{
+                        position:  'absolute',
+                        top: 0, left: '12%', right: '12%',
+                        height: '1px',
+                        background: `linear-gradient(90deg, transparent, ${plan.color}88, transparent)`,
+                        borderRadius: '1px',
+                      }}/>
+                    )}
+
+                    {/* ── Card top ── */}
                     <div className="pf-cardtop" style={c.cardTop}>
-                      <div className="pf-pricetopleft" style={c.cardTopLeft}>
-                        <span style={{ ...c.planName, color: plan.color }}>{plan.name}</span>
+                      <div className="pf-cardtop-left" style={c.cardTopLeft}>
+                        <span style={{ ...c.planName, color: active ? plan.color : '#c8c8e0' }}>
+                          {plan.name}
+                        </span>
                         {plan.badge && (
-                          <span style={{ ...c.chip, color: plan.color, borderColor: plan.color + '50', background: plan.color + '16' }}>
+                          <span style={{ ...c.chip, color: plan.color, borderColor: plan.color + '45', background: plan.color + '12' }}>
                             {plan.badge}
                           </span>
                         )}
                       </div>
-                      <div className="pf-priceblock" style={c.priceBlock}>
+                      <div style={c.priceBlock}>
                         <span className="pf-priceamt" style={{ ...c.priceAmt, color: active ? plan.color : '#e0e0f0' }}>
                           {plan.price}
                         </span>
@@ -221,7 +248,7 @@ export default function Profile() {
                       {plan.features.map(f => (
                         <div key={f} style={c.featItem}>
                           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-                            <circle cx="7" cy="7" r="6.5" fill={plan.color + '20'} stroke={plan.color + '35'} strokeWidth=".5"/>
+                            <circle cx="7" cy="7" r="6.5" fill={plan.color + '1a'} stroke={plan.color + '30'} strokeWidth=".5"/>
                             <path d="M4.5 7l2 2L9.5 5" stroke={plan.color} strokeWidth="1.5"
                               strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
@@ -232,7 +259,7 @@ export default function Profile() {
 
                     {/* ── CTA ── */}
                     {active ? (
-                      <div style={c.activeCta}>
+                      <div style={{ ...c.activeCta, color: plan.color, borderColor: plan.color + '28', background: plan.color + '0e' }}>
                         <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                           <path d="M3 6.5l2.5 2.5 4.5-5" stroke={plan.color} strokeWidth="1.6"
                             strokeLinecap="round" strokeLinejoin="round"/>
@@ -258,7 +285,7 @@ export default function Profile() {
         {tab === 'profile' && (
           <div style={{ animation: 'rise .22s ease' }}>
 
-            <div className="pf-eyebrow" style={c.eyebrow}>Account Details</div>
+            <div style={c.eyebrow}>Account Details</div>
 
             {/* Stat tiles */}
             <div className="pf-tiles" style={c.tiles}>
@@ -284,8 +311,7 @@ export default function Profile() {
             </div>
 
             {/* Form */}
-            <div className="pf-formbox" style={c.formBox}>
-
+            <div style={c.formBox}>
               <div style={c.formTitle}>Edit Profile</div>
 
               {/* Name */}
@@ -294,8 +320,8 @@ export default function Profile() {
                 <input
                   style={{
                     ...c.input,
-                    borderColor: nameFocus ? 'rgba(108,71,255,.65)' : 'rgba(255,255,255,.1)',
-                    boxShadow:   nameFocus ? '0 0 0 3px rgba(108,71,255,.12)' : 'none',
+                    borderColor: nameFocus ? 'rgba(124,92,255,.6)' : 'rgba(255,255,255,.1)',
+                    boxShadow:   nameFocus ? '0 0 0 3px rgba(108,71,255,.1)' : 'none',
                   }}
                   value={name}
                   onChange={e => setName(e.target.value)}
@@ -311,32 +337,38 @@ export default function Profile() {
                   <label style={c.label}>Email address</label>
                   <span style={c.locked}>
                     <svg width="9" height="10" viewBox="0 0 9 10" fill="none">
-                      <rect x="1" y="4.5" width="7" height="5" rx="1.2" stroke="#555577" strokeWidth="1"/>
-                      <path d="M2.5 4.5V3a2 2 0 014 0v1.5" stroke="#555577" strokeWidth="1"/>
+                      <rect x="1" y="4.5" width="7" height="5" rx="1.2" stroke="#44445a" strokeWidth="1"/>
+                      <path d="M2.5 4.5V3a2 2 0 014 0v1.5" stroke="#44445a" strokeWidth="1"/>
                     </svg>
                     Locked
                   </span>
                 </div>
                 <input
-                  style={{ ...c.input, opacity: .35, cursor: 'not-allowed', borderColor: 'rgba(255,255,255,.07)' }}
+                  style={{ ...c.input, opacity: .3, cursor: 'not-allowed', borderColor: 'rgba(255,255,255,.06)' }}
                   value={user.email || ''}
                   disabled
                 />
               </div>
 
               <button
-                className="pf-savebtn"
-                style={{ ...c.saveBtn, opacity: saving ? .55 : 1 }}
+                className="p-save pf-savebtn"
+                style={{ ...c.saveBtn, opacity: saving ? .5 : 1 }}
                 onClick={saveName}
                 disabled={saving}
               >
-                {saving
-                  ? <><span style={c.spinner} /> Saving...</>
-                  : 'Save changes'
-                }
+                {saving ? (
+                  <><span style={c.spinner} /> Saving...</>
+                ) : (
+                  <>
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                      <path d="M2 7l3.5 3.5L11 3" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Save changes
+                  </>
+                )}
               </button>
-
             </div>
+
           </div>
         )}
 
@@ -348,22 +380,26 @@ export default function Profile() {
 /* ─── Styles ─────────────────────────────────────────────────────────────── */
 const c = {
   page: {
-    maxWidth: '520px',
-    margin: '0 auto',
-    padding: '72px 1rem 5rem',
+    maxWidth:  '520px',
+    margin:    '0 auto',
+    padding:   '72px 1.1rem 5rem',
   },
 
   back: {
     display:        'inline-flex',
     alignItems:     'center',
-    justifyContent: 'center',
-    width:          '36px',
-    height:         '36px',
+    gap:            '.38rem',
+    padding:        '.42rem .85rem .42rem .65rem',
     background:     'rgba(255,255,255,.04)',
-    border:         '1px solid rgba(255,255,255,.09)',
+    border:         '1px solid rgba(255,255,255,.08)',
     borderRadius:   '10px',
     cursor:         'pointer',
     marginBottom:   '1.25rem',
+    color:          '#6e6e8a',
+    fontSize:       '.8rem',
+    fontWeight:     600,
+    fontFamily:     'inherit',
+    letterSpacing:  '-.01em',
   },
 
   /* Identity */
@@ -374,149 +410,152 @@ const c = {
     padding:      '1rem 1.25rem',
     background:   '#0f0f1a',
     border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '14px',
-    marginBottom: '1.25rem',
+    borderRadius: '16px',
+    marginBottom: '1.1rem',
+    position:     'relative',
+    overflow:     'hidden',
   },
   idAvatar: {
-    width:          '44px',
-    height:         '44px',
+    width:          '46px',
+    height:         '46px',
     borderRadius:   '50%',
-    background:     'linear-gradient(135deg,#4a30c8,#7c5cff)',
+    background:     'linear-gradient(135deg, #3a20b8, #7c5cff)',
     display:        'flex',
     alignItems:     'center',
     justifyContent: 'center',
     color:          '#fff',
     fontWeight:     800,
-    fontSize:       '1.1rem',
+    fontSize:       '1.15rem',
     flexShrink:     0,
+    letterSpacing:  '-.01em',
   },
   idBody:  { flex: 1, minWidth: 0 },
-  idName:  { fontSize: '.92rem', fontWeight: 700, color: '#f0f0f8', letterSpacing: '-.01em' },
-  idEmail: { fontSize: '.77rem', color: '#555577', marginTop: '.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  idName:  { fontSize: '.93rem', fontWeight: 700, color: '#ededfa', letterSpacing: '-.015em' },
+  idEmail: { fontSize: '.76rem', color: '#44445a', marginTop: '.18rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   idBadge: {
-    flexShrink:   0,
-    fontSize:     '.7rem',
-    fontWeight:   700,
-    padding:      '.28rem .75rem',
-    borderRadius: '999px',
-    border:       '1px solid',
-    letterSpacing:'.02em',
+    flexShrink:    0,
+    fontSize:      '.68rem',
+    fontWeight:    700,
+    padding:       '.26rem .7rem',
+    borderRadius:  '999px',
+    border:        '1px solid',
+    letterSpacing: '.03em',
   },
 
   /* Tabs */
   tabRow: {
-    display:      'flex',
-    gap:          '.45rem',
-    marginBottom: '1.75rem',
+    display:       'flex',
+    gap:           '.4rem',
+    marginBottom:  '1.6rem',
   },
   tab: {
-    padding:      '.52rem 1.1rem',
-    borderRadius: '999px',
-    border:       '1px solid',
-    fontSize:     '.84rem',
-    cursor:       'pointer',
-    fontFamily:   'inherit',
-    letterSpacing:'-.01em',
+    padding:       '.52rem 1.15rem',
+    borderRadius:  '999px',
+    border:        '1px solid',
+    fontSize:      '.83rem',
+    cursor:        'pointer',
+    fontFamily:    'inherit',
+    letterSpacing: '-.01em',
   },
 
   eyebrow: {
-    fontSize:     '.67rem',
-    fontWeight:   700,
-    color:        '#555577',
-    textTransform:'uppercase',
-    letterSpacing:'.09em',
-    marginBottom: '.9rem',
+    fontSize:      '.65rem',
+    fontWeight:    700,
+    color:         '#44445a',
+    textTransform: 'uppercase',
+    letterSpacing: '.1em',
+    marginBottom:  '.85rem',
   },
 
   /* Plans */
-  planStack: { display: 'flex', flexDirection: 'column', gap: '.7rem' },
+  planStack: { display: 'flex', flexDirection: 'column', gap: '.65rem' },
   planCard: {
-    padding:      '1.2rem',
-    background:   '#0f0f1a',
-    border:       '1px solid',
-    borderRadius: '16px',
-    display:      'flex',
-    flexDirection:'column',
-    gap:          '.85rem',
+    padding:       '1.2rem',
+    border:        '1px solid',
+    borderRadius:  '18px',
+    display:       'flex',
+    flexDirection: 'column',
+    gap:           '.85rem',
+    position:      'relative',
+    overflow:      'hidden',
   },
 
   cardTop: {
-    display:        'flex',
-    justifyContent: 'space-between',
-    alignItems:     'flex-start',
+    display:         'flex',
+    justifyContent:  'space-between',
+    alignItems:      'flex-start',
   },
   cardTopLeft: {
-    display:    'flex',
-    alignItems: 'center',
-    gap:        '.45rem',
-    flexWrap:   'wrap',
+    display:     'flex',
+    alignItems:  'center',
+    gap:         '.45rem',
+    flexWrap:    'wrap',
   },
-  planName: { fontSize: '.98rem', fontWeight: 800, letterSpacing: '-.01em' },
+  planName:  { fontSize: '1rem', fontWeight: 800, letterSpacing: '-.015em' },
   chip: {
-    fontSize:     '.6rem',
-    fontWeight:   700,
-    padding:      '.18rem .5rem',
-    borderRadius: '999px',
-    border:       '1px solid',
-    letterSpacing:'.03em',
+    fontSize:      '.59rem',
+    fontWeight:    700,
+    padding:       '.17rem .5rem',
+    borderRadius:  '999px',
+    border:        '1px solid',
+    letterSpacing: '.04em',
+    textTransform: 'uppercase',
   },
   priceBlock: {
     display:    'flex',
     alignItems: 'baseline',
-    gap:        '.25rem',
+    gap:        '.22rem',
     flexShrink: 0,
   },
-  priceAmt: { fontSize: '1.55rem', fontWeight: 900, letterSpacing: '-.04em', transition: 'color .2s' },
-  pricePer: { fontSize: '.72rem', color: '#555577' },
+  priceAmt: { fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-.04em', transition: 'color .2s' },
+  pricePer: { fontSize: '.71rem', color: '#44445a' },
 
-  hr: { height: '1px', background: 'rgba(255,255,255,.06)' },
+  hr: { height: '1px', background: 'rgba(255,255,255,.055)' },
 
   featGrid: {
     display:             'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap:                 '.38rem .7rem',
+    gap:                 '.4rem .7rem',
   },
   featItem: {
     display:    'flex',
     alignItems: 'center',
-    gap:        '.4rem',
-    fontSize:   '.76rem',
-    color:      '#8888aa',
-    lineHeight: 1.3,
+    gap:        '.38rem',
+    fontSize:   '.75rem',
+    color:      '#7878a0',
+    lineHeight: 1.35,
   },
 
   activeCta: {
-    display:        'flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    gap:            '.4rem',
-    padding:        '.75rem',
-    borderRadius:   '11px',
-    background:     'rgba(255,255,255,.04)',
-    border:         '1px solid rgba(255,255,255,.09)',
-    color:          '#666688',
-    fontSize:       '.84rem',
-    fontWeight:     600,
-    letterSpacing:  '-.01em',
+    display:         'flex',
+    alignItems:      'center',
+    justifyContent:  'center',
+    gap:             '.4rem',
+    padding:         '.72rem',
+    borderRadius:    '12px',
+    border:          '1px solid',
+    fontSize:        '.83rem',
+    fontWeight:      600,
+    letterSpacing:   '-.01em',
   },
   cta: {
-    width:        '100%',
-    padding:      '.75rem',
-    border:       'none',
-    borderRadius: '11px',
-    color:        '#fff',
-    fontWeight:   700,
-    fontSize:     '.88rem',
-    cursor:       'pointer',
-    fontFamily:   'inherit',
-    letterSpacing:'-.01em',
+    width:         '100%',
+    padding:       '.75rem',
+    border:        'none',
+    borderRadius:  '12px',
+    color:         '#fff',
+    fontWeight:    700,
+    fontSize:      '.88rem',
+    cursor:        'pointer',
+    fontFamily:    'inherit',
+    letterSpacing: '-.01em',
   },
 
   billingNote: {
-    textAlign:  'center',
-    color:      '#2e2e48',
-    fontSize:   '.72rem',
-    marginTop:  '1rem',
+    textAlign:     'center',
+    color:         '#28283e',
+    fontSize:      '.7rem',
+    marginTop:     '1rem',
     letterSpacing: '.01em',
   },
 
@@ -524,50 +563,50 @@ const c = {
   tiles: {
     display:             'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap:                 '.65rem',
-    marginBottom:        '1.2rem',
+    gap:                 '.6rem',
+    marginBottom:        '1.1rem',
   },
   tile: {
     padding:      '.9rem 1rem',
     background:   '#0f0f1a',
     border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '13px',
+    borderRadius: '14px',
   },
-  tileLabel: { fontSize: '.65rem', fontWeight: 700, color: '#555577', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '.32rem' },
-  tileVal:   { fontSize: '.9rem', fontWeight: 700, color: '#d0d0e8', display: 'flex', alignItems: 'center', gap: '.45rem', flexWrap: 'wrap' },
-  tileLink:  { background: 'none', border: 'none', color: '#7c5cff', fontSize: '.75rem', fontWeight: 700, cursor: 'pointer', padding: 0, fontFamily: 'inherit' },
+  tileLabel: { fontSize: '.63rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '.3rem' },
+  tileVal:   { fontSize: '.9rem', fontWeight: 700, color: '#d0d0e8', display: 'flex', alignItems: 'center', gap: '.4rem', flexWrap: 'wrap' },
+  tileLink:  { background: 'none', border: 'none', color: '#7c5cff', fontSize: '.74rem', fontWeight: 700, cursor: 'pointer', padding: 0, fontFamily: 'inherit' },
 
   formBox: {
-    padding:      '1.25rem',
-    background:   '#0f0f1a',
-    border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '16px',
-    display:      'flex',
-    flexDirection:'column',
-    gap:          '1rem',
+    padding:       '1.3rem',
+    background:    '#0f0f1a',
+    border:        '1px solid rgba(255,255,255,.07)',
+    borderRadius:  '18px',
+    display:       'flex',
+    flexDirection: 'column',
+    gap:           '1rem',
   },
-  formTitle: { fontSize: '.67rem', fontWeight: 700, color: '#555577', textTransform: 'uppercase', letterSpacing: '.09em' },
+  formTitle: { fontSize: '.65rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.1em' },
 
-  field:    { display: 'flex', flexDirection: 'column', gap: '.38rem' },
+  field:    { display: 'flex', flexDirection: 'column', gap: '.35rem' },
   labelRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-  label: { fontSize: '.68rem', fontWeight: 700, color: '#555577', textTransform: 'uppercase', letterSpacing: '.07em' },
+  label:    { fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em' },
   locked: {
     display:      'inline-flex',
     alignItems:   'center',
-    gap:          '.3rem',
-    fontSize:     '.65rem',
+    gap:          '.28rem',
+    fontSize:     '.63rem',
     fontWeight:   600,
-    color:        '#444466',
-    background:   'rgba(255,255,255,.04)',
-    border:       '1px solid rgba(255,255,255,.07)',
+    color:        '#3a3a52',
+    background:   'rgba(255,255,255,.03)',
+    border:       '1px solid rgba(255,255,255,.06)',
     borderRadius: '5px',
-    padding:      '.15rem .45rem',
+    padding:      '.13rem .42rem',
   },
   input: {
-    padding:      '.72rem .95rem',
+    padding:      '.73rem 1rem',
     background:   '#08080f',
     border:       '1px solid',
-    borderRadius: '10px',
+    borderRadius: '11px',
     color:        '#f0f0f8',
     fontSize:     '.9rem',
     outline:      'none',
@@ -581,28 +620,28 @@ const c = {
     alignSelf:      'flex-start',
     display:        'inline-flex',
     alignItems:     'center',
-    gap:            '.45rem',
-    padding:        '.72rem 1.5rem',
-    background:     'linear-gradient(135deg,#5535e0,#7c5cff)',
+    gap:            '.42rem',
+    padding:        '.72rem 1.55rem',
+    background:     'linear-gradient(135deg, #5535e0, #7c5cff)',
     color:          '#fff',
     border:         'none',
-    borderRadius:   '10px',
+    borderRadius:   '11px',
     fontWeight:     700,
-    fontSize:       '.88rem',
+    fontSize:       '.87rem',
     cursor:         'pointer',
     fontFamily:     'inherit',
     letterSpacing:  '-.01em',
-    boxShadow:      '0 4px 18px rgba(108,71,255,.3)',
-    transition:     'opacity .15s',
+    boxShadow:      '0 4px 16px rgba(108,71,255,.28)',
+    transition:     'opacity .15s, transform .12s',
   },
   spinner: {
-    width:         '13px',
-    height:        '13px',
-    border:        '2px solid rgba(255,255,255,.3)',
-    borderTopColor:'#fff',
-    borderRadius:  '50%',
-    display:       'inline-block',
-    animation:     'spin .6s linear infinite',
-    flexShrink:    0,
+    width:          '12px',
+    height:         '12px',
+    border:         '2px solid rgba(255,255,255,.25)',
+    borderTopColor: '#fff',
+    borderRadius:   '50%',
+    display:        'inline-block',
+    animation:      'spin .6s linear infinite',
+    flexShrink:     0,
   },
 };
