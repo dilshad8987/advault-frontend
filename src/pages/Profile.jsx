@@ -7,8 +7,8 @@ import api from '../api/axios';
 const PLANS = [
   {
     id: 'free', name: 'Free', price: '$0', sub: 'Forever free',
-    accent: '#444466',
-    features: ['200 credits / month', 'TikTok Ads (limited)', '3 Collections', 'Basic filters'],
+    accent: '#555577',
+    features: ['200 credits / month', 'TikTok Ads (limited)', '3 Collections', 'Basic filters', 'Standard support', 'Web access only'],
     cta: null,
   },
   {
@@ -141,11 +141,7 @@ export default function Profile() {
                             {p.badge}
                           </span>
                         )}
-                        {isCurrent && (
-                          <span style={{ ...S.badge, color: p.accent, background: p.accent + '18', borderColor: p.accent + '45' }}>
-                            ✓ Active
-                          </span>
-                        )}
+
                       </div>
                       <div style={S.priceCol}>
                         <span style={{ ...S.priceNum, color: isCurrent ? p.accent : '#f0f0f8' }}>{p.price}</span>
@@ -167,7 +163,9 @@ export default function Profile() {
                     </div>
 
                     {/* CTA */}
-                    {p.cta && !isCurrent && (
+                    {isCurrent ? (
+                      <div style={S.currentBtn}>✓ Your current plan</div>
+                    ) : (
                       <button className="upbtn" style={{
                         ...S.upBtn,
                         background: p.id === 'elite'
@@ -306,7 +304,7 @@ const S = {
   planStack: { display: 'flex', flexDirection: 'column', gap: '.75rem' },
   planCard: {
     background: '#12121e', border: '1px solid', borderRadius: '16px',
-    padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '.85rem',
+    padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '.85rem',
   },
   planHead: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '.5rem' },
   planHeadLeft: { display: 'flex', alignItems: 'center', gap: '.45rem', flexWrap: 'wrap' },
@@ -378,5 +376,11 @@ const S = {
     border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff',
     borderRadius: '50%', display: 'inline-block',
     animation: 'spin .6s linear infinite', flexShrink: 0,
+  },
+  currentBtn: {
+    width: '100%', padding: '.78rem', borderRadius: '12px', textAlign: 'center',
+    background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)',
+    color: '#555577', fontWeight: 600, fontSize: '.85rem',
+    letterSpacing: '-.01em',
   },
 };
