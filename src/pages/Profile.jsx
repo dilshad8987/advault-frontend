@@ -36,7 +36,6 @@ const PLANS = [
       'Unlimited credits',
       'TikTok + Facebook + Instagram',
       'Unlimited collections',
-      'AliExpress products',
       'Advanced filters',
       'Priority support',
     ],
