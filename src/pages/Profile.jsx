@@ -201,10 +201,25 @@ export default function Profile() {
           <div style={{ animation: 'rise .22s ease' }}>
 
             {/* ── Credits Card ── */}
-            {usage && (() => {
-              const pct   = Math.round((usage.creditsRemaining / usage.creditsLimit) * 100);
-              const clr   = pct > 50 ? '#4caf7d' : pct > 20 ? '#ffb700' : '#ff4f87';
-              const costs = usage.creditCosts || {};
+            {(() => {
+              if (!usage) return (
+                <div style={{ ...crd.card, opacity: .45 }}>
+                  <div style={crd.top}>
+                    <div style={crd.label}>Monthly Credits</div>
+                    <span style={{ fontSize: '.8rem', color: '#555' }}>Loading...</span>
+                  </div>
+                  <div style={crd.bar}><div style={{ ...crd.fill, width: '0%', background: '#333' }} /></div>
+                </div>
+              );
+
+              const limit     = usage.creditsLimit     || 200;
+              const remaining = usage.creditsRemaining ?? limit;
+              const used      = limit - remaining;
+              const pct       = Math.round((remaining / limit) * 100);
+              const clr       = pct > 50 ? '#4caf7d' : pct > 20 ? '#ffb700' : '#ff4f87';
+              const costs     = usage.creditCosts || {};
+              const isEmpty   = remaining <= 0;
+
               return (
                 <div style={crd.card}>
                   <div style={crd.top}>
@@ -213,22 +228,31 @@ export default function Profile() {
                       <div style={crd.resetNote}>Resets: {usage.creditsResetDate || '—'}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{ ...crd.count, color: clr }}>{usage.creditsRemaining.toLocaleString()}</span>
-                      <span style={crd.total}> / {usage.creditsLimit.toLocaleString()}</span>
+                      <span style={{ ...crd.count, color: clr }}>{used.toLocaleString()}</span>
+                      <span style={crd.total}> / {limit.toLocaleString()} used</span>
                     </div>
                   </div>
-                  {/* Progress bar */}
+
                   <div style={crd.bar}>
-                    <div style={{ ...crd.fill, width: `${pct}%`, background: clr }} />
+                    <div style={{ ...crd.fill, width: `${100 - pct}%`, background: clr }} />
                   </div>
-                  {/* Cost breakdown */}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.85rem' }}>
+                    <span style={{ fontSize: '.73rem', color: '#6666aa' }}>
+                      {remaining.toLocaleString()} credits remaining
+                    </span>
+                    {isEmpty && (
+                      <a href="/upgrade" style={crd.upgradeBtn}>⚡ Upgrade</a>
+                    )}
+                  </div>
+
                   <div style={crd.costsRow}>
                     {[
-                      { label: 'Search',      cost: costs.search      || 5  },
-                      { label: 'Detail View', cost: costs.ad_detail   || 30 },
-                      { label: 'Save Ad',     cost: costs.save_ad     || 5  },
-                      { label: 'Video DL',    cost: costs.video_download || 10 },
-                      { label: 'Load More',   cost: costs.load_more   || 5  },
+                      { label: 'Search',      cost: costs.search           || 5  },
+                      { label: 'Detail View', cost: costs.ad_detail        || 30 },
+                      { label: 'Save Ad',     cost: costs.save_ad          || 5  },
+                      { label: 'Video DL',    cost: costs.video_download   || 10 },
+                      { label: 'Load More',   cost: costs.load_more        || 5  },
                     ].map(({ label, cost }) => (
                       <div key={label} style={crd.costItem}>
                         <span style={crd.costLabel}>{label}</span>
@@ -512,4 +536,247 @@ const c = {
     gap:          '.55rem',
     marginBottom: '1.6rem',
   },
-  
+  tab: {
+    padding:       '.52rem 1.15rem',
+    borderRadius:  '10px',
+    border:        '1px solid',
+    fontSize:      '.83rem',
+    cursor:        'pointer',
+    fontFamily:    'inherit',
+    letterSpacing: '-.01em',
+    transition:    'background .15s, color .15s, border-color .15s, box-shadow .15s',
+  },
+
+  eyebrow: {
+    fontSize:      '.65rem',
+    fontWeight:    700,
+    color:         '#44445a',
+    textTransform: 'uppercase',
+    letterSpacing: '.1em',
+    marginBottom:  '.85rem',
+  },
+
+  /* Plans */
+  planStack: { display: 'flex', flexDirection: 'column', gap: '.65rem' },
+  planCard: {
+    padding:       '1.2rem',
+    border:        '1px solid',
+    borderRadius:  '18px',
+    display:       'flex',
+    flexDirection: 'column',
+    gap:           '.85rem',
+    position:      'relative',
+    overflow:      'hidden',
+  },
+
+  cardTop: {
+    display:         'flex',
+    justifyContent:  'space-between',
+    alignItems:      'flex-start',
+  },
+  cardTopLeft: {
+    display:     'flex',
+    alignItems:  'center',
+    gap:         '.45rem',
+    flexWrap:    'wrap',
+  },
+  planName:  { fontSize: '1rem', fontWeight: 800, letterSpacing: '-.015em' },
+  chip: {
+    fontSize:      '.59rem',
+    fontWeight:    700,
+    padding:       '.17rem .5rem',
+    borderRadius:  '999px',
+    border:        '1px solid',
+    letterSpacing: '.04em',
+    textTransform: 'uppercase',
+  },
+  priceBlock: {
+    display:    'flex',
+    alignItems: 'baseline',
+    gap:        '.22rem',
+    flexShrink: 0,
+  },
+  priceAmt: { fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-.04em', transition: 'color .2s' },
+  pricePer: { fontSize: '.71rem', color: '#44445a' },
+
+  hr: { height: '1px', background: 'rgba(255,255,255,.055)' },
+
+  featGrid: {
+    display:             'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap:                 '.4rem .7rem',
+  },
+  featItem: {
+    display:    'flex',
+    alignItems: 'center',
+    gap:        '.38rem',
+    fontSize:   '.75rem',
+    color:      '#7878a0',
+    lineHeight: 1.35,
+  },
+
+  activeCta: {
+    display:         'flex',
+    alignItems:      'center',
+    justifyContent:  'center',
+    gap:             '.4rem',
+    padding:         '.72rem',
+    borderRadius:    '12px',
+    border:          '1px solid',
+    fontSize:        '.83rem',
+    fontWeight:      600,
+    letterSpacing:   '-.01em',
+  },
+  cta: {
+    width:         '100%',
+    padding:       '.75rem',
+    border:        'none',
+    borderRadius:  '12px',
+    color:         '#fff',
+    fontWeight:    700,
+    fontSize:      '.88rem',
+    cursor:        'pointer',
+    fontFamily:    'inherit',
+    letterSpacing: '-.01em',
+  },
+
+  billingNote: {
+    textAlign:     'center',
+    color:         '#28283e',
+    fontSize:      '.7rem',
+    marginTop:     '1rem',
+    letterSpacing: '.01em',
+  },
+
+  /* Profile */
+  tiles: {
+    display:             'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap:                 '.6rem',
+    marginBottom:        '1.1rem',
+  },
+  tile: {
+    padding:      '.9rem 1rem',
+    background:   '#0f0f1a',
+    border:       '1px solid rgba(255,255,255,.07)',
+    borderRadius: '14px',
+  },
+  tileLabel: { fontSize: '.63rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '.3rem' },
+  tileVal:   { fontSize: '.9rem', fontWeight: 700, color: '#d0d0e8', display: 'flex', alignItems: 'center', gap: '.4rem', flexWrap: 'wrap' },
+  tileLink:  { background: 'none', border: 'none', color: '#7c5cff', fontSize: '.74rem', fontWeight: 700, cursor: 'pointer', padding: 0, fontFamily: 'inherit' },
+
+  formBox: {
+    padding:       '1.3rem',
+    background:    '#0f0f1a',
+    border:        '1px solid rgba(255,255,255,.07)',
+    borderRadius:  '18px',
+    display:       'flex',
+    flexDirection: 'column',
+    gap:           '1rem',
+  },
+  formTitle: { fontSize: '.65rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.1em' },
+
+  field:    { display: 'flex', flexDirection: 'column', gap: '.35rem' },
+  labelRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  label:    { fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em' },
+  locked: {
+    display:      'inline-flex',
+    alignItems:   'center',
+    gap:          '.28rem',
+    fontSize:     '.63rem',
+    fontWeight:   600,
+    color:        '#3a3a52',
+    background:   'rgba(255,255,255,.03)',
+    border:       '1px solid rgba(255,255,255,.06)',
+    borderRadius: '5px',
+    padding:      '.13rem .42rem',
+  },
+  input: {
+    padding:      '.73rem 1rem',
+    background:   '#08080f',
+    border:       '1px solid',
+    borderRadius: '11px',
+    color:        '#f0f0f8',
+    fontSize:     '.9rem',
+    outline:      'none',
+    width:        '100%',
+    fontFamily:   'inherit',
+    transition:   'border-color .15s, box-shadow .15s',
+    boxSizing:    'border-box',
+  },
+
+  saveBtn: {
+    alignSelf:      'flex-start',
+    display:        'inline-flex',
+    alignItems:     'center',
+    gap:            '.42rem',
+    padding:        '.72rem 1.55rem',
+    background:     'linear-gradient(135deg, #5535e0, #7c5cff)',
+    color:          '#fff',
+    border:         'none',
+    borderRadius:   '11px',
+    fontWeight:     700,
+    fontSize:       '.87rem',
+    cursor:         'pointer',
+    fontFamily:     'inherit',
+    letterSpacing:  '-.01em',
+    boxShadow:      '0 4px 16px rgba(108,71,255,.28)',
+    transition:     'opacity .15s, transform .12s',
+  },
+  spinner: {
+    width:          '12px',
+    height:         '12px',
+    border:         '2px solid rgba(255,255,255,.25)',
+    borderTopColor: '#fff',
+    borderRadius:   '50%',
+    display:        'inline-block',
+    animation:      'spin .6s linear infinite',
+    flexShrink:     0,
+  },
+};
+
+// Credits card styles
+const crd = {
+  card: {
+    background:   '#0f0f1a',
+    border:       '1px solid rgba(255,255,255,.08)',
+    borderRadius: '14px',
+    padding:      '1.1rem 1.25rem',
+    marginBottom: '1.4rem',
+  },
+  top: {
+    display:        'flex',
+    justifyContent: 'space-between',
+    alignItems:     'flex-start',
+    marginBottom:   '.7rem',
+  },
+  label: { fontSize: '.8rem', color: '#8888aa', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase' },
+  resetNote: { fontSize: '.7rem', color: '#5a5a7a', marginTop: '.15rem' },
+  count: { fontSize: '1.4rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' },
+  total: { fontSize: '.85rem', color: '#5a5a7a', fontWeight: 500 },
+  bar: {
+    height: '7px', background: 'rgba(255,255,255,.07)', borderRadius: '4px',
+    overflow: 'hidden', marginBottom: '.9rem',
+  },
+  fill: { height: '100%', borderRadius: '4px', transition: 'width .4s ease' },
+  costsRow: {
+    display: 'flex', flexWrap: 'wrap', gap: '.4rem',
+  },
+  costItem: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.06)',
+    borderRadius: '8px', padding: '.35rem .7rem', minWidth: '68px',
+  },
+  costLabel: { fontSize: '.65rem', color: '#6666aa', fontWeight: 500, marginBottom: '.1rem' },
+  costVal:   { fontSize: '.78rem', color: '#c0c0e0', fontWeight: 700 },
+  upgradeBtn: {
+    padding: '.28rem .75rem',
+    background: 'linear-gradient(135deg,#6c47ff,#8b6bff)',
+    color: '#fff',
+    borderRadius: '20px',
+    fontSize: '.72rem',
+    fontWeight: 700,
+    textDecoration: 'none',
+    letterSpacing: '.01em',
+  },
+};
