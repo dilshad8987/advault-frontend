@@ -248,11 +248,11 @@ export default function Profile() {
 
                   <div style={crd.costsRow}>
                     {[
-                      { label: 'Search',      cost: costs.search           || 5  },
+                      { label: 'Search',      cost: costs.search           || 10 },
                       { label: 'Detail View', cost: costs.ad_detail        || 30 },
-                      { label: 'Save Ad',     cost: costs.save_ad          || 5  },
+                      { label: 'Save Ad',     cost: costs.save_ad          || 10 },
                       { label: 'Video DL',    cost: costs.video_download   || 10 },
-                      { label: 'Load More',   cost: costs.load_more        || 5  },
+                      { label: 'Load More',   cost: costs.load_more        || 10 },
                     ].map(({ label, cost }) => (
                       <div key={label} style={crd.costItem}>
                         <span style={crd.costLabel}>{label}</span>
