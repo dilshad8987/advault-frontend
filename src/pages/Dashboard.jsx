@@ -59,6 +59,14 @@ export default function Dashboard() {
   const [metaKeyword, setMetaKeyword] = useState('product');
   const [metaStatus, setMetaStatus]   = useState('ACTIVE');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [userCredits, setUserCredits] = useState(null);
+  useEffect(() => {
+    api.get('/user/profile').then(res => {
+      const u = res.data?.usage;
+      if (u) setUserCredits({ remaining: u.creditsRemaining });
+    }).catch(() => {});
+  }, []);
+  const noCredits = userCredits !== null && userCredits.remaining <= 0;
 
   const countries = ['US','DE','GB','FR','IT','ES','NL','PL','AT','BE','SE','NO','DK','FI'];
   const periods   = [{ v: '7', l: '7 Days' },{ v: '30', l: '30 Days' },{ v: '90', l: '90 Days' },{ v: '180', l: '180 Days' }];
@@ -133,6 +141,14 @@ export default function Dashboard() {
           <p style={s.sub}>🔥 Last 7 days ke sabse trending product ads</p>
         </div>
 
+        {/* No Credits Banner */}
+        {noCredits && (
+          <div style={s.noCreditBanner}>
+            <span>🔒 Credits khatam ho gaye — premium features band hain.</span>
+            <a href="/profile" style={s.upgradeLink}>Upgrade karo →</a>
+          </div>
+        )}
+
         {/* TABS */}
         <div style={s.tabRow}>
           {MAIN_TABS.map(t => {
@@ -185,7 +201,13 @@ export default function Dashboard() {
                   value={metaKeyword} onChange={e => setMetaKeyword(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && fetchAds()}
                   placeholder="e.g. product, fashion..."/>
-                <button style={s.searchBtn} onClick={fetchAds}>Search</button>
+                <button
+                  style={{...s.searchBtn,...(noCredits?{opacity:.5,cursor:'not-allowed'}:{})}}
+                  onClick={noCredits ? undefined : fetchAds}
+                  title={noCredits?'Credits khatam':''}
+                >
+                  {noCredits ? '🔒' : 'Search'}
+                </button>
               </div>
             </div>
             <div style={s.fg}><label style={s.lbl}>📡 STATUS</label>
@@ -252,5 +274,7 @@ const s = {
   count: { color: '#8888aa', fontSize: '.83rem', marginBottom: '1rem' },
   grid:  { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap: '1.25rem' },
   center:{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '.5rem' },
-  spin:  { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+  spin:        { width: '40px', height: '40px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+  noCreditBanner: { display: 'flex', alignItems: 'center', gap: '1rem', padding: '.85rem 1.25rem', background: 'rgba(255,79,135,.06)', border: '1px solid rgba(255,79,135,.2)', borderRadius: '10px', marginBottom: '1rem', color: '#ff4f87', fontSize: '.85rem', fontWeight: 600 },
+  upgradeLink: { marginLeft: 'auto', padding: '.35rem .9rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', borderRadius: '7px', textDecoration: 'none', fontSize: '.8rem', fontWeight: 700 },
 };
