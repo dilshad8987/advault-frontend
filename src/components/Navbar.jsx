@@ -2,18 +2,28 @@
 // Fix: Logout ab server pe bhi call karta hai (pehle sirf localStorage.clear() tha)
 // Server logout se refreshToken invalidate hota hai aur device session hatata hai
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import { useCredits } from '../context/CreditContext';
 
 export default function Navbar() {
   const navigate  = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { credits, clearCredits } = useCredits();
+  const [credits, setCredits] = useState(null);
   const user  = JSON.parse(localStorage.getItem('user') || 'null');
   const isPro = user?.plan && user.plan !== 'free';
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/user/profile')
+      .then(res => {
+        const u = res.data?.usage;
+        if (u) setCredits({ remaining: u.creditsRemaining, limit: u.creditsLimit });
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const creditPct   = credits ? Math.round((credits.remaining / credits.limit) * 100) : null;
   const creditColor = creditPct === null ? '#6c47ff'
@@ -35,7 +45,6 @@ export default function Navbar() {
       // Server down ho toh bhi local logout karo
     } finally {
       localStorage.clear();
-      clearCredits();
       navigate('/login');
     }
   };
