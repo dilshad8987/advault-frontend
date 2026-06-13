@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
@@ -83,6 +83,13 @@ export default function Profile() {
   const [name,      setName] = useState(user.name || '');
   const [saving,  setSaving] = useState(false);
   const [nameFocus,  setNF]  = useState(false);
+  const [usage,    setUsage] = useState(null);
+
+  useEffect(() => {
+    api.get('/user/profile')
+      .then(res => { if (res.data?.usage) setUsage(res.data.usage); })
+      .catch(() => {});
+  }, []);
 
   const saveName = async () => {
     if (!name.trim()) return toast.error('Name daalo');
@@ -192,6 +199,46 @@ export default function Profile() {
         {/* ════ PLANS ════ */}
         {tab === 'plans' && (
           <div style={{ animation: 'rise .22s ease' }}>
+
+            {/* ── Credits Card ── */}
+            {usage && (() => {
+              const pct   = Math.round((usage.creditsRemaining / usage.creditsLimit) * 100);
+              const clr   = pct > 50 ? '#4caf7d' : pct > 20 ? '#ffb700' : '#ff4f87';
+              const costs = usage.creditCosts || {};
+              return (
+                <div style={crd.card}>
+                  <div style={crd.top}>
+                    <div>
+                      <div style={crd.label}>Monthly Credits</div>
+                      <div style={crd.resetNote}>Resets: {usage.creditsResetDate || '—'}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ ...crd.count, color: clr }}>{usage.creditsRemaining.toLocaleString()}</span>
+                      <span style={crd.total}> / {usage.creditsLimit.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  {/* Progress bar */}
+                  <div style={crd.bar}>
+                    <div style={{ ...crd.fill, width: `${pct}%`, background: clr }} />
+                  </div>
+                  {/* Cost breakdown */}
+                  <div style={crd.costsRow}>
+                    {[
+                      { label: 'Search',      cost: costs.search      || 5  },
+                      { label: 'Detail View', cost: costs.ad_detail   || 30 },
+                      { label: 'Save Ad',     cost: costs.save_ad     || 5  },
+                      { label: 'Video DL',    cost: costs.video_download || 10 },
+                      { label: 'Load More',   cost: costs.load_more   || 5  },
+                    ].map(({ label, cost }) => (
+                      <div key={label} style={crd.costItem}>
+                        <span style={crd.costLabel}>{label}</span>
+                        <span style={crd.costVal}>{cost} cr</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div style={c.eyebrow}>Choose a plan</div>
 
@@ -465,201 +512,4 @@ const c = {
     gap:          '.55rem',
     marginBottom: '1.6rem',
   },
-  tab: {
-    padding:       '.52rem 1.15rem',
-    borderRadius:  '10px',
-    border:        '1px solid',
-    fontSize:      '.83rem',
-    cursor:        'pointer',
-    fontFamily:    'inherit',
-    letterSpacing: '-.01em',
-    transition:    'background .15s, color .15s, border-color .15s, box-shadow .15s',
-  },
-
-  eyebrow: {
-    fontSize:      '.65rem',
-    fontWeight:    700,
-    color:         '#44445a',
-    textTransform: 'uppercase',
-    letterSpacing: '.1em',
-    marginBottom:  '.85rem',
-  },
-
-  /* Plans */
-  planStack: { display: 'flex', flexDirection: 'column', gap: '.65rem' },
-  planCard: {
-    padding:       '1.2rem',
-    border:        '1px solid',
-    borderRadius:  '18px',
-    display:       'flex',
-    flexDirection: 'column',
-    gap:           '.85rem',
-    position:      'relative',
-    overflow:      'hidden',
-  },
-
-  cardTop: {
-    display:         'flex',
-    justifyContent:  'space-between',
-    alignItems:      'flex-start',
-  },
-  cardTopLeft: {
-    display:     'flex',
-    alignItems:  'center',
-    gap:         '.45rem',
-    flexWrap:    'wrap',
-  },
-  planName:  { fontSize: '1rem', fontWeight: 800, letterSpacing: '-.015em' },
-  chip: {
-    fontSize:      '.59rem',
-    fontWeight:    700,
-    padding:       '.17rem .5rem',
-    borderRadius:  '999px',
-    border:        '1px solid',
-    letterSpacing: '.04em',
-    textTransform: 'uppercase',
-  },
-  priceBlock: {
-    display:    'flex',
-    alignItems: 'baseline',
-    gap:        '.22rem',
-    flexShrink: 0,
-  },
-  priceAmt: { fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-.04em', transition: 'color .2s' },
-  pricePer: { fontSize: '.71rem', color: '#44445a' },
-
-  hr: { height: '1px', background: 'rgba(255,255,255,.055)' },
-
-  featGrid: {
-    display:             'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap:                 '.4rem .7rem',
-  },
-  featItem: {
-    display:    'flex',
-    alignItems: 'center',
-    gap:        '.38rem',
-    fontSize:   '.75rem',
-    color:      '#7878a0',
-    lineHeight: 1.35,
-  },
-
-  activeCta: {
-    display:         'flex',
-    alignItems:      'center',
-    justifyContent:  'center',
-    gap:             '.4rem',
-    padding:         '.72rem',
-    borderRadius:    '12px',
-    border:          '1px solid',
-    fontSize:        '.83rem',
-    fontWeight:      600,
-    letterSpacing:   '-.01em',
-  },
-  cta: {
-    width:         '100%',
-    padding:       '.75rem',
-    border:        'none',
-    borderRadius:  '12px',
-    color:         '#fff',
-    fontWeight:    700,
-    fontSize:      '.88rem',
-    cursor:        'pointer',
-    fontFamily:    'inherit',
-    letterSpacing: '-.01em',
-  },
-
-  billingNote: {
-    textAlign:     'center',
-    color:         '#28283e',
-    fontSize:      '.7rem',
-    marginTop:     '1rem',
-    letterSpacing: '.01em',
-  },
-
-  /* Profile */
-  tiles: {
-    display:             'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap:                 '.6rem',
-    marginBottom:        '1.1rem',
-  },
-  tile: {
-    padding:      '.9rem 1rem',
-    background:   '#0f0f1a',
-    border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '14px',
-  },
-  tileLabel: { fontSize: '.63rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '.3rem' },
-  tileVal:   { fontSize: '.9rem', fontWeight: 700, color: '#d0d0e8', display: 'flex', alignItems: 'center', gap: '.4rem', flexWrap: 'wrap' },
-  tileLink:  { background: 'none', border: 'none', color: '#7c5cff', fontSize: '.74rem', fontWeight: 700, cursor: 'pointer', padding: 0, fontFamily: 'inherit' },
-
-  formBox: {
-    padding:       '1.3rem',
-    background:    '#0f0f1a',
-    border:        '1px solid rgba(255,255,255,.07)',
-    borderRadius:  '18px',
-    display:       'flex',
-    flexDirection: 'column',
-    gap:           '1rem',
-  },
-  formTitle: { fontSize: '.65rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.1em' },
-
-  field:    { display: 'flex', flexDirection: 'column', gap: '.35rem' },
-  labelRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-  label:    { fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em' },
-  locked: {
-    display:      'inline-flex',
-    alignItems:   'center',
-    gap:          '.28rem',
-    fontSize:     '.63rem',
-    fontWeight:   600,
-    color:        '#3a3a52',
-    background:   'rgba(255,255,255,.03)',
-    border:       '1px solid rgba(255,255,255,.06)',
-    borderRadius: '5px',
-    padding:      '.13rem .42rem',
-  },
-  input: {
-    padding:      '.73rem 1rem',
-    background:   '#08080f',
-    border:       '1px solid',
-    borderRadius: '11px',
-    color:        '#f0f0f8',
-    fontSize:     '.9rem',
-    outline:      'none',
-    width:        '100%',
-    fontFamily:   'inherit',
-    transition:   'border-color .15s, box-shadow .15s',
-    boxSizing:    'border-box',
-  },
-
-  saveBtn: {
-    alignSelf:      'flex-start',
-    display:        'inline-flex',
-    alignItems:     'center',
-    gap:            '.42rem',
-    padding:        '.72rem 1.55rem',
-    background:     'linear-gradient(135deg, #5535e0, #7c5cff)',
-    color:          '#fff',
-    border:         'none',
-    borderRadius:   '11px',
-    fontWeight:     700,
-    fontSize:       '.87rem',
-    cursor:         'pointer',
-    fontFamily:     'inherit',
-    letterSpacing:  '-.01em',
-    boxShadow:      '0 4px 16px rgba(108,71,255,.28)',
-    transition:     'opacity .15s, transform .12s',
-  },
-  spinner: {
-    width:          '12px',
-    height:         '12px',
-    border:         '2px solid rgba(255,255,255,.25)',
-    borderTopColor: '#fff',
-    borderRadius:   '50%',
-    display:        'inline-block',
-    animation:      'spin .6s linear infinite',
-    flexShrink:     0,
-  },
-};
+  
