@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCredits } from '../context/CreditContext';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
@@ -64,12 +63,16 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   const [thumbError, setThumbError] = useState(false);
   const navigate = useNavigate();
   const isMeta   = platform === 'meta';
-  const { credits, applyApiResponse } = useCredits();
-
-  // Credits 0 hone pe features lock honge
-  const noCredits   = credits !== null && credits.remaining <= 0;
-  const saveCost    = credits?.costs?.save_ad    ?? 10;
-  const canSave     = !noCredits && (credits === null || credits.remaining >= saveCost);
+  const [userCredits, setUserCredits] = useState(null);
+  useEffect(() => {
+    api.get('/user/profile').then(res => {
+      const u = res.data?.usage;
+      if (u) setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
+    }).catch(() => {});
+  }, []);
+  const noCredits = userCredits !== null && userCredits.remaining <= 0;
+  const saveCost  = userCredits?.costs?.save_ad ?? 10;
+  const canSave   = !noCredits && (userCredits === null || userCredits.remaining >= saveCost);
 
   function fmtNum(n) {
     n = Number(n);
@@ -365,7 +368,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     try {
       const res = await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
       setSaved(true);
-      applyApiResponse(res.data);
       toast.success('Ad save ho gayi!');
     } catch (err) {
       if (err.response?.data?.upgrade) {
