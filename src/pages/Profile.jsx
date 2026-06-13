@@ -87,8 +87,13 @@ export default function Profile() {
 
   useEffect(() => {
     api.get('/user/profile')
-      .then(res => { if (res.data?.usage) setUsage(res.data.usage); })
-      .catch(() => {});
+      .then(res => {
+        if (res.data?.usage) setUsage(res.data.usage);
+        else setUsage({ creditsLimit: 200, creditsRemaining: 200, creditsUsed: 0, creditsResetDate: '', creditCosts: {} });
+      })
+      .catch(() => {
+        setUsage({ creditsLimit: 200, creditsRemaining: 200, creditsUsed: 0, creditsResetDate: '', creditCosts: {} });
+      });
   }, []);
 
   const saveName = async () => {
@@ -200,69 +205,7 @@ export default function Profile() {
         {tab === 'plans' && (
           <div style={{ animation: 'rise .22s ease' }}>
 
-            {/* ── Credits Card ── */}
-            {(() => {
-              if (!usage) return (
-                <div style={{ ...crd.card, opacity: .45 }}>
-                  <div style={crd.top}>
-                    <div style={crd.label}>Monthly Credits</div>
-                    <span style={{ fontSize: '.8rem', color: '#555' }}>Loading...</span>
-                  </div>
-                  <div style={crd.bar}><div style={{ ...crd.fill, width: '0%', background: '#333' }} /></div>
-                </div>
-              );
 
-              const limit     = usage.creditsLimit     || 200;
-              const remaining = usage.creditsRemaining ?? limit;
-              const used      = limit - remaining;
-              const pct       = Math.round((remaining / limit) * 100);
-              const clr       = pct > 50 ? '#4caf7d' : pct > 20 ? '#ffb700' : '#ff4f87';
-              const costs     = usage.creditCosts || {};
-              const isEmpty   = remaining <= 0;
-
-              return (
-                <div style={crd.card}>
-                  <div style={crd.top}>
-                    <div>
-                      <div style={crd.label}>Monthly Credits</div>
-                      <div style={crd.resetNote}>Resets: {usage.creditsResetDate || '—'}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ ...crd.count, color: clr }}>{used.toLocaleString()}</span>
-                      <span style={crd.total}> / {limit.toLocaleString()} used</span>
-                    </div>
-                  </div>
-
-                  <div style={crd.bar}>
-                    <div style={{ ...crd.fill, width: `${100 - pct}%`, background: clr }} />
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.85rem' }}>
-                    <span style={{ fontSize: '.73rem', color: '#6666aa' }}>
-                      {remaining.toLocaleString()} credits remaining
-                    </span>
-                    {isEmpty && (
-                      <a href="/upgrade" style={crd.upgradeBtn}>⚡ Upgrade</a>
-                    )}
-                  </div>
-
-                  <div style={crd.costsRow}>
-                    {[
-                      { label: 'Search',      cost: costs.search           || 10 },
-                      { label: 'Detail View', cost: costs.ad_detail        || 30 },
-                      { label: 'Save Ad',     cost: costs.save_ad          || 10 },
-                      { label: 'Video DL',    cost: costs.video_download   || 10 },
-                      { label: 'Load More',   cost: costs.load_more        || 10 },
-                    ].map(({ label, cost }) => (
-                      <div key={label} style={crd.costItem}>
-                        <span style={crd.costLabel}>{label}</span>
-                        <span style={crd.costVal}>{cost} cr</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
 
             <div style={c.eyebrow}>Choose a plan</div>
 
@@ -338,7 +281,6 @@ export default function Profile() {
                       ))}
                     </div>
 
-                    {/* ── Credits progress bar (free plan only) ── */}
                     {plan.id === 'free' && (() => {
                       const fLimit     = usage?.creditsLimit     || 200;
                       const fRemaining = usage?.creditsRemaining ?? fLimit;
@@ -348,32 +290,17 @@ export default function Profile() {
                       return (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em' }}>
-                              Credits Used
-                            </span>
+                            <span style={{ fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em' }}>Credits Used</span>
                             <span style={{ fontSize: '.7rem', fontWeight: 700, color: fClr }}>
-                              {usage ? `${fUsed.toLocaleString()} / ${fLimit.toLocaleString()}` : '— / 200'}
+                              {usage ? `${fUsed} / ${fLimit}` : `— / ${fLimit}`}
                             </span>
                           </div>
-                          <div style={{
-                            height:       '5px',
-                            background:   'rgba(255,255,255,.06)',
-                            borderRadius: '999px',
-                            overflow:     'hidden',
-                          }}>
-                            <div style={{
-                              height:       '100%',
-                              width:        `${fPct}%`,
-                              background:   `linear-gradient(90deg, ${fClr}88, ${fClr})`,
-                              borderRadius: '999px',
-                              transition:   'width .6s ease',
-                            }}/>
+                          <div style={{ height: '5px', background: 'rgba(255,255,255,.06)', borderRadius: '999px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${fPct}%`, background: `linear-gradient(90deg, ${fClr}88, ${fClr})`, borderRadius: '999px', transition: 'width .6s ease' }}/>
                           </div>
-                          {usage && (
-                            <span style={{ fontSize: '.67rem', color: '#5a5a7a' }}>
-                              {fRemaining.toLocaleString()} credits remaining · Resets {usage.creditsResetDate || '—'}
-                            </span>
-                          )}
+                          <span style={{ fontSize: '.67rem', color: '#5a5a7a' }}>
+                            {usage ? `${fRemaining} remaining · Resets ${usage.creditsResetDate || '—'}` : 'Loading...'}
+                          </span>
                         </div>
                       );
                     })()}
