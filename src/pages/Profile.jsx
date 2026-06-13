@@ -294,7 +294,13 @@ export default function Profile() {
                           <div style={{ height: '5px', background: 'rgba(255,255,255,.06)', borderRadius: '999px', overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${fPct}%`, background: `linear-gradient(90deg, ${fClr}88, ${fClr})`, borderRadius: '999px', transition: 'width .6s ease' }}/>
                           </div>
-                          <span style={{ fontSize: '.67rem', color: '#5a5a7a' }}>{fRemaining} remaining · Resets {usage.creditsResetDate || '—'}</span>
+                          <span style={{ fontSize: '.67rem', color: '#5a5a7a' }}>
+                            {fRemaining} remaining · Resets {
+                              usage.nextResetDate || usage.creditsResetDate
+                                ? new Date(usage.nextResetDate || usage.creditsResetDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                                : '—'
+                            }
+                          </span>
                           {fRemaining <= 0 && (
                             <a href="/upgrade" style={{ marginTop: '.2rem', display: 'inline-block', padding: '.4rem 1rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', borderRadius: '8px', fontSize: '.75rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
                               ⚡ Upgrade to continue
