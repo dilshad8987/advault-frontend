@@ -392,6 +392,18 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
   const [volume,       setVolume]       = useState(1);
   const [muted,        setMuted]        = useState(false);
   const [downloading,  setDownloading]  = useState(false);
+  const [userCredits, setUserCredits] = useState(null);
+  useEffect(() => {
+    api.get('/user/profile').then(res => {
+      const u = res.data?.usage;
+      if (u) setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
+    }).catch(() => {});
+  }, []);
+  const noCredits   = userCredits !== null && userCredits.remaining <= 0;
+  const dlCost      = userCredits?.costs?.video_download ?? 10;
+  const saveCost    = userCredits?.costs?.save_ad ?? 10;
+  const canDownload = !noCredits && (userCredits === null || userCredits.remaining >= dlCost);
+  const canSave     = !noCredits && (userCredits === null || userCredits.remaining >= saveCost);
   const [dlProgress,   setDlProgress]   = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [videoError,   setVideoError]   = useState(false);
@@ -466,6 +478,10 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
     v.muted = !muted; setMuted(!muted); showCtrl();
   };
   const downloadVideo = async () => {
+    if (!canDownload) {
+      toast.error('Credits khatam! Upgrade karo.');
+      return;
+    }
     if (!videoUrl) return toast.error('Video URL nahi mili');
     setDownloading(true); setDlProgress(0);
     try {
@@ -548,9 +564,13 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
           <button style={VP.ctrlBtn} onClick={toggleMute}>{muted||volume===0?'🔇':volume<0.5?'🔉':'🔊'}</button>
           <input type="range" min="0" max="1" step="0.05" value={muted?0:volume}
             onChange={changeVolume} onClick={e=>e.stopPropagation()} style={VP.volSlider} />
-          <button style={{...VP.dlBtn,...(downloading?VP.dlBtnActive:{})}}
-            onClick={e=>{e.stopPropagation();downloadVideo();}} disabled={downloading}>
-            {downloading?(dlProgress>0?`${dlProgress}%`:'⏳'):'⬇ Download'}
+          <button
+            style={{...VP.dlBtn,...(downloading?VP.dlBtnActive:{}),...(!canDownload?{opacity:.45,cursor:'not-allowed'}:{})}}
+            onClick={e=>{e.stopPropagation();downloadVideo();}}
+            disabled={downloading}
+            title={!canDownload?'Credits khatam – upgrade karo':''}
+          >
+            {downloading?(dlProgress>0?`${dlProgress}%`:'⏳'):!canDownload?'🔒 Download':'⬇ Download'}
           </button>
         </div>
       </div>
@@ -787,6 +807,7 @@ export default function AdDetail() {
   };
 
   const saveAd = async () => {
+    if (!canSave) { toast.error('Credits khatam! Upgrade karo.'); return; }
     const ad = detail||passedAd; if(!ad) return;
     try {
       await api.post('/ads/save', { adId, adData:{ title:ad.ad_title||ad.title, brand:ad.brand_name||'Unknown', cover:ad.video_info?.cover||'', platform:'tiktok' } });
@@ -889,8 +910,12 @@ export default function AdDetail() {
       <div style={S.topBar}>
         <button onClick={()=>navigate(-1)} style={S.backBtn}>← Wapas</button>
         <div style={{display:'flex',gap:'.6rem',flexWrap:'wrap'}}>
-          <button className="action-btn" style={{...S.pill,...(saved?S.pillSaved:{})}} onClick={saveAd} disabled={saved}>
-            {saved?'✅ Saved':'💾 Save Ad'}
+          <button className="action-btn"
+            style={{...S.pill,...(saved?S.pillSaved:{}),...(!canSave&&!saved?{opacity:.45,cursor:'not-allowed'}:{})}}
+            onClick={saveAd} disabled={saved}
+            title={!canSave&&!saved?'Credits khatam – upgrade karo':''}
+          >
+            {saved?'✅ Saved':!canSave?'🔒 Save Ad':'💾 Save Ad'}
           </button>
           {/* ✅ Meta ke liye TikTok button nahi — sirf TikTok ads ke liye */}
           {!isMeta && (
