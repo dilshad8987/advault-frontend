@@ -87,13 +87,8 @@ export default function Profile() {
 
   useEffect(() => {
     api.get('/user/profile')
-      .then(res => {
-        if (res.data?.usage) setUsage(res.data.usage);
-        else setUsage({ creditsLimit: 200, creditsRemaining: 200, creditsUsed: 0, creditsResetDate: '', creditCosts: {} });
-      })
-      .catch(() => {
-        setUsage({ creditsLimit: 200, creditsRemaining: 200, creditsUsed: 0, creditsResetDate: '', creditCosts: {} });
-      });
+      .then(res => { if (res.data?.usage) setUsage(res.data.usage); })
+      .catch(() => {});
   }, []);
 
   const saveName = async () => {
@@ -282,8 +277,11 @@ export default function Profile() {
                     </div>
 
                     {plan.id === 'free' && (() => {
-                      const fLimit     = usage?.creditsLimit     || 200;
-                      const fRemaining = usage?.creditsRemaining ?? fLimit;
+                      if (!usage) return (
+                        <div style={{ fontSize: '.72rem', color: '#44445a', padding: '.4rem 0' }}>Loading credits...</div>
+                      );
+                      const fLimit     = usage.creditsLimit;
+                      const fRemaining = usage.creditsRemaining;
                       const fUsed      = fLimit - fRemaining;
                       const fPct       = Math.min(100, Math.round((fUsed / fLimit) * 100));
                       const fClr       = fPct < 50 ? '#4caf7d' : fPct < 80 ? '#ffb700' : '#ff4f87';
@@ -291,16 +289,17 @@ export default function Profile() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em' }}>Credits Used</span>
-                            <span style={{ fontSize: '.7rem', fontWeight: 700, color: fClr }}>
-                              {usage ? `${fUsed} / ${fLimit}` : `— / ${fLimit}`}
-                            </span>
+                            <span style={{ fontSize: '.7rem', fontWeight: 700, color: fClr }}>{fUsed} / {fLimit}</span>
                           </div>
                           <div style={{ height: '5px', background: 'rgba(255,255,255,.06)', borderRadius: '999px', overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${fPct}%`, background: `linear-gradient(90deg, ${fClr}88, ${fClr})`, borderRadius: '999px', transition: 'width .6s ease' }}/>
                           </div>
-                          <span style={{ fontSize: '.67rem', color: '#5a5a7a' }}>
-                            {usage ? `${fRemaining} remaining · Resets ${usage.creditsResetDate || '—'}` : 'Loading...'}
-                          </span>
+                          <span style={{ fontSize: '.67rem', color: '#5a5a7a' }}>{fRemaining} remaining · Resets {usage.creditsResetDate || '—'}</span>
+                          {fRemaining <= 0 && (
+                            <a href="/upgrade" style={{ marginTop: '.2rem', display: 'inline-block', padding: '.4rem 1rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', borderRadius: '8px', fontSize: '.75rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+                              ⚡ Upgrade to continue
+                            </a>
+                          )}
                         </div>
                       );
                     })()}
