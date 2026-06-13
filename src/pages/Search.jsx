@@ -8,6 +8,16 @@ const CACHE_KEY = 'search_cache';
 
 export default function Search() {
   const [keyword, setKeyword] = useState(() => sessionStorage.getItem('search_keyword') || '');
+  const [userCredits, setUserCredits] = useState(null);
+  useEffect(() => {
+    api.get('/user/profile').then(res => {
+      const u = res.data?.usage;
+      if (u) setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
+    }).catch(() => {});
+  }, []);
+  const noCredits  = userCredits !== null && userCredits.remaining <= 0;
+  const searchCost = userCredits?.costs?.search ?? 10;
+  const canSearch  = !noCredits && (userCredits === null || userCredits.remaining >= searchCost);
   const [platform, setPlatform] = useState(() => sessionStorage.getItem('search_platform') || 'tiktok');
   const [country, setCountry] = useState(() => sessionStorage.getItem('search_country') || 'US');
   const [ads, setAds] = useState([]);
@@ -35,6 +45,10 @@ export default function Search() {
 
   const search = async () => {
     if (!keyword.trim()) return toast.error('Keyword daalo');
+    if (!canSearch) {
+      toast.error('Credits khatam! Upgrade karo premium features ke liye.');
+      return;
+    }
     setLoading(true);
     setSearched(true);
     try {
@@ -70,6 +84,13 @@ export default function Search() {
         <h1 style={styles.h1}>🔍 Search Ads</h1>
         <p style={styles.sub}>Keyword se winning ads dhundo</p>
 
+        {noCredits && (
+          <div style={styles.noCreditBanner}>
+            <span>🔒 Credits khatam ho gaye.</span>
+            <a href="/profile" style={styles.upgradeLink}>Upgrade karo →</a>
+          </div>
+        )}
+
         <div style={styles.searchBox}>
           <input
             style={styles.input}
@@ -78,8 +99,13 @@ export default function Search() {
             onChange={e => setKeyword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && search()}
           />
-          <button style={styles.btn} onClick={search} disabled={loading}>
-            {loading ? '⏳' : '🔍 Search'}
+          <button
+            style={{ ...styles.btn, ...(!canSearch ? styles.btnLocked : {}) }}
+            onClick={search}
+            disabled={loading || !canSearch}
+            title={!canSearch ? 'Credits khatam – upgrade karo' : ''}
+          >
+            {loading ? '⏳' : !canSearch ? '🔒 Search' : '🔍 Search'}
           </button>
         </div>
 
@@ -151,5 +177,8 @@ const styles = {
   count: { color: '#8888aa', fontSize: '.85rem', marginBottom: '1rem' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(300px,100%),1fr))', gap: '1.25rem' },
   center: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '250px' },
-  spinner: { width: '36px', height: '36px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' }
+  spinner:      { width: '36px', height: '36px', border: '3px solid rgba(108,71,255,.2)', borderTop: '3px solid #6c47ff', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+  btnLocked:    { background: 'rgba(255,255,255,.06)', cursor: 'not-allowed', opacity: 0.5 },
+  noCreditBanner: { display: 'flex', alignItems: 'center', gap: '1rem', padding: '.85rem 1.25rem', background: 'rgba(255,79,135,.06)', border: '1px solid rgba(255,79,135,.2)', borderRadius: '10px', marginBottom: '1rem', color: '#ff4f87', fontSize: '.85rem', fontWeight: 600 },
+  upgradeLink:  { marginLeft: 'auto', padding: '.35rem .9rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', color: '#fff', borderRadius: '7px', textDecoration: 'none', fontSize: '.8rem', fontWeight: 700 }
 };
