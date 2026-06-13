@@ -339,32 +339,44 @@ export default function Profile() {
                     </div>
 
                     {/* ── Credits progress bar (free plan only) ── */}
-                    {plan.id === 'free' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em' }}>
-                            Credits Used
-                          </span>
-                          <span style={{ fontSize: '.7rem', fontWeight: 700, color: plan.color }}>
-                            0 / 200
-                          </span>
-                        </div>
-                        <div style={{
-                          height:       '5px',
-                          background:   'rgba(255,255,255,.06)',
-                          borderRadius: '999px',
-                          overflow:     'hidden',
-                        }}>
+                    {plan.id === 'free' && (() => {
+                      const fLimit     = usage?.creditsLimit     || 200;
+                      const fRemaining = usage?.creditsRemaining ?? fLimit;
+                      const fUsed      = fLimit - fRemaining;
+                      const fPct       = Math.min(100, Math.round((fUsed / fLimit) * 100));
+                      const fClr       = fPct < 50 ? '#4caf7d' : fPct < 80 ? '#ffb700' : '#ff4f87';
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em' }}>
+                              Credits Used
+                            </span>
+                            <span style={{ fontSize: '.7rem', fontWeight: 700, color: fClr }}>
+                              {usage ? `${fUsed.toLocaleString()} / ${fLimit.toLocaleString()}` : '— / 200'}
+                            </span>
+                          </div>
                           <div style={{
-                            height:       '100%',
-                            width:        '0%',
-                            background:   `linear-gradient(90deg, ${plan.color}88, ${plan.color})`,
+                            height:       '5px',
+                            background:   'rgba(255,255,255,.06)',
                             borderRadius: '999px',
-                            transition:   'width .6s ease',
-                          }}/>
+                            overflow:     'hidden',
+                          }}>
+                            <div style={{
+                              height:       '100%',
+                              width:        `${fPct}%`,
+                              background:   `linear-gradient(90deg, ${fClr}88, ${fClr})`,
+                              borderRadius: '999px',
+                              transition:   'width .6s ease',
+                            }}/>
+                          </div>
+                          {usage && (
+                            <span style={{ fontSize: '.67rem', color: '#5a5a7a' }}>
+                              {fRemaining.toLocaleString()} credits remaining · Resets {usage.creditsResetDate || '—'}
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* ── CTA ── */}
                     {active ? (
