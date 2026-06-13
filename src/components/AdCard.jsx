@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCredits } from '../context/CreditContext';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
@@ -63,6 +64,12 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   const [thumbError, setThumbError] = useState(false);
   const navigate = useNavigate();
   const isMeta   = platform === 'meta';
+  const { credits, applyApiResponse } = useCredits();
+
+  // Credits 0 hone pe features lock honge
+  const noCredits   = credits !== null && credits.remaining <= 0;
+  const saveCost    = credits?.costs?.save_ad    ?? 10;
+  const canSave     = !noCredits && (credits === null || credits.remaining >= saveCost);
 
   function fmtNum(n) {
     n = Number(n);
@@ -351,12 +358,21 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
   const saveAd = async (e) => {
     e.stopPropagation();
+    if (!canSave) {
+      toast.error('Credits khatam! Upgrade karo premium features ke liye.');
+      return;
+    }
     try {
-      await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
+      const res = await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
       setSaved(true);
+      applyApiResponse(res.data);
       toast.success('Ad save ho gayi!');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Save fail');
+      if (err.response?.data?.upgrade) {
+        toast.error('Credits khatam! Upgrade karo.');
+      } else {
+        toast.error(err.response?.data?.message || 'Save fail');
+      }
     }
   };
 
@@ -451,8 +467,17 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
         </div>
 
         <div style={s.actions}>
-          <button style={{ ...s.saveBtn, ...(saved ? s.savedBtn : {}) }} onClick={saveAd} disabled={saved}>
-            {saved ? '✅ Saved' : '💾 Save'}
+          <button
+            style={{
+              ...s.saveBtn,
+              ...(saved ? s.savedBtn : {}),
+              ...(!canSave && !saved ? s.lockedBtn : {}),
+            }}
+            onClick={saveAd}
+            disabled={saved}
+            title={!canSave && !saved ? 'Credits khatam – upgrade karo' : ''}
+          >
+            {saved ? '✅ Saved' : !canSave ? '🔒 Save' : '💾 Save'}
           </button>
           <button style={s.detailBtn} onClick={openDetail}>
             🔍 Detail
@@ -492,4 +517,5 @@ const s = {
   saveBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.76rem', cursor: 'pointer' },
   savedBtn: { background: 'rgba(108,71,255,.2)', color: '#8b6bff', border: '1px solid rgba(108,71,255,.3)' },
   detailBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(108,71,255,.3)', background: 'rgba(108,71,255,.15)', color: '#8b6bff', fontSize: '.76rem', cursor: 'pointer', fontWeight: 700 },
+  lockedBtn: { opacity: 0.45, cursor: 'not-allowed', border: '1px solid rgba(255,255,255,.05)' },
 };
