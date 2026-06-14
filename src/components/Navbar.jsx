@@ -66,8 +66,8 @@ export default function Navbar() {
     <>
       <style>{`
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-        .nav-upgrade:hover { background:rgba(108,71,255,.18) !important; border-color:rgba(108,71,255,.38) !important; }
-        .nav-logout:hover  { background:rgba(255,79,135,.1) !important; border-color:rgba(255,79,135,.3) !important; }
+        .nav-upgrade:hover { filter: brightness(1.08); }
+        .nav-logout:hover  { background: rgba(120,0,30,.5) !important; }
         .nav-modal-cancel:hover  { background: rgba(255,255,255,.08) !important; }
         .nav-modal-confirm:hover { background: rgba(255,79,135,.2) !important; }
       `}</style>
@@ -106,51 +106,33 @@ export default function Navbar() {
                     </div>
                   </div>
 
-                  {/* ── Credits ── */}
-                  <div style={s.creditsCard}>
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:'.5rem' }}>
-                      <span style={s.creditsLabel}>Credits</span>
-                      <div>
-                        <span style={{ fontSize:'1.05rem', fontWeight:900, color: barColor, fontVariantNumeric:'tabular-nums', letterSpacing:'-.02em' }}>
-                          {credits ? credits.remaining : '—'}
-                        </span>
-                        <span style={{ fontSize:'.7rem', color:'#33334a', fontWeight:500 }}>
-                          {' / '}{credits ? credits.limit : '—'}
-                        </span>
-                      </div>
-                    </div>
-                    {/* Segmented bar */}
-                    <div style={{ display:'flex', gap:'2px' }}>
-                      {Array.from({ length: 10 }).map((_, i) => {
-                        const filled = i < Math.round(creditPct / 10);
-                        return (
-                          <div key={i} style={{ flex:1, height:'4px', borderRadius:'2px', background: filled ? barColor : 'rgba(255,255,255,.07)', transition:'background .4s ease' }} />
-                        );
-                      })}
-                    </div>
-                    {isLow && (
-                      <div style={{ fontSize:'.63rem', color:'#ff4f87', fontWeight:600, marginTop:'.38rem', display:'flex', alignItems:'center', gap:'.25rem' }}>
-                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 1L7.5 7H.5L4 1z" stroke="#ff4f87" strokeWidth="1" strokeLinejoin="round"/><path d="M4 3.2v1.6" stroke="#ff4f87" strokeWidth="1" strokeLinecap="round"/></svg>
-                        Low on credits
-                      </div>
-                    )}
-                  </div>
+                  <div style={s.divider} />
 
-                  {/* ── Upgrade ── */}
+                  {/* Credits */}
+                  <div style={s.creditsRow}>
+                    <span style={s.creditsLabel}>Credits</span>
+                    <span style={{ ...s.creditsCount, color: barColor }}>
+                      {credits ? credits.remaining.toLocaleString() : '—'}
+                      <span style={s.creditsTotal}> / {credits ? credits.limit.toLocaleString() : '—'}</span>
+                    </span>
+                  </div>
+                  <div style={s.barBg}>
+                    <div style={{ ...s.barFill, width: `${Math.min(creditPct, 100)}%`, background: barColor }} />
+                  </div>
+                  {isLow && <div style={s.lowWarn}>⚠ Credits khatam hone wale hain!</div>}
+
+                  <div style={s.divider} />
+
+                  {/* Upgrade */}
                   <Link to="/upgrade" className="nav-upgrade" style={s.upgradeBtn} onClick={closeMenu}>
-                    <span style={s.upgradeIcon}>⚡</span>
-                    <span style={s.upgradeText}>Upgrade Plan</span>
-                    <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style={{ opacity:.4, marginLeft:'auto' }}><path d="M3 1.5L6.5 4.5 3 7.5" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    ⚡ Upgrade
                   </Link>
 
-                  {/* ── Logout ── */}
+                  <div style={s.divider} />
+
+                  {/* Logout */}
                   <button className="nav-logout" style={s.logoutBtn} onClick={confirmLogout}>
-                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                      <path d="M5 2.5H3a1 1 0 00-1 1v6a1 1 0 001 1h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                      <path d="M8.5 8.5L11 6.5 8.5 4.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M11 6.5H5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                    </svg>
-                    Sign out
+                    🚪 Logout
                   </button>
                 </div>
               )}
@@ -202,14 +184,19 @@ const s = {
   userName:  { fontSize:'.88rem', fontWeight:700, color:'#f0f0f8', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' },
   userEmail: { fontSize:'.71rem', color:'#55556a', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', marginTop:'.05rem' },
 
-  creditsCard:  { background:'rgba(255,255,255,.03)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'12px', padding:'.7rem .8rem', margin:'.05rem 0' },
-  creditsLabel: { fontSize:'.65rem', fontWeight:700, color:'#44445e', textTransform:'uppercase', letterSpacing:'.07em' },
+  divider:   { height:'1px', background:'rgba(255,255,255,.07)', margin:'.6rem 0' },
 
-  upgradeBtn:   { display:'flex', alignItems:'center', gap:'.5rem', padding:'.65rem .8rem', background:'linear-gradient(135deg,rgba(108,71,255,.18),rgba(90,171,255,.1))', border:'1px solid rgba(108,71,255,.3)', borderRadius:'12px', color:'#c4b5fd', textDecoration:'none', transition:'all .15s', margin:'.05rem 0' },
-  upgradeIcon:  { fontSize:'.9rem', lineHeight:1 },
-  upgradeText:  { fontSize:'.83rem', fontWeight:700, letterSpacing:'-.01em' },
+  creditsRow:   { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'.4rem' },
+  creditsLabel: { fontSize:'.75rem', fontWeight:500, color:'#6666aa' },
+  creditsCount: { fontSize:'.88rem', fontWeight:800, fontVariantNumeric:'tabular-nums' },
+  creditsTotal: { fontSize:'.75rem', fontWeight:500, color:'#444460' },
+  barBg:   { height:'5px', background:'rgba(255,255,255,.07)', borderRadius:'3px', overflow:'hidden' },
+  barFill: { height:'100%', borderRadius:'3px', transition:'width .5s ease' },
+  lowWarn: { fontSize:'.69rem', color:'#ff4f87', fontWeight:600, marginTop:'.35rem' },
 
-  logoutBtn:    { width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:'.45rem', padding:'.62rem', background:'rgba(255,79,135,.06)', border:'1px solid rgba(255,79,135,.14)', borderRadius:'12px', color:'#ff4f87', fontSize:'.83rem', fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all .15s', marginTop:'.05rem' },
+  upgradeBtn: { display:'flex', alignItems:'center', justifyContent:'center', gap:'.4rem', padding:'.6rem', background:'rgba(108,71,255,.12)', border:'1px solid rgba(108,71,255,.25)', borderRadius:'9px', color:'#a08bff', fontSize:'.85rem', fontWeight:700, textDecoration:'none', transition:'filter .15s' },
+
+  logoutBtn: { width:'100%', padding:'.6rem', background:'rgba(140,0,30,.35)', border:'1px solid rgba(255,79,135,.2)', borderRadius:'9px', color:'#ff4f87', fontSize:'.85rem', fontWeight:700, cursor:'pointer', fontFamily:'inherit', transition:'background .15s' },
 
   authBtns:    { display:'flex', gap:'.5rem' },
   loginBtn:    { padding:'.42rem .9rem', background:'transparent', border:'1px solid rgba(255,255,255,.1)', borderRadius:'8px', color:'#c0c0d8', textDecoration:'none', fontSize:'.83rem' },
