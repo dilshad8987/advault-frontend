@@ -742,39 +742,43 @@ export default function AdDetail() {
       }
       fetchRelatedAds(passedAd);
       setLoading(false);
+      // Background mein API call karo — credit deduct karne ke liye (pehli baar)
+      fetchDetail(true);
     } else {
-      fetchDetail();
+      fetchDetail(false);
     }
   }, [adId]); // eslint-disable-line
 
-  const fetchDetail = async () => {
-    setLoading(true);
+  const fetchDetail = async (backgroundOnly = false) => {
+    if (!backgroundOnly) setLoading(true);
     try {
       const res  = await api.get(`/ads/tiktok/${adId}`);
       const data = res.data?.data?.data || res.data?.data || res.data || {};
-      setDetail(data);
+      if (!backgroundOnly) setDetail(data);
       // Agar pehli baar dekha to credit deduct hua — Navbar update karo
       if (res.data?.creditDeducted) {
         window.dispatchEvent(new Event('credits-updated'));
       }
       const isMetaAd = !!(data?.page_name || data?.library_id || data?.snapshot_url || data?._source === 'mongodb_scraped');
-      if (isMetaAd) {
-        const brandName = data?.page_name || data?.brand;
-        if (brandName) fetchMetaBrandAds(brandName, data?.id || data?.library_id);
-      } else {
-        const advId = data.advertiser_id || data.brand_id || passedAd?.advertiser_id;
-        if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
+      if (!backgroundOnly) {
+        if (isMetaAd) {
+          const brandName = data?.page_name || data?.brand;
+          if (brandName) fetchMetaBrandAds(brandName, data?.id || data?.library_id);
+        } else {
+          const advId = data.advertiser_id || data.brand_id || passedAd?.advertiser_id;
+          if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
+        }
+        fetchRelatedAds(data);
       }
-      fetchRelatedAds(data);
     } catch {
-      if (passedAd) {
+      if (!backgroundOnly && passedAd) {
         setDetail(passedAd);
         const advId = passedAd?.advertiser_id || passedAd?.brand_id;
         if (advId) fetchPageDetails(advId);
         fetchRelatedAds(passedAd);
       }
     }
-    setLoading(false);
+    if (!backgroundOnly) setLoading(false);
   };
 
   const fetchPageDetails = async (advId) => {
