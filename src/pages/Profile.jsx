@@ -84,11 +84,19 @@ export default function Profile() {
   const [saving,  setSaving] = useState(false);
   const [nameFocus,  setNF]  = useState(false);
   const [usage,    setUsage] = useState(null);
+  const [usageLoading, setUsageLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchUsage = () => {
     api.get('/user/profile')
       .then(res => { if (res.data?.usage) setUsage(res.data.usage); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setUsageLoading(false));
+  };
+
+  useEffect(() => {
+    fetchUsage();
+    window.addEventListener('credits-updated', fetchUsage);
+    return () => window.removeEventListener('credits-updated', fetchUsage);
   }, []);
 
   const saveName = async () => {
@@ -277,40 +285,31 @@ export default function Profile() {
                     </div>
 
                     {plan.id === 'free' && (() => {
-                      if (!usage) return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '.45rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em' }}>Credits Remaining</span>
-                            <span style={{ fontSize: '.72rem', color: '#44445a' }}>— / 200</span>
-                          </div>
-                          <div style={{ height: '6px', background: 'rgba(255,255,255,.06)', borderRadius: '999px' }}/>
-                        </div>
-                      );
-                      const fLimit     = usage.creditsLimit;
-                      const fRemaining = usage.creditsRemaining;
+                      const fLimit     = usage?.creditsLimit  || 200;
+                      const fRemaining = usage ? usage.creditsRemaining : fLimit;
                       const fUsed      = fLimit - fRemaining;
-                      const fRemPct    = Math.min(100, Math.round((fRemaining / fLimit) * 100));
-                      const fClr       = fRemPct > 50 ? '#4caf7d' : fRemPct > 20 ? '#ffb700' : '#ff4f87';
+                      const fPct       = Math.min(100, Math.round((fUsed / fLimit) * 100));
+                      const fClr       = fPct < 50 ? '#4caf7d' : fPct < 80 ? '#ffb700' : '#ff4f87';
                       return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', padding: '.75rem', background: 'rgba(255,255,255,.03)', borderRadius: '12px', border: `1px solid ${fClr}22` }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', marginTop: '.2rem', padding: '.65rem .7rem', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)', borderRadius: '10px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em' }}>Credits Remaining</span>
-                            <span style={{ fontSize: '.78rem', fontWeight: 800, color: fClr }}>
-                              {fRemaining.toLocaleString()} <span style={{ color: '#44445a', fontWeight: 500 }}>/ {fLimit}</span>
-                            </span>
+                            <div>
+                              <div style={{ fontSize: '.62rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '.15rem' }}>Credits Remaining</div>
+                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: usage ? fClr : '#44445a', lineHeight: 1 }}>
+                                {usage ? fRemaining.toLocaleString() : '—'}
+                                <span style={{ fontSize: '.72rem', fontWeight: 500, color: '#44445a' }}> / {fLimit}</span>
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '1.6rem' }}>{!usage ? '⏳' : fPct >= 80 ? '🔴' : fPct >= 50 ? '🟡' : '🟢'}</div>
                           </div>
-                          <div style={{ height: '6px', background: 'rgba(255,255,255,.07)', borderRadius: '999px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${fRemPct}%`, background: `linear-gradient(90deg, ${fClr}99, ${fClr})`, borderRadius: '999px', transition: 'width .7s cubic-bezier(.4,0,.2,1)' }}/>
+                          <div style={{ height: '5px', background: 'rgba(255,255,255,.06)', borderRadius: '999px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: usage ? `${fPct}%` : '0%', background: `linear-gradient(90deg, ${fClr}88, ${fClr})`, borderRadius: '999px', transition: 'width .6s ease' }}/>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '.65rem', color: '#44445a' }}>{fUsed} used this month</span>
-                            {fRemaining > 0 && fRemaining <= 40 && <span style={{ fontSize: '.63rem', color: '#ffb700', fontWeight: 600 }}>⚠ Almost done</span>}
-                            {fRemaining <= 0 && <span style={{ fontSize: '.63rem', color: '#ff4f87', fontWeight: 600 }}>❌ Khatam</span>}
-                          </div>
-                          {fRemaining <= 60 && (
-                            <a href="/upgrade" style={{ marginTop: '.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', padding: '.5rem 1rem', background: 'linear-gradient(135deg,#5535e0,#8b6bff)', color: '#fff', borderRadius: '9px', fontSize: '.75rem', fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 14px rgba(108,71,255,.3)' }}>
-                              ⚡ Upgrade for Unlimited Credits
-                            </a>
+                          {usage && <div style={{ fontSize: '.67rem', color: '#44445a', textAlign: 'right' }}>{fUsed} used this month</div>}
+                          {usage && fRemaining <= 20 && (
+                            <div style={{ fontSize: '.7rem', color: '#ff4f87', fontWeight: 600 }}>
+                              ⚠ {fRemaining <= 0 ? 'Credits khatam ho gaye!' : 'Credits khatam hone wale hain!'}
+                            </div>
                           )}
                         </div>
                       );
