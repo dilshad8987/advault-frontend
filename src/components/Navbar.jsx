@@ -28,9 +28,19 @@ function CreditsDisplay({ user }) {
   return { credits, creditPct, isLow, clr };
 }
 
+// Cache key for localStorage
+const CREDITS_CACHE_KEY = 'advault_credits_cache';
+
 // Hook version — sirf credits state, koi JSX nahi
 function useCredits(user) {
-  const [credits, setCredits] = useState(null);
+  // Pehle localStorage se cached value lo — null nahi dikhega kabhi
+  const [credits, setCredits] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CREDITS_CACHE_KEY);
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return null;
+  });
 
   useEffect(() => {
     const load = () => {
@@ -38,12 +48,16 @@ function useCredits(user) {
       api.get('/user/profile')
         .then(res => {
           const u = res.data?.usage;
-          if (u) setCredits(c => {
-            // Same value hai toh naya object mat banao — re-render avoid karo
-            if (c && c.remaining === u.creditsRemaining && c.limit === u.creditsLimit) return c;
-            return { remaining: u.creditsRemaining, limit: u.creditsLimit };
-          });
-        }).catch(() => {});
+          if (u) {
+            const newVal = { remaining: u.creditsRemaining, limit: u.creditsLimit };
+            // localStorage cache update karo silently
+            try { localStorage.setItem(CREDITS_CACHE_KEY, JSON.stringify(newVal)); } catch {}
+            setCredits(c => {
+              if (c && c.remaining === u.creditsRemaining && c.limit === u.creditsLimit) return c;
+              return newVal;
+            });
+          }
+        }).catch(() => {}); // Error pe cached value dikhti rahegi
     };
     load();
     window.addEventListener('credits-updated', load);
