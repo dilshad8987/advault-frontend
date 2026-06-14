@@ -67,6 +67,14 @@ export default function Search() {
       sessionStorage.setItem(CACHE_KEY, JSON.stringify(result));
       if (result.length === 0) toast('Koi ads nahi mili', { icon: '📭' });
       else toast.success(result.length + ' ads mili!');
+      // Credits refresh karo after search deduction
+      api.get('/user/profile').then(r => {
+        const u = r.data?.usage;
+        if (u) {
+          setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
+          window.dispatchEvent(new Event('credits-updated')); // Navbar update karo
+        }
+      }).catch(() => {});
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Search fail');
