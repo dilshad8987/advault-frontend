@@ -14,7 +14,7 @@ export default function Navbar() {
   const user  = JSON.parse(localStorage.getItem('user') || 'null');
   const isPro = user?.plan && user.plan !== 'free';
 
-  useEffect(() => {
+  const loadCredits = () => {
     if (!user) return;
     api.get('/user/profile')
       .then(res => {
@@ -22,6 +22,13 @@ export default function Navbar() {
         if (u) setCredits({ remaining: u.creditsRemaining, limit: u.creditsLimit });
       })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadCredits();
+    // Jab bhi credit deduct ho, Navbar refresh ho
+    window.addEventListener('credits-updated', loadCredits);
+    return () => window.removeEventListener('credits-updated', loadCredits);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
