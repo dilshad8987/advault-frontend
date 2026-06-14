@@ -1,49 +1,82 @@
 // components/Navbar.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
-export default function Navbar() {
-  const navigate  = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+// ── Alag component — sirf yeh re-render ho credits update pe, Navbar nahi ──
+function CreditsDisplay({ user }) {
   const [credits, setCredits] = useState(null);
-  const menuOpenRef = useRef(false); // dropdown state track karo bina re-render ke
-  const user  = JSON.parse(localStorage.getItem('user') || 'null');
-  const isPro = user?.plan && user.plan !== 'free';
-
-  // Credits sirf update karo — dropdown band mat karo
-  const loadCredits = useCallback(() => {
-    if (!user) return;
-    api.get('/user/profile')
-      .then(res => {
-        const u = res.data?.usage;
-        if (u) setCredits(prev => ({ ...prev, remaining: u.creditsRemaining, limit: u.creditsLimit }));
-      })
-      .catch(() => {});
-  }, []); // eslint-disable-line
 
   useEffect(() => {
-    loadCredits();
-    window.addEventListener('credits-updated', loadCredits);
-    return () => window.removeEventListener('credits-updated', loadCredits);
-  }, [loadCredits]);
+    const load = () => {
+      api.get('/user/profile')
+        .then(res => {
+          const u = res.data?.usage;
+          if (u) setCredits({ remaining: u.creditsRemaining, limit: u.creditsLimit });
+        }).catch(() => {});
+    };
+    load();
+    window.addEventListener('credits-updated', load);
+    return () => window.removeEventListener('credits-updated', load);
+  }, []);
+
+  const creditColor = user?.plan === 'elite' ? '#ffb700' : user?.plan === 'pro' ? '#5aabff' : '#8b6bff';
+  const creditPct   = credits ? Math.round((credits.remaining / credits.limit) * 100) : null;
+  const isLow       = creditPct !== null && creditPct < 20;
+  const clr         = isLow ? '#ff4f87' : creditColor;
+
+  return { credits, creditPct, isLow, clr };
+}
+
+// Hook version — sirf credits state, koi JSX nahi
+function useCredits(user) {
+  const [credits, setCredits] = useState(null);
+
+  useEffect(() => {
+    const load = () => {
+      if (!user) return;
+      api.get('/user/profile')
+        .then(res => {
+          const u = res.data?.usage;
+          if (u) setCredits(c => {
+            // Same value hai toh naya object mat banao — re-render avoid karo
+            if (c && c.remaining === u.creditsRemaining && c.limit === u.creditsLimit) return c;
+            return { remaining: u.creditsRemaining, limit: u.creditsLimit };
+          });
+        }).catch(() => {});
+    };
+    load();
+    window.addEventListener('credits-updated', load);
+    return () => window.removeEventListener('credits-updated', load);
+  }, []); // eslint-disable-line
+
+  return credits;
+}
+
+export default function Navbar() {
+  const navigate  = useNavigate();
+  const menuOpen  = useRef(false);
+  const [, forceRender] = useState(0); // sirf toggle ke liye
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const user        = JSON.parse(localStorage.getItem('user') || 'null');
+  const credits     = useCredits(user);
+  const creditColor = user?.plan === 'elite' ? '#ffb700' : user?.plan === 'pro' ? '#5aabff' : '#8b6bff';
+  const creditPct   = credits ? Math.round((credits.remaining / credits.limit) * 100) : null;
+  const isLow       = creditPct !== null && creditPct < 20;
+  const clr         = isLow ? '#ff4f87' : creditColor;
 
   const toggleMenu = () => {
-    const next = !menuOpen;
-    setMenuOpen(next);
-    menuOpenRef.current = next;
+    menuOpen.current = !menuOpen.current;
+    forceRender(n => n + 1); // sirf toggle ke liye re-render
   };
 
-  const creditPct   = credits ? Math.round((credits.remaining / credits.limit) * 100) : null;
-  const creditColor = user?.plan === 'elite' ? '#ffb700'
-    : user?.plan === 'pro'   ? '#5aabff'
-    : '#8b6bff';
+  const closeMenu = () => {
+    menuOpen.current = false;
+    forceRender(n => n + 1);
+  };
 
-  // Low credits warning
-  const isLow = credits && creditPct !== null && creditPct < 20;
-
-  const confirmLogout = () => { setMenuOpen(false); setShowLogoutConfirm(true); };
+  const confirmLogout = () => { closeMenu(); setShowLogoutConfirm(true); };
 
   const logout = async () => {
     setShowLogoutConfirm(false);
@@ -75,14 +108,14 @@ export default function Navbar() {
                 <div style={s.profileInfo}>
                   <span style={s.profileName}>{user.name}</span>
                   {credits !== null && (
-                    <span style={{ fontSize: '.68rem', color: isLow ? '#ff4f87' : creditColor, fontWeight: 700 }}>
+                    <span style={{ fontSize: '.68rem', color: clr, fontWeight: 700 }}>
                       {isLow ? '⚠ ' : ''}{credits.remaining} credits
                     </span>
                   )}
                 </div>
               </div>
 
-              {menuOpen && (
+              {menuOpen.current && (
                 <div style={s.dropdown}>
                   {/* Header */}
                   <div style={s.dropHeader}>
@@ -96,33 +129,35 @@ export default function Navbar() {
                   <div style={s.divider} />
 
                   {/* Credits Card */}
-                  {credits !== null ? (
+                  {credits !== null && (
                     <div style={{ ...s.creditsCard, borderColor: isLow ? 'rgba(255,79,135,.25)' : 'rgba(139,107,255,.2)' }}>
                       <div style={s.creditsTop}>
                         <div>
                           <div style={s.creditsTitle}>Credits</div>
-                          <div style={{ ...s.creditsBig, color: isLow ? '#ff4f87' : creditColor }}>
+                          <div style={{ ...s.creditsBig, color: clr }}>
                             {credits.remaining.toLocaleString()}
                             <span style={s.creditsOf}> / {credits.limit.toLocaleString()}</span>
                           </div>
                         </div>
-                        <div style={{ ...s.planBadge, background: user?.plan === 'elite' ? 'rgba(255,183,0,.12)' : user?.plan === 'pro' ? 'rgba(90,171,255,.12)' : 'rgba(139,107,255,.12)', color: user?.plan === 'elite' ? '#ffb700' : user?.plan === 'pro' ? '#5aabff' : '#8b6bff', borderColor: user?.plan === 'elite' ? 'rgba(255,183,0,.25)' : user?.plan === 'pro' ? 'rgba(90,171,255,.25)' : 'rgba(139,107,255,.25)' }}>
+                        <div style={{ ...s.planBadge,
+                          background:   user?.plan === 'elite' ? 'rgba(255,183,0,.12)' : user?.plan === 'pro' ? 'rgba(90,171,255,.12)' : 'rgba(139,107,255,.12)',
+                          color:        user?.plan === 'elite' ? '#ffb700' : user?.plan === 'pro' ? '#5aabff' : '#8b6bff',
+                          borderColor:  user?.plan === 'elite' ? 'rgba(255,183,0,.25)' : user?.plan === 'pro' ? 'rgba(90,171,255,.25)' : 'rgba(139,107,255,.25)'
+                        }}>
                           {user?.plan === 'elite' ? '⭐ Elite' : user?.plan === 'pro' ? '💎 Pro' : '◇ Free'}
                         </div>
                       </div>
                       <div style={s.barBg}>
-                        <div style={{ ...s.barFill, width: `${Math.min(creditPct, 100)}%`, background: isLow ? '#ff4f87' : creditColor }} />
+                        <div style={{ ...s.barFill, width: `${Math.min(creditPct, 100)}%`, background: clr }} />
                       </div>
                       {isLow && <div style={s.lowWarn}>⚠ Credits khatam hone wale hain!</div>}
                     </div>
-                  ) : (
-                    <div style={{ padding: '.5rem .4rem', fontSize: '.75rem', color: '#55557a' }}>Credits load ho rahe hain...</div>
                   )}
 
                   <div style={s.divider} />
 
                   {/* Upgrade */}
-                  <Link to="/upgrade" style={s.upgradeBtn} onClick={() => setMenuOpen(false)}>
+                  <Link to="/upgrade" style={s.upgradeBtn} onClick={closeMenu}>
                     <span>⚡</span>
                     <span>Upgrade Plan</span>
                     <span style={{ marginLeft: 'auto', opacity: .5, fontSize: '.8rem' }}>→</span>
@@ -146,7 +181,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {menuOpen && <div style={s.backdrop} onClick={() => setMenuOpen(false)} />}
+      {menuOpen.current && <div style={s.backdrop} onClick={closeMenu} />}
 
       {/* Logout Confirm Modal */}
       {showLogoutConfirm && (
@@ -175,14 +210,12 @@ const s = {
   avatarCircle: { width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '.9rem', flexShrink: 0, transition: 'box-shadow .2s' },
   profileInfo: { display: 'flex', flexDirection: 'column', lineHeight: 1.3 },
   profileName: { fontSize: '.82rem', fontWeight: 700, color: '#f0f0f8' },
-  // Dropdown
   dropdown: { position: 'absolute', top: '50px', right: 0, width: '240px', background: '#0f0f1a', border: '1px solid rgba(255,255,255,.08)', borderRadius: '14px', padding: '.75rem', zIndex: 200, boxShadow: '0 16px 48px rgba(0,0,0,.6)' },
   dropHeader: { display: 'flex', alignItems: 'center', gap: '.65rem', padding: '.1rem 0 .35rem' },
   dropAvatar: { width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, flexShrink: 0 },
   dropName: { fontSize: '.84rem', fontWeight: 700, color: '#f0f0f8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   dropEmail: { fontSize: '.7rem', color: '#666688', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   divider: { height: '1px', background: 'rgba(255,255,255,.06)', margin: '.45rem 0' },
-  // Credits card
   creditsCard: { background: 'rgba(255,255,255,.03)', border: '1px solid', borderRadius: '10px', padding: '.6rem .7rem', margin: '.1rem 0' },
   creditsTop: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '.5rem' },
   creditsTitle: { fontSize: '.7rem', color: '#666688', fontWeight: 500, marginBottom: '.1rem', textTransform: 'uppercase', letterSpacing: '.04em' },
@@ -192,10 +225,8 @@ const s = {
   barBg: { height: '4px', background: 'rgba(255,255,255,.07)', borderRadius: '2px', overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: '2px', transition: 'width .4s ease' },
   lowWarn: { fontSize: '.68rem', color: '#ff4f87', marginTop: '.35rem', fontWeight: 600 },
-  // Upgrade button
-  upgradeBtn: { display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.55rem .5rem', background: 'linear-gradient(135deg,rgba(108,71,255,.15),rgba(139,107,255,.08))', border: '1px solid rgba(139,107,255,.2)', borderRadius: '8px', color: '#a08bff', fontSize: '.83rem', fontWeight: 600, textDecoration: 'none', transition: 'background .2s' },
+  upgradeBtn: { display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.55rem .5rem', background: 'linear-gradient(135deg,rgba(108,71,255,.15),rgba(139,107,255,.08))', border: '1px solid rgba(139,107,255,.2)', borderRadius: '8px', color: '#a08bff', fontSize: '.83rem', fontWeight: 600, textDecoration: 'none' },
   dropLogout: { width: '100%', padding: '.5rem', background: 'rgba(255,79,135,.08)', border: '1px solid rgba(255,79,135,.15)', color: '#ff4f87', borderRadius: '8px', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 },
-  // Auth
   authBtns: { display: 'flex', gap: '.6rem' },
   loginBtn: { padding: '.45rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,.12)', borderRadius: '8px', color: '#fff', textDecoration: 'none' },
   registerBtn: { padding: '.45rem 1rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', borderRadius: '8px', color: '#fff', textDecoration: 'none' },
