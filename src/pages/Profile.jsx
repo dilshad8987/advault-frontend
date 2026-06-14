@@ -4,89 +4,47 @@ import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 
-/* ─── Plan config ─────────────────────────────────────────────────────────── */
+const CREDITS_CACHE_KEY = 'advault_credits_cache';
+
 const PLANS = [
   {
-    id: 'free',
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    color: '#6e6e8a',
-    border: 'rgba(255,255,255,.08)',
-    glow: 'none',
-    features: [
-      '200 credits / month',
-      'TikTok Ads — limited',
-      '3 saved collections',
-      'Basic search filters',
-      'Standard support',
-      'Web access',
-    ],
+    id: 'free', name: 'Free', price: '$0', period: 'forever',
+    color: '#6e6e8a', border: 'rgba(255,255,255,.08)', glow: 'none',
+    features: ['200 credits / month','TikTok Ads — limited','3 saved collections','Basic search filters','Standard support','Web access'],
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    price: '$29',
-    period: '/ month',
-    color: '#7c5cff',
-    border: 'rgba(124,92,255,.45)',
-    glow: '0 0 32px rgba(108,71,255,.15)',
+    id: 'pro', name: 'Pro', price: '$29', period: '/ month',
+    color: '#7c5cff', border: 'rgba(124,92,255,.4)', glow: '0 0 40px rgba(108,71,255,.12)',
     badge: 'Most Popular',
-    features: [
-      'Unlimited credits',
-      'TikTok + Facebook + Instagram',
-      'Unlimited collections',
-      'Advanced filters',
-      'Priority support',
-    ],
-    cta: 'Upgrade to Pro',
-    ctaBg: 'linear-gradient(135deg, #5535e0, #7c5cff)',
-    ctaShadow: '0 6px 20px rgba(108,71,255,.38)',
+    features: ['Unlimited credits','TikTok + Facebook + Instagram','Unlimited collections','Advanced filters','Priority support'],
+    cta: 'Upgrade to Pro', ctaBg: 'linear-gradient(135deg,#5535e0,#7c5cff)', ctaShadow: '0 6px 20px rgba(108,71,255,.35)',
   },
   {
-    id: 'elite',
-    name: 'Elite',
-    price: '$79',
-    period: '/ month',
-    color: '#c8920a',
-    border: 'rgba(200,146,10,.4)',
-    glow: '0 0 32px rgba(200,146,10,.12)',
+    id: 'elite', name: 'Elite', price: '$79', period: '/ month',
+    color: '#f5a623', border: 'rgba(245,166,35,.35)', glow: '0 0 40px rgba(245,166,35,.1)',
     badge: 'Best Value',
-    features: [
-      'Everything in Pro',
-      'Team access — 5 seats',
-      'API access',
-      'Custom exports',
-      'Dedicated manager',
-      'White-label reports',
-    ],
-    cta: 'Get Elite',
-    ctaBg: 'linear-gradient(135deg, #a87208, #c8920a)',
-    ctaShadow: '0 6px 20px rgba(200,146,10,.3)',
+    features: ['Everything in Pro','Team access — 5 seats','API access','Custom exports','Dedicated manager','White-label reports'],
+    cta: 'Get Elite', ctaBg: 'linear-gradient(135deg,#c47d0a,#f5a623)', ctaShadow: '0 6px 20px rgba(245,166,35,.28)',
   },
 ];
 
-const PLAN_MAP = {
+const PLAN_META = {
   free:  { label: 'Free',  color: '#6e6e8a' },
   pro:   { label: 'Pro',   color: '#7c5cff' },
-  elite: { label: 'Elite', color: '#c8920a' },
+  elite: { label: 'Elite', color: '#f5a623' },
 };
 
-/* ─── Component ───────────────────────────────────────────────────────────── */
 export default function Profile() {
   const navigate    = useNavigate();
   const user        = JSON.parse(localStorage.getItem('user') || '{}');
   const currentPlan = user.plan || 'free';
-  const pm          = PLAN_MAP[currentPlan] || PLAN_MAP.free;
+  const pm          = PLAN_META[currentPlan] || PLAN_META.free;
 
-  const CREDITS_CACHE_KEY = 'advault_credits_cache';
+  const [tab,      setTab]  = useState('plans');
+  const [name,     setName] = useState(user.name || '');
+  const [saving, setSaving] = useState(false);
+  const [nameFocus,  setNF] = useState(false);
 
-  const [tab,       setTab]  = useState('plans');
-  const [name,      setName] = useState(user.name || '');
-  const [saving,  setSaving] = useState(false);
-  const [nameFocus,  setNF]  = useState(false);
-
-  // Cached credits se seedha initialize karo — loading screen nahi dikhega
   const [usage, setUsage] = useState(() => {
     try {
       const cached = localStorage.getItem(CREDITS_CACHE_KEY);
@@ -99,21 +57,14 @@ export default function Profile() {
   });
 
   const fetchUsage = () => {
-    // Background mein silently update karo — koi loading state nahi
     api.get('/user/profile')
       .then(res => {
         if (res.data?.usage) {
           const u = res.data.usage;
           setUsage(u);
-          // Cache update karo
-          try {
-            localStorage.setItem(CREDITS_CACHE_KEY, JSON.stringify({
-              remaining: u.creditsRemaining, limit: u.creditsLimit
-            }));
-          } catch {}
+          try { localStorage.setItem(CREDITS_CACHE_KEY, JSON.stringify({ remaining: u.creditsRemaining, limit: u.creditsLimit })); } catch {}
         }
-      })
-      .catch(() => {}); // Error pe cached value dikhti rahegi
+      }).catch(() => {});
   };
 
   useEffect(() => {
@@ -136,90 +87,61 @@ export default function Profile() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#08080f' }}>
+    <div style={{ minHeight:'100vh', background:'#08080f' }}>
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-        .p-back { transition: background .15s, border-color .15s, color .15s; }
-        .p-back:hover { background: rgba(255,255,255,.07) !important; border-color: rgba(255,255,255,.18) !important; color: #c0c0d8 !important; }
-
-        .p-tab { transition: background .18s, color .18s, border-color .18s; }
-        .p-tab:hover { color: #e8e8f8 !important; }
-
-        .p-card { transition: border-color .22s, box-shadow .22s, transform .22s; }
-        .p-card:hover { transform: translateY(-3px); }
-
-        .p-cta { transition: filter .15s, transform .12s, box-shadow .15s; }
-        .p-cta:hover { filter: brightness(1.12); transform: translateY(-1px); }
-
-        .p-save { transition: opacity .15s, transform .12s; }
-        .p-save:hover:not(:disabled) { opacity: .88 !important; transform: translateY(-1px); }
-
-        /* Mobile */
-        @media (max-width: 480px) {
-          .pf-page    { padding: 62px .9rem 4rem !important; }
-          .pf-idcard  { padding: .85rem 1rem !important; }
-          .pf-avatar  { width: 40px !important; height: 40px !important; font-size: 1rem !important; }
-          .pf-tabs    { margin-bottom: 1.4rem !important; }
-          .pf-tab     { padding: .44rem .7rem !important; font-size: .79rem !important; flex: 1; text-align: center; }
-          .pf-cardtop { flex-direction: column !important; gap: .55rem !important; }
-          .pf-cardtop-left { flex-direction: row !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; }
-          .pf-featgrid { grid-template-columns: 1fr !important; gap: .35rem !important; }
-          .pf-tiles   { grid-template-columns: 1fr 1fr !important; }
-          .pf-savebtn { width: 100% !important; justify-content: center !important; }
-          .pf-priceamt { font-size: 1.35rem !important; }
+        @keyframes spin  { to { transform: rotate(360deg); } }
+        @keyframes rise  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .pf-back:hover   { background:rgba(255,255,255,.07) !important; border-color:rgba(255,255,255,.15) !important; }
+        .pf-tab:hover    { color:#c0c0e0 !important; }
+        .pf-card:hover   { transform:translateY(-2px); }
+        .pf-cta:hover    { filter:brightness(1.1); transform:translateY(-1px); }
+        .pf-save:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); }
+        @media(max-width:480px){
+          .pf-page { padding:62px .85rem 5rem !important; }
+          .pf-idcard { padding:.75rem .9rem !important; }
+          .pf-tabs { gap:.4rem !important; }
+          .pf-tab  { flex:1; text-align:center; padding:.44rem .5rem !important; font-size:.78rem !important; }
+          .pf-plancard { padding:1rem !important; }
+          .pf-feats { grid-template-columns:1fr !important; }
+          .pf-savebtn { width:100% !important; justify-content:center !important; }
         }
       `}</style>
-
       <Navbar />
 
       <div className="pf-page" style={c.page}>
 
-        {/* ── Back ── */}
-        <button className="p-back" onClick={() => navigate(-1)} style={c.back}>
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <path d="M9 12.5L4 7.5 9 2.5" stroke="currentColor" strokeWidth="1.6"
-              strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span>Back</span>
+        {/* Back */}
+        <button className="pf-back" onClick={() => navigate(-1)} style={c.back}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 11.5L4 7l4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Back
         </button>
 
-        {/* ── Identity card ── */}
+        {/* Identity card */}
         <div className="pf-idcard" style={c.idCard}>
-          {/* Avatar with subtle glow ring matching plan */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <div className="pf-avatar" style={{
-              ...c.idAvatar,
-              boxShadow: `0 0 0 2px #08080f, 0 0 0 3.5px ${pm.color}55`,
-            }}>
-              {(user.name || 'U').charAt(0).toUpperCase()}
-            </div>
+          <div style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3px ${pm.color}55` }}>
+            {(user.name || 'U').charAt(0).toUpperCase()}
           </div>
           <div style={c.idBody}>
             <div style={c.idName}>{user.name || 'User'}</div>
             <div style={c.idEmail}>{user.email}</div>
           </div>
-          <div style={{ ...c.idBadge, color: pm.color, borderColor: pm.color + '55', background: pm.color + '14' }}>
+          <div style={{ ...c.idBadge, color:pm.color, borderColor:pm.color+'40', background:pm.color+'12' }}>
             ✦ {pm.label}
           </div>
         </div>
 
-        {/* ── Tabs ── */}
-        <div className="pf-tabs" style={c.tabRow}>
-          {[
-            { id: 'plans',   label: 'Plans & Billing' },
-            { id: 'profile', label: 'My Profile' },
-          ].map(t => {
+        {/* Tabs */}
+        <div style={c.tabs}>
+          {[{ id:'plans', label:'Plans & Billing' }, { id:'profile', label:'My Profile' }].map(t => {
             const on = tab === t.id;
             return (
-              <button key={t.id} className="p-tab pf-tab" onClick={() => setTab(t.id)} style={{
+              <button key={t.id} className="pf-tab" onClick={() => setTab(t.id)} style={{
                 ...c.tab,
-                background:  on ? '#18182a' : 'transparent',
-                color:       on ? '#e0e0f8' : '#4a4a66',
+                background:  on ? '#14142a' : 'transparent',
+                color:       on ? '#e0e0f8' : '#3e3e5a',
                 fontWeight:  on ? 700 : 500,
-                borderColor: on ? 'rgba(124,92,255,.45)' : 'rgba(255,255,255,.07)',
-                boxShadow:   on ? '0 0 16px rgba(108,71,255,.12)' : 'none',
+                borderColor: on ? 'rgba(124,92,255,.4)' : 'rgba(255,255,255,.06)',
+                boxShadow:   on ? '0 0 20px rgba(108,71,255,.1)' : 'none',
               }}>
                 {t.label}
               </button>
@@ -227,132 +149,100 @@ export default function Profile() {
           })}
         </div>
 
-        {/* ════ PLANS ════ */}
+        {/* ── PLANS TAB ── */}
         {tab === 'plans' && (
-          <div style={{ animation: 'rise .22s ease' }}>
-
-
-
+          <div style={{ animation:'rise .2s ease' }}>
             <div style={c.eyebrow}>Choose a plan</div>
 
             <div style={c.planStack}>
               {PLANS.map(plan => {
                 const active = currentPlan === plan.id;
+
+                /* credits bar for free plan */
+                const fLimit     = usage?.creditsLimit     || 200;
+                const fRemaining = usage?.creditsRemaining ?? fLimit;
+                const fUsed      = fLimit - fRemaining;
+                const fPct       = Math.min(100, Math.round((fUsed / fLimit) * 100));
+                const fClr       = fPct >= 80 ? '#ff4f87' : fPct >= 50 ? '#ffb700' : '#4caf7d';
+
                 return (
-                  <div key={plan.id} className="p-card" style={{
+                  <div key={plan.id} className="pf-card pf-plancard" style={{
                     ...c.planCard,
-                    borderColor: active ? plan.border : 'rgba(255,255,255,.07)',
-                    boxShadow:   active ? plan.glow : 'none',
+                    borderColor: active ? plan.border : 'rgba(255,255,255,.06)',
+                    boxShadow:   active ? plan.glow   : 'none',
                     background:  active
-                      ? `linear-gradient(160deg, ${plan.color}0a 0%, #0f0f1a 55%)`
-                      : '#0f0f1a',
+                      ? `linear-gradient(155deg, ${plan.color}0d 0%, #0d0d1e 60%)`
+                      : '#0d0d1e',
                   }}>
+                    {/* Active accent line */}
+                    {active && <div style={{ position:'absolute', top:0, left:'10%', right:'10%', height:'1px', background:`linear-gradient(90deg,transparent,${plan.color}70,transparent)` }} />}
+                    {/* Left stripe */}
+                    {active && <div style={{ position:'absolute', left:0, top:'20%', bottom:'20%', width:'2.5px', background:`linear-gradient(180deg,transparent,${plan.color}bb,transparent)`, borderRadius:'0 3px 3px 0' }} />}
 
-                    {/* Active top accent line */}
-                    {active && (
-                      <div style={{
-                        position:  'absolute',
-                        top: 0, left: '12%', right: '12%',
-                        height: '1px',
-                        background: `linear-gradient(90deg, transparent, ${plan.color}88, transparent)`,
-                        borderRadius: '1px',
-                      }}/>
-                    )}
-
-                    {/* Left border stripe */}
-                    {active && (
-                      <div style={{
-                        position:     'absolute',
-                        left:         0, top: '18%', bottom: '18%',
-                        width:        '3px',
-                        background:   `linear-gradient(180deg, transparent, ${plan.color}cc, transparent)`,
-                        borderRadius: '0 3px 3px 0',
-                      }}/>
-                    )}
-
-                    {/* ── Card top ── */}
-                    <div className="pf-cardtop" style={c.cardTop}>
-                      <div className="pf-cardtop-left" style={c.cardTopLeft}>
-                        <span style={{ ...c.planName, color: active ? plan.color : '#c8c8e0' }}>
-                          {plan.name}
-                        </span>
+                    {/* Header row */}
+                    <div style={c.planHeader}>
+                      <div style={{ display:'flex', alignItems:'center', gap:'.5rem', flexWrap:'wrap' }}>
+                        <span style={{ ...c.planName, color: active ? plan.color : '#c8c8e0' }}>{plan.name}</span>
                         {plan.badge && (
-                          <span style={{ ...c.chip, color: plan.color, borderColor: plan.color + '45', background: plan.color + '12' }}>
+                          <span style={{ fontSize:'.58rem', fontWeight:700, padding:'.16rem .5rem', borderRadius:'99px', border:`1px solid ${plan.color}45`, color:plan.color, background:plan.color+'12', textTransform:'uppercase', letterSpacing:'.04em' }}>
                             {plan.badge}
                           </span>
                         )}
                       </div>
-                      <div style={c.priceBlock}>
-                        <span className="pf-priceamt" style={{ ...c.priceAmt, color: active ? plan.color : '#e0e0f0' }}>
-                          {plan.price}
-                        </span>
-                        <span style={c.pricePer}>{plan.period}</span>
+                      <div style={{ display:'flex', alignItems:'baseline', gap:'.2rem', flexShrink:0 }}>
+                        <span style={{ fontSize:'1.55rem', fontWeight:900, letterSpacing:'-.04em', color: active ? plan.color : '#e0e0f0' }}>{plan.price}</span>
+                        <span style={{ fontSize:'.69rem', color:'#3e3e5a' }}>{plan.period}</span>
                       </div>
                     </div>
 
-                    {/* ── Divider ── */}
-                    <div style={c.hr} />
+                    <div style={c.divLine} />
 
-                    {/* ── Features 2-col ── */}
-                    <div className="pf-featgrid" style={c.featGrid}>
+                    {/* Features */}
+                    <div className="pf-feats" style={c.feats}>
                       {plan.features.map(f => (
                         <div key={f} style={c.featItem}>
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-                            <circle cx="7" cy="7" r="6.5" fill={plan.color + '1a'} stroke={plan.color + '30'} strokeWidth=".5"/>
-                            <path d="M4.5 7l2 2L9.5 5" stroke={plan.color} strokeWidth="1.5"
-                              strokeLinecap="round" strokeLinejoin="round"/>
+                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink:0 }}>
+                            <circle cx="6.5" cy="6.5" r="6" fill={plan.color+'18'} stroke={plan.color+'35'} strokeWidth=".5"/>
+                            <path d="M4 6.5l2 2L9 4.5" stroke={plan.color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                           <span>{f}</span>
                         </div>
                       ))}
                     </div>
 
-                    {plan.id === 'free' && (() => {
-                      const fLimit     = usage?.creditsLimit  || 200;
-                      const fRemaining = usage ? usage.creditsRemaining : fLimit;
-                      const fUsed      = fLimit - fRemaining;
-                      const fPct       = Math.min(100, Math.round((fUsed / fLimit) * 100));
-                      const fClr       = fPct < 50 ? '#4caf7d' : fPct < 80 ? '#ffb700' : '#ff4f87';
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', marginTop: '.2rem', padding: '.65rem .7rem', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)', borderRadius: '10px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              <div style={{ fontSize: '.62rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '.15rem' }}>Credits Remaining</div>
-                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: fClr, lineHeight: 1 }}>
-                                {fRemaining.toLocaleString()}
-                                <span style={{ fontSize: '.72rem', fontWeight: 500, color: '#44445a' }}> / {fLimit}</span>
-                              </div>
-                            </div>
-                            <div style={{ fontSize: '1.6rem' }}>{fPct >= 80 ? '🔴' : fPct >= 50 ? '🟡' : '🟢'}</div>
-                          </div>
-                          <div style={{ height: '5px', background: 'rgba(255,255,255,.06)', borderRadius: '999px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${fPct}%`, background: `linear-gradient(90deg, ${fClr}88, ${fClr})`, borderRadius: '999px', transition: 'width .6s ease' }}/>
-                          </div>
-                          {usage && <div style={{ fontSize: '.67rem', color: '#44445a', textAlign: 'right' }}>{fUsed} used this month</div>}
-                          {fRemaining <= 20 && (
-                            <div style={{ fontSize: '.7rem', color: '#ff4f87', fontWeight: 600 }}>
-                              ⚠ {fRemaining <= 0 ? 'Credits khatam ho gaye!' : 'Credits khatam hone wale hain!'}
-                            </div>
-                          )}
+                    {/* Credits usage — only free plan */}
+                    {plan.id === 'free' && (
+                      <div style={c.usageBox}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.42rem' }}>
+                          <span style={c.usageLabel}>Credits used</span>
+                          <span style={{ fontSize:'.78rem', fontWeight:800, color: fClr, fontVariantNumeric:'tabular-nums' }}>
+                            {fRemaining.toLocaleString()}
+                            <span style={{ color:'#3a3a52', fontWeight:500 }}> / {fLimit}</span>
+                          </span>
                         </div>
-                      );
-                    })()}
+                        <div style={c.usageTrack}>
+                          <div style={{ height:'100%', width:`${fPct}%`, background:`linear-gradient(90deg,${fClr}80,${fClr})`, borderRadius:'4px', transition:'width .6s ease' }} />
+                        </div>
+                        {fRemaining <= 20 && (
+                          <div style={{ fontSize:'.65rem', color:'#ff4f87', fontWeight:600, marginTop:'.35rem', display:'flex', alignItems:'center', gap:'.28rem' }}>
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1L9.5 9H.5L5 1z" stroke="#ff4f87" strokeWidth="1.1" strokeLinejoin="round"/><path d="M5 4v2" stroke="#ff4f87" strokeWidth="1.1" strokeLinecap="round"/></svg>
+                            {fRemaining <= 0 ? 'Credits khatam ho gaye!' : 'Credits khatam hone wale hain!'}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                    {/* ── CTA ── */}
+                    {/* CTA */}
                     {active ? (
-                      <div style={{ ...c.activeCta, color: plan.color, borderColor: plan.color + '28', background: plan.color + '0e' }}>
-                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                          <path d="M3 6.5l2.5 2.5 4.5-5" stroke={plan.color} strokeWidth="1.6"
-                            strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                      <div style={{ ...c.activeCta, color:plan.color, borderColor:plan.color+'28', background:plan.color+'0d' }}>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke={plan.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         Current plan
                       </div>
                     ) : (
-                      <button className="p-cta" style={{ ...c.cta, background: plan.ctaBg, boxShadow: plan.ctaShadow }}>
+                      <button className="pf-cta" style={{ ...c.cta, background:plan.ctaBg, boxShadow:plan.ctaShadow }}>
                         {plan.cta}
                       </button>
                     )}
-
                   </div>
                 );
               })}
@@ -362,27 +252,19 @@ export default function Profile() {
           </div>
         )}
 
-        {/* ════ PROFILE ════ */}
+        {/* ── PROFILE TAB ── */}
         {tab === 'profile' && (
-          <div style={{ animation: 'rise .22s ease' }}>
-
+          <div style={{ animation:'rise .2s ease' }}>
             <div style={c.eyebrow}>Account Details</div>
 
-
-
-            {/* Form */}
-            <div style={c.formBox}>
+            <div style={c.formCard}>
               <div style={c.formTitle}>Edit Profile</div>
 
               {/* Name */}
               <div style={c.field}>
                 <label style={c.label}>Name</label>
                 <input
-                  style={{
-                    ...c.input,
-                    borderColor: nameFocus ? 'rgba(124,92,255,.6)' : 'rgba(255,255,255,.1)',
-                    boxShadow:   nameFocus ? '0 0 0 3px rgba(108,71,255,.1)' : 'none',
-                  }}
+                  style={{ ...c.input, borderColor: nameFocus ? 'rgba(124,92,255,.55)' : 'rgba(255,255,255,.08)', boxShadow: nameFocus ? '0 0 0 3px rgba(108,71,255,.1)' : 'none' }}
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="Your full name"
@@ -393,42 +275,23 @@ export default function Profile() {
 
               {/* Email */}
               <div style={c.field}>
-                <div style={c.labelRow}>
-                  <label style={c.label}>Email address</label>
-                  <span style={c.locked}>
-                    <svg width="9" height="10" viewBox="0 0 9 10" fill="none">
-                      <rect x="1" y="4.5" width="7" height="5" rx="1.2" stroke="#44445a" strokeWidth="1"/>
-                      <path d="M2.5 4.5V3a2 2 0 014 0v1.5" stroke="#44445a" strokeWidth="1"/>
-                    </svg>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <label style={c.label}>Email</label>
+                  <span style={c.lockedTag}>
+                    <svg width="9" height="10" viewBox="0 0 9 10" fill="none"><rect x="1" y="4.5" width="7" height="5" rx="1.2" stroke="#3e3e5a" strokeWidth="1"/><path d="M2.5 4.5V3a2 2 0 014 0v1.5" stroke="#3e3e5a" strokeWidth="1"/></svg>
                     Locked
                   </span>
                 </div>
-                <input
-                  style={{ ...c.input, opacity: .3, cursor: 'not-allowed', borderColor: 'rgba(255,255,255,.06)' }}
-                  value={user.email || ''}
-                  disabled
-                />
+                <input style={{ ...c.input, opacity:.3, cursor:'not-allowed', borderColor:'rgba(255,255,255,.05)' }} value={user.email || ''} disabled />
               </div>
 
-              <button
-                className="p-save pf-savebtn"
-                style={{ ...c.saveBtn, opacity: saving ? .5 : 1 }}
-                onClick={saveName}
-                disabled={saving}
-              >
-                {saving ? (
-                  <><span style={c.spinner} /> Saving...</>
-                ) : (
-                  <>
-                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                      <path d="M2 7l3.5 3.5L11 3" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Save changes
-                  </>
-                )}
+              <button className="pf-save pf-savebtn" style={{ ...c.saveBtn, opacity: saving ? .5 : 1 }} onClick={saveName} disabled={saving}>
+                {saving
+                  ? <><span style={c.spinner} />Saving...</>
+                  : <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6.5l3 3 5-6" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>Save changes</>
+                }
               </button>
             </div>
-
           </div>
         )}
 
@@ -437,318 +300,47 @@ export default function Profile() {
   );
 }
 
-/* ─── Styles ─────────────────────────────────────────────────────────────── */
 const c = {
-  page: {
-    maxWidth:  '520px',
-    margin:    '0 auto',
-    padding:   '72px 1.1rem 5rem',
-  },
+  page: { maxWidth:'500px', margin:'0 auto', padding:'70px 1rem 5rem' },
 
-  back: {
-    display:        'inline-flex',
-    alignItems:     'center',
-    gap:            '.38rem',
-    padding:        '.42rem .85rem .42rem .65rem',
-    background:     'rgba(255,255,255,.04)',
-    border:         '1px solid rgba(255,255,255,.08)',
-    borderRadius:   '10px',
-    cursor:         'pointer',
-    marginBottom:   '1.25rem',
-    color:          '#6e6e8a',
-    fontSize:       '.8rem',
-    fontWeight:     600,
-    fontFamily:     'inherit',
-    letterSpacing:  '-.01em',
-  },
+  back: { display:'inline-flex', alignItems:'center', gap:'.38rem', padding:'.4rem .8rem .4rem .6rem', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'9px', cursor:'pointer', color:'#4e4e6a', fontSize:'.78rem', fontWeight:600, fontFamily:'inherit', marginBottom:'1.2rem', transition:'background .15s, border-color .15s' },
 
-  /* Identity */
-  idCard: {
-    display:      'flex',
-    alignItems:   'center',
-    gap:          '1rem',
-    padding:      '1rem 1.25rem',
-    background:   '#0f0f1a',
-    border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '16px',
-    marginBottom: '1.1rem',
-    position:     'relative',
-    overflow:     'hidden',
-  },
-  idAvatar: {
-    width:          '46px',
-    height:         '46px',
-    borderRadius:   '50%',
-    background:     'linear-gradient(135deg, #3a20b8, #7c5cff)',
-    display:        'flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    color:          '#fff',
-    fontWeight:     800,
-    fontSize:       '1.15rem',
-    flexShrink:     0,
-    letterSpacing:  '-.01em',
-  },
-  idBody:  { flex: 1, minWidth: 0 },
-  idName:  { fontSize: '.93rem', fontWeight: 700, color: '#ededfa', letterSpacing: '-.015em' },
-  idEmail: { fontSize: '.76rem', color: '#44445a', marginTop: '.18rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  idBadge: {
-    flexShrink:    0,
-    fontSize:      '.68rem',
-    fontWeight:    700,
-    padding:       '.26rem .7rem',
-    borderRadius:  '999px',
-    border:        '1px solid',
-    letterSpacing: '.03em',
-  },
+  idCard: { display:'flex', alignItems:'center', gap:'.9rem', padding:'.9rem 1.1rem', background:'#0d0d1e', border:'1px solid rgba(255,255,255,.07)', borderRadius:'16px', marginBottom:'1rem', overflow:'hidden', position:'relative' },
+  idAvatar: { width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg,#3a20b8,#7c5cff)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:800, fontSize:'1.1rem', flexShrink:0 },
+  idBody:  { flex:1, minWidth:0 },
+  idName:  { fontSize:'.9rem', fontWeight:700, color:'#ededf8', letterSpacing:'-.015em' },
+  idEmail: { fontSize:'.72rem', color:'#3e3e5a', marginTop:'.1rem', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' },
+  idBadge: { flexShrink:0, fontSize:'.65rem', fontWeight:700, padding:'.22rem .65rem', borderRadius:'99px', border:'1px solid', letterSpacing:'.025em' },
 
-  /* Tabs */
-  tabRow: {
-    display:      'flex',
-    gap:          '.55rem',
-    marginBottom: '1.6rem',
-  },
-  tab: {
-    padding:       '.52rem 1.15rem',
-    borderRadius:  '10px',
-    border:        '1px solid',
-    fontSize:      '.83rem',
-    cursor:        'pointer',
-    fontFamily:    'inherit',
-    letterSpacing: '-.01em',
-    transition:    'background .15s, color .15s, border-color .15s, box-shadow .15s',
-  },
+  tabs: { display:'flex', gap:'.5rem', marginBottom:'1.5rem' },
+  tab:  { padding:'.5rem 1rem', borderRadius:'10px', border:'1px solid', fontSize:'.82rem', cursor:'pointer', fontFamily:'inherit', letterSpacing:'-.01em', transition:'background .15s, color .15s, border-color .15s, box-shadow .15s' },
 
-  eyebrow: {
-    fontSize:      '.65rem',
-    fontWeight:    700,
-    color:         '#44445a',
-    textTransform: 'uppercase',
-    letterSpacing: '.1em',
-    marginBottom:  '.85rem',
-  },
+  eyebrow: { fontSize:'.62rem', fontWeight:700, color:'#3e3e5a', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:'.8rem' },
 
-  /* Plans */
-  planStack: { display: 'flex', flexDirection: 'column', gap: '.65rem' },
-  planCard: {
-    padding:       '1.2rem',
-    border:        '1px solid',
-    borderRadius:  '18px',
-    display:       'flex',
-    flexDirection: 'column',
-    gap:           '.85rem',
-    position:      'relative',
-    overflow:      'hidden',
-  },
+  planStack: { display:'flex', flexDirection:'column', gap:'.6rem' },
+  planCard:  { padding:'1.15rem', border:'1px solid', borderRadius:'18px', display:'flex', flexDirection:'column', gap:'.8rem', position:'relative', overflow:'hidden', transition:'transform .2s, box-shadow .2s' },
+  planHeader: { display:'flex', justifyContent:'space-between', alignItems:'flex-start' },
+  planName:   { fontSize:'.98rem', fontWeight:800, letterSpacing:'-.02em', transition:'color .2s' },
+  divLine:    { height:'1px', background:'rgba(255,255,255,.05)' },
 
-  cardTop: {
-    display:         'flex',
-    justifyContent:  'space-between',
-    alignItems:      'flex-start',
-  },
-  cardTopLeft: {
-    display:     'flex',
-    alignItems:  'center',
-    gap:         '.45rem',
-    flexWrap:    'wrap',
-  },
-  planName:  { fontSize: '1rem', fontWeight: 800, letterSpacing: '-.015em' },
-  chip: {
-    fontSize:      '.59rem',
-    fontWeight:    700,
-    padding:       '.17rem .5rem',
-    borderRadius:  '999px',
-    border:        '1px solid',
-    letterSpacing: '.04em',
-    textTransform: 'uppercase',
-  },
-  priceBlock: {
-    display:    'flex',
-    alignItems: 'baseline',
-    gap:        '.22rem',
-    flexShrink: 0,
-  },
-  priceAmt: { fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-.04em', transition: 'color .2s' },
-  pricePer: { fontSize: '.71rem', color: '#44445a' },
+  feats: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.35rem .6rem' },
+  featItem: { display:'flex', alignItems:'center', gap:'.35rem', fontSize:'.73rem', color:'#6a6a8a', lineHeight:1.35 },
 
-  hr: { height: '1px', background: 'rgba(255,255,255,.055)' },
+  usageBox:   { background:'rgba(255,255,255,.025)', border:'1px solid rgba(255,255,255,.06)', borderRadius:'10px', padding:'.6rem .65rem' },
+  usageLabel: { fontSize:'.6rem', fontWeight:700, color:'#3e3e5a', textTransform:'uppercase', letterSpacing:'.07em' },
+  usageTrack: { height:'4px', background:'rgba(255,255,255,.06)', borderRadius:'4px', overflow:'hidden' },
 
-  featGrid: {
-    display:             'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap:                 '.4rem .7rem',
-  },
-  featItem: {
-    display:    'flex',
-    alignItems: 'center',
-    gap:        '.38rem',
-    fontSize:   '.75rem',
-    color:      '#7878a0',
-    lineHeight: 1.35,
-  },
+  activeCta: { display:'flex', alignItems:'center', justifyContent:'center', gap:'.38rem', padding:'.68rem', borderRadius:'11px', border:'1px solid', fontSize:'.81rem', fontWeight:600, letterSpacing:'-.01em' },
+  cta:       { width:'100%', padding:'.72rem', border:'none', borderRadius:'11px', color:'#fff', fontWeight:700, fontSize:'.86rem', cursor:'pointer', fontFamily:'inherit', letterSpacing:'-.01em', transition:'filter .15s, transform .12s' },
 
-  activeCta: {
-    display:         'flex',
-    alignItems:      'center',
-    justifyContent:  'center',
-    gap:             '.4rem',
-    padding:         '.72rem',
-    borderRadius:    '12px',
-    border:          '1px solid',
-    fontSize:        '.83rem',
-    fontWeight:      600,
-    letterSpacing:   '-.01em',
-  },
-  cta: {
-    width:         '100%',
-    padding:       '.75rem',
-    border:        'none',
-    borderRadius:  '12px',
-    color:         '#fff',
-    fontWeight:    700,
-    fontSize:      '.88rem',
-    cursor:        'pointer',
-    fontFamily:    'inherit',
-    letterSpacing: '-.01em',
-  },
+  billingNote: { textAlign:'center', color:'#252538', fontSize:'.68rem', marginTop:'.9rem' },
 
-  billingNote: {
-    textAlign:     'center',
-    color:         '#28283e',
-    fontSize:      '.7rem',
-    marginTop:     '1rem',
-    letterSpacing: '.01em',
-  },
-
-  /* Profile */
-  tiles: {
-    display:             'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap:                 '.6rem',
-    marginBottom:        '1.1rem',
-  },
-  tile: {
-    padding:      '.9rem 1rem',
-    background:   '#0f0f1a',
-    border:       '1px solid rgba(255,255,255,.07)',
-    borderRadius: '14px',
-  },
-  tileLabel: { fontSize: '.63rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '.3rem' },
-  tileVal:   { fontSize: '.9rem', fontWeight: 700, color: '#d0d0e8', display: 'flex', alignItems: 'center', gap: '.4rem', flexWrap: 'wrap' },
-  tileLink:  { background: 'none', border: 'none', color: '#7c5cff', fontSize: '.74rem', fontWeight: 700, cursor: 'pointer', padding: 0, fontFamily: 'inherit' },
-
-  formBox: {
-    padding:       '1.3rem',
-    background:    '#0f0f1a',
-    border:        '1px solid rgba(255,255,255,.07)',
-    borderRadius:  '18px',
-    display:       'flex',
-    flexDirection: 'column',
-    gap:           '1rem',
-  },
-  formTitle: { fontSize: '.65rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.1em' },
-
-  field:    { display: 'flex', flexDirection: 'column', gap: '.35rem' },
-  labelRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-  label:    { fontSize: '.67rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.08em' },
-  locked: {
-    display:      'inline-flex',
-    alignItems:   'center',
-    gap:          '.28rem',
-    fontSize:     '.63rem',
-    fontWeight:   600,
-    color:        '#3a3a52',
-    background:   'rgba(255,255,255,.03)',
-    border:       '1px solid rgba(255,255,255,.06)',
-    borderRadius: '5px',
-    padding:      '.13rem .42rem',
-  },
-  input: {
-    padding:      '.73rem 1rem',
-    background:   '#08080f',
-    border:       '1px solid',
-    borderRadius: '11px',
-    color:        '#f0f0f8',
-    fontSize:     '.9rem',
-    outline:      'none',
-    width:        '100%',
-    fontFamily:   'inherit',
-    transition:   'border-color .15s, box-shadow .15s',
-    boxSizing:    'border-box',
-  },
-
-  saveBtn: {
-    alignSelf:      'flex-start',
-    display:        'inline-flex',
-    alignItems:     'center',
-    gap:            '.42rem',
-    padding:        '.72rem 1.55rem',
-    background:     'linear-gradient(135deg, #5535e0, #7c5cff)',
-    color:          '#fff',
-    border:         'none',
-    borderRadius:   '11px',
-    fontWeight:     700,
-    fontSize:       '.87rem',
-    cursor:         'pointer',
-    fontFamily:     'inherit',
-    letterSpacing:  '-.01em',
-    boxShadow:      '0 4px 16px rgba(108,71,255,.28)',
-    transition:     'opacity .15s, transform .12s',
-  },
-  spinner: {
-    width:          '12px',
-    height:         '12px',
-    border:         '2px solid rgba(255,255,255,.25)',
-    borderTopColor: '#fff',
-    borderRadius:   '50%',
-    display:        'inline-block',
-    animation:      'spin .6s linear infinite',
-    flexShrink:     0,
-  },
-};
-
-// Credits card styles
-const crd = {
-  card: {
-    background:   '#0f0f1a',
-    border:       '1px solid rgba(255,255,255,.08)',
-    borderRadius: '14px',
-    padding:      '1.1rem 1.25rem',
-    marginBottom: '1.4rem',
-  },
-  top: {
-    display:        'flex',
-    justifyContent: 'space-between',
-    alignItems:     'flex-start',
-    marginBottom:   '.7rem',
-  },
-  label: { fontSize: '.8rem', color: '#8888aa', fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase' },
-  resetNote: { fontSize: '.7rem', color: '#5a5a7a', marginTop: '.15rem' },
-  count: { fontSize: '1.4rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' },
-  total: { fontSize: '.85rem', color: '#5a5a7a', fontWeight: 500 },
-  bar: {
-    height: '7px', background: 'rgba(255,255,255,.07)', borderRadius: '4px',
-    overflow: 'hidden', marginBottom: '.9rem',
-  },
-  fill: { height: '100%', borderRadius: '4px', transition: 'width .4s ease' },
-  costsRow: {
-    display: 'flex', flexWrap: 'wrap', gap: '.4rem',
-  },
-  costItem: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.06)',
-    borderRadius: '8px', padding: '.35rem .7rem', minWidth: '68px',
-  },
-  costLabel: { fontSize: '.65rem', color: '#6666aa', fontWeight: 500, marginBottom: '.1rem' },
-  costVal:   { fontSize: '.78rem', color: '#c0c0e0', fontWeight: 700 },
-  upgradeBtn: {
-    padding: '.28rem .75rem',
-    background: 'linear-gradient(135deg,#6c47ff,#8b6bff)',
-    color: '#fff',
-    borderRadius: '20px',
-    fontSize: '.72rem',
-    fontWeight: 700,
-    textDecoration: 'none',
-    letterSpacing: '.01em',
-  },
+  formCard:  { padding:'1.25rem', background:'#0d0d1e', border:'1px solid rgba(255,255,255,.07)', borderRadius:'18px', display:'flex', flexDirection:'column', gap:'.95rem' },
+  formTitle: { fontSize:'.62rem', fontWeight:700, color:'#3e3e5a', textTransform:'uppercase', letterSpacing:'.1em' },
+  field:     { display:'flex', flexDirection:'column', gap:'.3rem' },
+  label:     { fontSize:'.65rem', fontWeight:700, color:'#3e3e5a', textTransform:'uppercase', letterSpacing:'.07em' },
+  lockedTag: { display:'inline-flex', alignItems:'center', gap:'.25rem', fontSize:'.62rem', fontWeight:600, color:'#2e2e48', background:'rgba(255,255,255,.03)', border:'1px solid rgba(255,255,255,.05)', borderRadius:'5px', padding:'.1rem .38rem' },
+  input:     { padding:'.7rem .95rem', background:'#08080f', border:'1px solid', borderRadius:'10px', color:'#f0f0f8', fontSize:'.88rem', outline:'none', width:'100%', fontFamily:'inherit', transition:'border-color .15s, box-shadow .15s', boxSizing:'border-box' },
+  saveBtn:   { alignSelf:'flex-start', display:'inline-flex', alignItems:'center', gap:'.4rem', padding:'.68rem 1.45rem', background:'linear-gradient(135deg,#5535e0,#7c5cff)', color:'#fff', border:'none', borderRadius:'10px', fontWeight:700, fontSize:'.85rem', cursor:'pointer', fontFamily:'inherit', boxShadow:'0 4px 18px rgba(108,71,255,.3)', transition:'filter .15s, transform .12s, opacity .15s' },
+  spinner:   { width:'11px', height:'11px', border:'2px solid rgba(255,255,255,.2)', borderTopColor:'#fff', borderRadius:'50%', display:'inline-block', animation:'spin .6s linear infinite', flexShrink:0 },
 };
