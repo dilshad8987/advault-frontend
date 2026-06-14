@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'https://api.advault.in/api';
+// Hardcoded — env variable inconsistencies se bachne ke liye
+// Agar custom backend URL chahiye, yahan change karo
+const BASE_URL = 'https://api.advault.in/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
