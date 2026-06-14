@@ -477,7 +477,15 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
     const v = videoRef.current; if (!v) return;
     v.muted = !muted; setMuted(!muted); showCtrl();
   };
-  const downloadVideo = async () => {
+  const refreshCredits = () => {
+    api.get('/user/profile').then(res => {
+      const u = res.data?.usage;
+      if (u) {
+        setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
+        window.dispatchEvent(new Event('credits-updated')); // Navbar update karo
+      }
+    }).catch(() => {});
+  };
     if (!canDownload) {
       toast.error('Credits khatam! Upgrade karo.');
       return;
@@ -501,10 +509,12 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
       a.download = filename; a.click(); URL.revokeObjectURL(a.href);
       toast.success('Video download ho gayi! 🎉');
+      refreshCredits(); // credits update karo after download
     } catch {
       const a = document.createElement('a'); a.href = videoUrl; a.target = '_blank';
       a.download = `advault-ad-${adId||Date.now()}.mp4`; a.click();
       toast.success('Download shuru ho gaya!');
+      refreshCredits(); // fallback mein bhi refresh karo
     }
     setDownloading(false); setDlProgress(0);
   };
@@ -742,6 +752,10 @@ export default function AdDetail() {
       const res  = await api.get(`/ads/tiktok/${adId}`);
       const data = res.data?.data?.data || res.data?.data || res.data || {};
       setDetail(data);
+      // Agar pehli baar dekha to credit deduct hua — Navbar update karo
+      if (res.data?.creditDeducted) {
+        window.dispatchEvent(new Event('credits-updated'));
+      }
       const isMetaAd = !!(data?.page_name || data?.library_id || data?.snapshot_url || data?._source === 'mongodb_scraped');
       if (isMetaAd) {
         const brandName = data?.page_name || data?.brand;
