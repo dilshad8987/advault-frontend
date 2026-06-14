@@ -359,6 +359,16 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     vid.addEventListener('error', () => {});
   }, [hasVideo, rawVideoUrl, thumbUrl]);
 
+  const refreshCredits = () => {
+    api.get('/user/profile').then(res => {
+      const u = res.data?.usage;
+      if (u) {
+        setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
+        window.dispatchEvent(new Event('credits-updated')); // Navbar update karo
+      }
+    }).catch(() => {});
+  };
+
   const saveAd = async (e) => {
     e.stopPropagation();
     if (!canSave) {
@@ -369,6 +379,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
       const res = await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
       setSaved(true);
       toast.success('Ad save ho gayi!');
+      refreshCredits(); // credits update karo after save
     } catch (err) {
       if (err.response?.data?.upgrade) {
         toast.error('Credits khatam! Upgrade karo.');
