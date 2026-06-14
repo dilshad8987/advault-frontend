@@ -26,10 +26,10 @@ export default function Navbar() {
   }, []);
 
   const creditPct   = credits ? Math.round((credits.remaining / credits.limit) * 100) : null;
-  const creditColor = creditPct === null ? '#6c47ff'
-    : creditPct > 50 ? '#4caf7d'
-    : creditPct > 20 ? '#ffb700'
-    : '#ff4f87';
+  // Plan-based color — Free: purple, Pro: blue, Elite: gold
+  const creditColor = user?.plan === 'elite' ? '#ffb700'
+    : user?.plan === 'pro'   ? '#5aabff'
+    : '#8b6bff';
 
   const confirmLogout = () => {
     setMenuOpen(false);
@@ -60,24 +60,6 @@ export default function Navbar() {
         <div style={s.right}>
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-              {/* ── Credits pill ── */}
-              {credits !== null && (
-                <Link to="/profile" style={{ textDecoration: 'none' }}>
-                  <div style={s.creditPill}>
-                    <svg width="11" height="11" viewBox="0 0 20 20" fill={creditColor} style={{ flexShrink: 0 }}>
-                      <circle cx="10" cy="10" r="9" stroke={creditColor} strokeWidth="2" fill="none"/>
-                      <path d="M10 5v5l3 3" stroke={creditColor} strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    <span style={{ ...s.creditText, color: creditColor }}>
-                      {credits.remaining.toLocaleString()}
-                    </span>
-                    <div style={s.creditBar}>
-                      <div style={{ ...s.creditBarFill, width: `${creditPct}%`, background: creditColor }} />
-                    </div>
-                  </div>
-                </Link>
-              )}
-
               <div style={{ position: 'relative' }}>
                 <div style={s.profileRow} onClick={() => setMenuOpen(!menuOpen)}>
                   <div style={s.avatarCircle}>
@@ -164,11 +146,6 @@ const s = {
   logo: { display: 'flex', alignItems: 'center', gap: '.5rem', fontWeight: 800, fontSize: '1.2rem', color: '#fff', textDecoration: 'none' },
   logoIcon: { width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   right: { display: 'flex', alignItems: 'center' },
-  // Credits pill
-  creditPill: { display: 'flex', alignItems: 'center', gap: '.35rem', padding: '.3rem .65rem', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '20px', cursor: 'pointer' },
-  creditText: { fontSize: '.75rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums' },
-  creditBar: { width: '36px', height: '4px', background: 'rgba(255,255,255,.1)', borderRadius: '2px', overflow: 'hidden' },
-  creditBarFill: { height: '100%', borderRadius: '2px', transition: 'width .3s' },
   // Profile
   profileRow: { display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer', padding: '.3rem .4rem', borderRadius: '10px' },
   avatarCircle: { width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '.9rem', flexShrink: 0 },
