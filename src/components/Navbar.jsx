@@ -97,15 +97,7 @@ export default function Navbar() {
                 <div style={{ ...s.avatar, boxShadow: `0 0 0 2px #0a0a12, 0 0 0 3.5px ${isLow ? '#ff4f87' : planColor}60` }}>
                   {user.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
-                <div style={s.profileMeta}>
-                  <span style={s.profileName}>{user.name}</span>
-                  <span style={{ fontSize: '.67rem', color: credits ? barColor : '#555577', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-                    {credits ? `${credits.remaining} / ${credits.limit} credits` : '— credits'}
-                  </span>
-                </div>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ opacity: .4, transition: 'transform .2s', transform: menuOpen.current ? 'rotate(180deg)' : 'none' }}>
-                  <path d="M2.5 4.5L6 8l3.5-3.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <span style={s.profileName}>{user.name}</span>
               </div>
 
               {/* Dropdown */}
@@ -126,24 +118,39 @@ export default function Navbar() {
                     </div>
                   </div>
 
-                  {/* Credits block */}
-                  <div style={{ ...s.creditsBlock, borderColor: isLow ? 'rgba(255,79,135,.2)' : 'rgba(139,107,255,.15)' }}>
-                    {/* Label row */}
-                    <div style={s.creditsLabelRow}>
-                      <span style={s.creditsLabel}>Credits</span>
-                      <span style={{ ...s.creditsVal, color: barColor }}>
-                        {credits ? credits.remaining.toLocaleString() : '—'}
-                        <span style={{ color: '#3a3a52', fontWeight: 500 }}> / {credits ? credits.limit.toLocaleString() : '—'}</span>
-                      </span>
+                  {/* Credits block — redesigned */}
+                  <div style={{ ...s.creditsBlock, borderColor: isLow ? 'rgba(255,79,135,.22)' : `${planColor}28` }}>
+                    {/* Top: icon + label + count */}
+                    <div style={{ display:'flex', alignItems:'center', gap:'.5rem', marginBottom:'.55rem' }}>
+                      <div style={{ width:'28px', height:'28px', borderRadius:'8px', background: isLow ? 'rgba(255,79,135,.12)' : `${planColor}18`, border:`1px solid ${isLow ? 'rgba(255,79,135,.2)' : planColor+'30'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                          <circle cx="6.5" cy="6.5" r="5.5" stroke={isLow ? '#ff4f87' : barColor} strokeWidth="1.2" strokeDasharray="2 1.5" opacity=".5"/>
+                          <text x="6.5" y="9.5" textAnchor="middle" fontSize="6" fontWeight="700" fill={isLow ? '#ff4f87' : barColor}>C</text>
+                        </svg>
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:'.6rem', fontWeight:700, color:'#3a3a52', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:'.06rem' }}>Credits Remaining</div>
+                        <div style={{ display:'flex', alignItems:'baseline', gap:'.2rem' }}>
+                          <span style={{ fontSize:'1.1rem', fontWeight:900, color: barColor, fontVariantNumeric:'tabular-nums', letterSpacing:'-.03em', lineHeight:1 }}>
+                            {credits ? credits.remaining.toLocaleString() : '—'}
+                          </span>
+                          <span style={{ fontSize:'.68rem', color:'#3a3a52', fontWeight:500 }}>
+                            / {credits ? credits.limit.toLocaleString() : '—'}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ fontSize:'.65rem', fontWeight:700, color: barColor, background: `${barColor}14`, border:`1px solid ${barColor}28`, borderRadius:'99px', padding:'.15rem .45rem', flexShrink:0 }}>
+                        {creditPct}%
+                      </div>
                     </div>
-                    {/* Bar */}
+                    {/* Progress bar */}
                     <div style={s.barTrack}>
-                      <div style={{ ...s.barFill, width: `${Math.min(creditPct, 100)}%`, background: `linear-gradient(90deg, ${barColor}90, ${barColor})` }} />
+                      <div style={{ ...s.barFill, width: `${Math.min(creditPct, 100)}%`, background: `linear-gradient(90deg, ${barColor}70, ${barColor})` }} />
                     </div>
                     {isLow && (
                       <div style={s.lowWarn}>
-                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1L10 10H1L5.5 1z" stroke="#ff4f87" strokeWidth="1.2" strokeLinejoin="round"/><path d="M5.5 4.5v2.5" stroke="#ff4f87" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                        Credits khatam hone wale hain
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1L9.5 9H.5L5 1z" stroke="#ff4f87" strokeWidth="1.1" strokeLinejoin="round"/><path d="M5 4v2" stroke="#ff4f87" strokeWidth="1.1" strokeLinecap="round"/></svg>
+                        Credits khatam hone wale hain!
                       </div>
                     )}
                   </div>
