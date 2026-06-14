@@ -486,6 +486,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
       }
     }).catch(() => {});
   };
+  const downloadVideo = async () => {
     if (!canDownload) {
       toast.error('Credits khatam! Upgrade karo.');
       return;
