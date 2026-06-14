@@ -48,7 +48,7 @@ function App() {
     const token = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
     if (token && refreshToken) {
-      fetch((process.env.REACT_APP_API_URL || 'http://localhost:5000/api') + '/auth/refresh', {
+      fetch('https://api.advault.in/api/auth/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken })
