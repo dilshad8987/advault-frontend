@@ -79,18 +79,41 @@ export default function Profile() {
   const currentPlan = user.plan || 'free';
   const pm          = PLAN_MAP[currentPlan] || PLAN_MAP.free;
 
+  const CREDITS_CACHE_KEY = 'advault_credits_cache';
+
   const [tab,       setTab]  = useState('plans');
   const [name,      setName] = useState(user.name || '');
   const [saving,  setSaving] = useState(false);
   const [nameFocus,  setNF]  = useState(false);
-  const [usage,    setUsage] = useState(null);
-  const [usageLoading, setUsageLoading] = useState(true);
+
+  // Cached credits se seedha initialize karo — loading screen nahi dikhega
+  const [usage, setUsage] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CREDITS_CACHE_KEY);
+      if (cached) {
+        const { remaining, limit } = JSON.parse(cached);
+        return { creditsRemaining: remaining, creditsLimit: limit };
+      }
+    } catch {}
+    return null;
+  });
 
   const fetchUsage = () => {
+    // Background mein silently update karo — koi loading state nahi
     api.get('/user/profile')
-      .then(res => { if (res.data?.usage) setUsage(res.data.usage); })
-      .catch(() => {})
-      .finally(() => setUsageLoading(false));
+      .then(res => {
+        if (res.data?.usage) {
+          const u = res.data.usage;
+          setUsage(u);
+          // Cache update karo
+          try {
+            localStorage.setItem(CREDITS_CACHE_KEY, JSON.stringify({
+              remaining: u.creditsRemaining, limit: u.creditsLimit
+            }));
+          } catch {}
+        }
+      })
+      .catch(() => {}); // Error pe cached value dikhti rahegi
   };
 
   useEffect(() => {
@@ -295,18 +318,18 @@ export default function Profile() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
                               <div style={{ fontSize: '.62rem', fontWeight: 700, color: '#44445a', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '.15rem' }}>Credits Remaining</div>
-                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: usage ? fClr : '#44445a', lineHeight: 1 }}>
-                                {usage ? fRemaining.toLocaleString() : '—'}
+                              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: fClr, lineHeight: 1 }}>
+                                {fRemaining.toLocaleString()}
                                 <span style={{ fontSize: '.72rem', fontWeight: 500, color: '#44445a' }}> / {fLimit}</span>
                               </div>
                             </div>
-                            <div style={{ fontSize: '1.6rem' }}>{!usage ? '⏳' : fPct >= 80 ? '🔴' : fPct >= 50 ? '🟡' : '🟢'}</div>
+                            <div style={{ fontSize: '1.6rem' }}>{fPct >= 80 ? '🔴' : fPct >= 50 ? '🟡' : '🟢'}</div>
                           </div>
                           <div style={{ height: '5px', background: 'rgba(255,255,255,.06)', borderRadius: '999px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: usage ? `${fPct}%` : '0%', background: `linear-gradient(90deg, ${fClr}88, ${fClr})`, borderRadius: '999px', transition: 'width .6s ease' }}/>
+                            <div style={{ height: '100%', width: `${fPct}%`, background: `linear-gradient(90deg, ${fClr}88, ${fClr})`, borderRadius: '999px', transition: 'width .6s ease' }}/>
                           </div>
                           {usage && <div style={{ fontSize: '.67rem', color: '#44445a', textAlign: 'right' }}>{fUsed} used this month</div>}
-                          {usage && fRemaining <= 20 && (
+                          {fRemaining <= 20 && (
                             <div style={{ fontSize: '.7rem', color: '#ff4f87', fontWeight: 600 }}>
                               ⚠ {fRemaining <= 0 ? 'Credits khatam ho gaye!' : 'Credits khatam hone wale hain!'}
                             </div>
