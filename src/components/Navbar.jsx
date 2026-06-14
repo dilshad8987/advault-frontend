@@ -1,8 +1,5 @@
 // components/Navbar.jsx
-// Fix: Logout ab server pe bhi call karta hai (pehle sirf localStorage.clear() tha)
-// Server logout se refreshToken invalidate hota hai aur device session hatata hai
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
@@ -11,46 +8,50 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [credits, setCredits] = useState(null);
+  const menuOpenRef = useRef(false); // dropdown state track karo bina re-render ke
   const user  = JSON.parse(localStorage.getItem('user') || 'null');
   const isPro = user?.plan && user.plan !== 'free';
 
-  const loadCredits = () => {
+  // Credits sirf update karo — dropdown band mat karo
+  const loadCredits = useCallback(() => {
     if (!user) return;
     api.get('/user/profile')
       .then(res => {
         const u = res.data?.usage;
-        if (u) setCredits({ remaining: u.creditsRemaining, limit: u.creditsLimit });
+        if (u) setCredits(prev => ({ ...prev, remaining: u.creditsRemaining, limit: u.creditsLimit }));
       })
       .catch(() => {});
-  };
+  }, []); // eslint-disable-line
 
   useEffect(() => {
     loadCredits();
-    // Jab bhi credit deduct ho, Navbar refresh ho
     window.addEventListener('credits-updated', loadCredits);
     return () => window.removeEventListener('credits-updated', loadCredits);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadCredits]);
+
+  const toggleMenu = () => {
+    const next = !menuOpen;
+    setMenuOpen(next);
+    menuOpenRef.current = next;
+  };
 
   const creditPct   = credits ? Math.round((credits.remaining / credits.limit) * 100) : null;
-  // Plan-based color — Free: purple, Pro: blue, Elite: gold
   const creditColor = user?.plan === 'elite' ? '#ffb700'
     : user?.plan === 'pro'   ? '#5aabff'
     : '#8b6bff';
 
-  const confirmLogout = () => {
-    setMenuOpen(false);
-    setShowLogoutConfirm(true);
-  };
+  // Low credits warning
+  const isLow = credits && creditPct !== null && creditPct < 20;
+
+  const confirmLogout = () => { setMenuOpen(false); setShowLogoutConfirm(true); };
 
   const logout = async () => {
     setShowLogoutConfirm(false);
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       await api.post('/auth/logout', { refreshToken });
-    } catch {
-      // Server down ho toh bhi local logout karo
-    } finally {
+    } catch {}
+    finally {
       localStorage.clear();
       navigate('/login');
     }
@@ -66,58 +67,75 @@ export default function Navbar() {
 
         <div style={s.right}>
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-              <div style={{ position: 'relative' }}>
-                <div style={s.profileRow} onClick={() => setMenuOpen(!menuOpen)}>
-                  <div style={s.avatarCircle}>
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div style={s.profileInfo}>
-                    <span style={s.profileName}>{user.name}</span>
-                    {isPro && <span style={s.proBadge}>⭐ {user.plan === 'elite' ? 'Elite' : 'Pro'}</span>}
-                  </div>
+            <div style={{ position: 'relative' }}>
+              <div style={s.profileRow} onClick={toggleMenu}>
+                <div style={{ ...s.avatarCircle, boxShadow: isLow ? '0 0 0 2px #ff4f87' : '0 0 0 2px rgba(139,107,255,0.4)' }}>
+                  {user.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
+                <div style={s.profileInfo}>
+                  <span style={s.profileName}>{user.name}</span>
+                  {credits !== null && (
+                    <span style={{ fontSize: '.68rem', color: isLow ? '#ff4f87' : creditColor, fontWeight: 700 }}>
+                      {isLow ? '⚠ ' : ''}{credits.remaining} credits
+                    </span>
+                  )}
+                </div>
+              </div>
 
-                {menuOpen && (
-                  <div style={s.dropdown}>
-                    <div style={s.dropHeader}>
-                      <div style={s.dropAvatar}>{user.name?.charAt(0).toUpperCase()}</div>
-                      <div>
-                        <div style={s.dropName}>{user.name}</div>
-                        <div style={s.dropEmail}>{user.email}</div>
-                      </div>
+              {menuOpen && (
+                <div style={s.dropdown}>
+                  {/* Header */}
+                  <div style={s.dropHeader}>
+                    <div style={s.dropAvatar}>{user.name?.charAt(0).toUpperCase()}</div>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={s.dropName}>{user.name}</div>
+                      <div style={s.dropEmail}>{user.email}</div>
                     </div>
+                  </div>
 
-                    <div style={s.divider} />
+                  <div style={s.divider} />
 
-                    {/* Credits summary in dropdown */}
-                    {credits !== null && (
-                      <>
-                        <div style={s.dropCredits}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.3rem' }}>
-                            <span style={s.dropCreditsLabel}>Credits</span>
-                            <span style={{ ...s.dropCreditsVal, color: creditColor }}>
-                              {credits.remaining.toLocaleString()} / {credits.limit.toLocaleString()}
-                            </span>
-                          </div>
-                          <div style={s.dropCreditBar}>
-                            <div style={{ ...s.dropCreditFill, width: `${creditPct}%`, background: creditColor }} />
+                  {/* Credits Card */}
+                  {credits !== null ? (
+                    <div style={{ ...s.creditsCard, borderColor: isLow ? 'rgba(255,79,135,.25)' : 'rgba(139,107,255,.2)' }}>
+                      <div style={s.creditsTop}>
+                        <div>
+                          <div style={s.creditsTitle}>Credits</div>
+                          <div style={{ ...s.creditsBig, color: isLow ? '#ff4f87' : creditColor }}>
+                            {credits.remaining.toLocaleString()}
+                            <span style={s.creditsOf}> / {credits.limit.toLocaleString()}</span>
                           </div>
                         </div>
-                        <div style={s.divider} />
-                      </>
-                    )}
+                        <div style={{ ...s.planBadge, background: user?.plan === 'elite' ? 'rgba(255,183,0,.12)' : user?.plan === 'pro' ? 'rgba(90,171,255,.12)' : 'rgba(139,107,255,.12)', color: user?.plan === 'elite' ? '#ffb700' : user?.plan === 'pro' ? '#5aabff' : '#8b6bff', borderColor: user?.plan === 'elite' ? 'rgba(255,183,0,.25)' : user?.plan === 'pro' ? 'rgba(90,171,255,.25)' : 'rgba(139,107,255,.25)' }}>
+                          {user?.plan === 'elite' ? '⭐ Elite' : user?.plan === 'pro' ? '💎 Pro' : '◇ Free'}
+                        </div>
+                      </div>
+                      <div style={s.barBg}>
+                        <div style={{ ...s.barFill, width: `${Math.min(creditPct, 100)}%`, background: isLow ? '#ff4f87' : creditColor }} />
+                      </div>
+                      {isLow && <div style={s.lowWarn}>⚠ Credits khatam hone wale hain!</div>}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '.5rem .4rem', fontSize: '.75rem', color: '#55557a' }}>Credits load ho rahe hain...</div>
+                  )}
 
-                    <Link to="/upgrade" style={s.dropItem} onClick={() => setMenuOpen(false)}>
-                      ⚡ Upgrade
-                    </Link>
+                  <div style={s.divider} />
 
-                    <div style={s.divider} />
+                  {/* Upgrade */}
+                  <Link to="/upgrade" style={s.upgradeBtn} onClick={() => setMenuOpen(false)}>
+                    <span>⚡</span>
+                    <span>Upgrade Plan</span>
+                    <span style={{ marginLeft: 'auto', opacity: .5, fontSize: '.8rem' }}>→</span>
+                  </Link>
 
-                    <button style={s.dropLogout} onClick={confirmLogout}>🚪 Logout</button>
-                  </div>
-                )}
-              </div>
+                  <div style={s.divider} />
+
+                  {/* Logout */}
+                  <button style={s.dropLogout} onClick={confirmLogout}>
+                    🚪 Logout
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div style={s.authBtns}>
@@ -130,7 +148,7 @@ export default function Navbar() {
 
       {menuOpen && <div style={s.backdrop} onClick={() => setMenuOpen(false)} />}
 
-      {/* ── Logout Confirm Modal ─────────────────────────────────────── */}
+      {/* Logout Confirm Modal */}
       {showLogoutConfirm && (
         <div style={s.modalOverlay}>
           <div style={s.modal}>
@@ -153,26 +171,31 @@ const s = {
   logo: { display: 'flex', alignItems: 'center', gap: '.5rem', fontWeight: 800, fontSize: '1.2rem', color: '#fff', textDecoration: 'none' },
   logoIcon: { width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   right: { display: 'flex', alignItems: 'center' },
-  // Profile
   profileRow: { display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer', padding: '.3rem .4rem', borderRadius: '10px' },
-  avatarCircle: { width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '.9rem', flexShrink: 0 },
-  profileInfo: { display: 'flex', flexDirection: 'column', lineHeight: 1.2 },
+  avatarCircle: { width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '.9rem', flexShrink: 0, transition: 'box-shadow .2s' },
+  profileInfo: { display: 'flex', flexDirection: 'column', lineHeight: 1.3 },
   profileName: { fontSize: '.82rem', fontWeight: 700, color: '#f0f0f8' },
-  proBadge: { fontSize: '.7rem', color: '#ffb700', fontWeight: 700 },
-  dropdown: { position: 'absolute', top: '46px', right: 0, width: '220px', background: '#0f0f1a', border: '1px solid rgba(255,255,255,.07)', borderRadius: '12px', padding: '.75rem', zIndex: 200, boxShadow: '0 12px 40px rgba(0,0,0,.5)' },
-  dropHeader: { display: 'flex', alignItems: 'center', gap: '.6rem', padding: '.15rem 0 .3rem' },
-  dropAvatar: { width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, flexShrink: 0 },
-  dropName: { fontSize: '.83rem', fontWeight: 700, color: '#f0f0f8' },
-  dropEmail: { fontSize: '.7rem', color: '#8888aa' },
+  // Dropdown
+  dropdown: { position: 'absolute', top: '50px', right: 0, width: '240px', background: '#0f0f1a', border: '1px solid rgba(255,255,255,.08)', borderRadius: '14px', padding: '.75rem', zIndex: 200, boxShadow: '0 16px 48px rgba(0,0,0,.6)' },
+  dropHeader: { display: 'flex', alignItems: 'center', gap: '.65rem', padding: '.1rem 0 .35rem' },
+  dropAvatar: { width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, flexShrink: 0 },
+  dropName: { fontSize: '.84rem', fontWeight: 700, color: '#f0f0f8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  dropEmail: { fontSize: '.7rem', color: '#666688', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   divider: { height: '1px', background: 'rgba(255,255,255,.06)', margin: '.45rem 0' },
-  dropItem: { display: 'block', padding: '.5rem .4rem', color: '#c8c8e0', fontSize: '.83rem', fontWeight: 500, textDecoration: 'none', borderRadius: '6px' },
-  dropLogout: { width: '100%', padding: '.5rem', background: 'rgba(255,79,135,.08)', border: '1px solid rgba(255,79,135,.15)', color: '#ff4f87', borderRadius: '6px', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 },
-  // Dropdown credits
-  dropCredits: { padding: '.1rem .1rem .3rem' },
-  dropCreditsLabel: { fontSize: '.75rem', color: '#8888aa', fontWeight: 500 },
-  dropCreditsVal: { fontSize: '.75rem', fontWeight: 700 },
-  dropCreditBar: { height: '5px', background: 'rgba(255,255,255,.08)', borderRadius: '3px', overflow: 'hidden' },
-  dropCreditFill: { height: '100%', borderRadius: '3px', transition: 'width .3s' },
+  // Credits card
+  creditsCard: { background: 'rgba(255,255,255,.03)', border: '1px solid', borderRadius: '10px', padding: '.6rem .7rem', margin: '.1rem 0' },
+  creditsTop: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '.5rem' },
+  creditsTitle: { fontSize: '.7rem', color: '#666688', fontWeight: 500, marginBottom: '.1rem', textTransform: 'uppercase', letterSpacing: '.04em' },
+  creditsBig: { fontSize: '1.3rem', fontWeight: 800, lineHeight: 1 },
+  creditsOf: { fontSize: '.75rem', fontWeight: 500, color: '#555577' },
+  planBadge: { fontSize: '.65rem', fontWeight: 700, padding: '.2rem .5rem', borderRadius: '20px', border: '1px solid', whiteSpace: 'nowrap' },
+  barBg: { height: '4px', background: 'rgba(255,255,255,.07)', borderRadius: '2px', overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: '2px', transition: 'width .4s ease' },
+  lowWarn: { fontSize: '.68rem', color: '#ff4f87', marginTop: '.35rem', fontWeight: 600 },
+  // Upgrade button
+  upgradeBtn: { display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.55rem .5rem', background: 'linear-gradient(135deg,rgba(108,71,255,.15),rgba(139,107,255,.08))', border: '1px solid rgba(139,107,255,.2)', borderRadius: '8px', color: '#a08bff', fontSize: '.83rem', fontWeight: 600, textDecoration: 'none', transition: 'background .2s' },
+  dropLogout: { width: '100%', padding: '.5rem', background: 'rgba(255,79,135,.08)', border: '1px solid rgba(255,79,135,.15)', color: '#ff4f87', borderRadius: '8px', cursor: 'pointer', fontSize: '.83rem', fontWeight: 600 },
+  // Auth
   authBtns: { display: 'flex', gap: '.6rem' },
   loginBtn: { padding: '.45rem 1rem', background: 'transparent', border: '1px solid rgba(255,255,255,.12)', borderRadius: '8px', color: '#fff', textDecoration: 'none' },
   registerBtn: { padding: '.45rem 1rem', background: 'linear-gradient(135deg,#6c47ff,#8b6bff)', borderRadius: '8px', color: '#fff', textDecoration: 'none' },
