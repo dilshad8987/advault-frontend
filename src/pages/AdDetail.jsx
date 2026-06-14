@@ -703,6 +703,18 @@ export default function AdDetail() {
   const [saved,        setSaved]        = useState(false);
   const [activeTab,    setActiveTab]    = useState('overview');
   const [copied,       setCopied]       = useState(false);
+  const [userCredits,  setUserCredits]  = useState(null);
+
+  useEffect(() => {
+    api.get('/user/profile').then(res => {
+      const u = res.data?.usage;
+      if (u) setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
+    }).catch(() => {});
+  }, []);
+
+  const noCredits = userCredits !== null && userCredits.remaining <= 0;
+  const saveCost  = userCredits?.costs?.save_ad ?? 10;
+  const canSave   = !noCredits && (userCredits === null || userCredits.remaining >= saveCost);
 
   const passedAd = location.state?.ad || null;
 
