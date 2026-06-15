@@ -162,14 +162,22 @@ export default function Profile() {
         @keyframes ripple { 0% { transform:scale(0); opacity:.55; } 100% { transform:scale(4); opacity:0; } }
         @keyframes cardPop { 0% { transform:scale(1); } 35% { transform:scale(.975); } 65% { transform:scale(1.022); } 100% { transform:scale(1); } }
 
-        /* Mobile heading — always visible, gradient bold */
+        /* Mobile heading — always visible */
         .pf-plan-heading-all {
           display:block !important;
-          font-size:1.55rem !important;
+          font-size:1.45rem !important;
           font-weight:900 !important;
           letter-spacing:-.04em;
-          margin-bottom:.5rem !important;
+          margin-bottom:.4rem !important;
           line-height:1.2 !important;
+        }
+        /* Mobile subheading */
+        .pf-plan-subheading-mobile {
+          display:block;
+          font-size:.8rem;
+          color:#6868aa;
+          line-height:1.5;
+          margin-bottom:1.1rem;
         }
 
         /* CTA height fix — both upgrade buttons same padding */
@@ -192,6 +200,7 @@ export default function Profile() {
         @media(min-width:900px) {
           .pf-plancard.pf-card:hover { transform:translateY(-5px) !important; }
           .pf-plancard.pf-plan-featured.pf-card:hover { transform:scale(1.025) translateY(-5px) !important; }
+          .pf-plancard.pf-plan-elite.pf-card:hover { transform:scale(1.02) translateY(-5px) !important; }
         }
 
         /* ── Mobile (default) ── */
@@ -252,7 +261,8 @@ export default function Profile() {
 
           /* Headings */
           .pf-plan-eyebrow-desktop { font-size:.78rem !important; letter-spacing:.28em !important; margin-bottom:.75rem !important; color:#7c5cff !important; text-transform:uppercase; font-weight:700 !important; }
-          .pf-plan-heading-desktop { display:block !important; font-size:2.2rem !important; font-weight:900 !important; color:#f4f4fc !important; letter-spacing:-.04em; margin-bottom:.6rem !important; line-height:1.15 !important; }
+          .pf-plan-heading-all { font-size:2.2rem !important; margin-bottom:.6rem !important; line-height:1.15 !important; }
+          .pf-plan-subheading-mobile { display:none !important; }
           .pf-plan-subheading-desktop { display:block !important; font-size:.97rem !important; color:#8888aa !important; margin-bottom:2.8rem !important; line-height:1.6 !important; }
 
           /* Card internals — SAME font for all plan names */
@@ -357,7 +367,7 @@ export default function Profile() {
             {tab === 'plans' && (
               <div style={{ animation:'rise .22s ease' }}>
                 <div className="pf-plan-eyebrow-desktop" style={c.eyebrow}>Plans &amp; Pricing</div>
-                <h2 className="pf-plan-heading-desktop pf-plan-heading-all" style={{ position:'relative', display:'block' }}>
+                <h2 className="pf-plan-heading-all" style={{ position:'relative', display:'block' }}>
                   <span style={{
                     background: 'linear-gradient(135deg, #f4f4fc 30%, #a78bfa 70%, #7c5cff 100%)',
                     WebkitBackgroundClip: 'text',
@@ -369,6 +379,9 @@ export default function Profile() {
                     Spy Smarter. Scale Faster.
                   </span>
                 </h2>
+                <p className="pf-plan-subheading-mobile">
+                  Find winning ads before your competitors even know they exist.
+                </p>
                 <p className="pf-plan-subheading-desktop" style={{ color:'#8888aa', lineHeight:'1.6' }}>
                   Find winning ads before your competitors even know they exist.
                 </p>
@@ -383,7 +396,7 @@ export default function Profile() {
                     return (
                       <div
                         key={plan.id}
-                        className={`pf-card pf-plancard${plan.id === 'pro' ? ' pf-plan-featured' : ''}`}
+                        className={`pf-card pf-plancard${plan.id === 'pro' ? ' pf-plan-featured' : ''}${plan.id === 'elite' ? ' pf-plan-elite' : ''}`}
                         onClick={() => {
                           if (plan.id !== 'free') {
                             setPoppedCard(plan.id);
