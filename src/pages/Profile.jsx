@@ -19,7 +19,7 @@ const PLANS = [
     badge: 'Most Popular', badgeBg: 'linear-gradient(135deg,#5535e0,#7c5cff)',
     accentGrad: 'linear-gradient(135deg,#5535e0,#7c5cff)',
     features: ['Unlimited credits','TikTok + Facebook + Instagram','Unlimited collections','Advanced filters','Priority support'],
-    cta: 'Upgrade to Pro', ctaBg: 'linear-gradient(135deg,#5535e0,#7c5cff)', ctaShadow: '0 6px 24px rgba(108,71,255,.4)',
+    cta: 'Get Started', ctaBg: 'linear-gradient(135deg,#5535e0,#7c5cff)', ctaShadow: '0 6px 24px rgba(108,71,255,.4)',
   },
   {
     id: 'elite', name: 'Elite', price: '$79', period: '/ month',
@@ -27,7 +27,7 @@ const PLANS = [
     badge: 'Best Value', badgeBg: 'linear-gradient(135deg,#c47d0a,#f5a623)',
     accentGrad: 'linear-gradient(135deg,#c47d0a,#f5a623)',
     features: ['Everything in Pro','Team access — 5 seats','API access','Custom exports','Dedicated manager','White-label reports'],
-    cta: 'Get Elite', ctaBg: 'linear-gradient(135deg,#c47d0a,#f5a623)', ctaShadow: '0 6px 24px rgba(245,166,35,.35)',
+    cta: 'Get Started', ctaBg: 'linear-gradient(135deg,#c47d0a,#f5a623)', ctaShadow: '0 6px 24px rgba(245,166,35,.35)',
   },
 ];
 
@@ -168,12 +168,20 @@ export default function Profile() {
         /* ── Desktop 900px+ ── */
         @media(min-width:900px) {
           .pf-outer   { max-width:1120px; padding:80px 2rem 5rem; }
-          .pf-layout  { display:grid; grid-template-columns:240px 1fr; gap:2rem; align-items:start; }
-          .pf-sidebar { display:flex; flex-direction:column; gap:.5rem; position:sticky; top:88px; }
+          .pf-layout  { display:grid; grid-template-columns:68px 1fr; gap:2rem; align-items:start; }
+          .pf-sidebar { display:flex; flex-direction:column; gap:.4rem; position:sticky; top:88px; align-items:center; }
           .pf-tabs    { display:none; }
+          /* Sidebar icon-only items */
+          .pf-sidenav-item { position:relative; }
+          .pf-sidenav-item .pf-tooltip {
+            display:none; position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%);
+            background:#1a1a2e; border:1px solid rgba(255,255,255,.1); color:#c0c0e0;
+            font-size:.75rem; font-weight:600; white-space:nowrap;
+            padding:.3rem .65rem; border-radius:7px; pointer-events:none;
+            box-shadow:0 4px 16px rgba(0,0,0,.4);
+          }
+          .pf-sidenav-item:hover .pf-tooltip { display:block; }
           .pf-back    { margin-bottom:1.5rem; }
-          .pf-idcard  { padding:1.25rem 1.4rem; border-radius:18px; }
-          .pf-idavatar-desktop { width:52px !important; height:52px !important; font-size:1.3rem !important; }
           .pf-feats   { grid-template-columns:1fr !important; gap:.6rem !important; }
           .pf-plancard { padding:2rem 1.75rem 1.75rem; border-radius:22px; gap:1.2rem; }
           .pf-plan-grid {
@@ -232,51 +240,23 @@ export default function Profile() {
           {/* ── SIDEBAR (desktop only) ── */}
           <aside className="pf-sidebar">
 
-            {/* Identity card */}
-            <div className="pf-idcard" style={c.idCard}>
-              <div className="pf-idavatar-desktop" style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3.5px ${pm.color}66` }}>
-                {(user.name || 'U').charAt(0).toUpperCase()}
-              </div>
-              <div style={c.idBody}>
-                <div style={c.idName}>{user.name || 'User'}</div>
-                <div style={c.idEmail}>{user.email}</div>
-              </div>
-              <div style={{ ...c.idBadge, color:pm.color, borderColor:pm.color+'40', background:pm.color+'12' }}>
-                ✦ {pm.label}
-              </div>
-            </div>
-
-            {/* Credits mini card */}
-            <div style={c.sideCredits}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.55rem' }}>
-                <span style={c.sideCreditsLabel}>Credits</span>
-                <span style={{ fontSize:'.82rem', fontWeight:800, color:fClr, fontVariantNumeric:'tabular-nums' }}>
-                  {fRemaining}<span style={{ color:'#3a3a52', fontWeight:500 }}>/{fLimit}</span>
-                </span>
-              </div>
-              <div style={c.sideBar}>
-                <div style={{ height:'100%', width:`${fPct}%`, background:`linear-gradient(90deg,${fClr}70,${fClr})`, borderRadius:'3px', transition:'width .6s ease' }} />
-              </div>
-              <div style={{ fontSize:'.65rem', color:'#3a3a52', marginTop:'.38rem' }}>{fUsed} used this month</div>
-            </div>
-
-            {/* Nav items — icons + labels on desktop */}
-            <nav style={{ display:'flex', flexDirection:'column', gap:'.25rem', marginTop:'.25rem' }}>
+            {/* Icon-only nav — desktop */}
+            <nav style={{ display:'flex', flexDirection:'column', gap:'.3rem', width:'100%', alignItems:'center' }}>
               {NAV_ITEMS.map(({ id, label, Icon }) => {
                 const on = tab === id;
                 return (
                   <button key={id} className="pf-sidenav-item" onClick={() => setTab(id)} style={{
-                    display:'flex', alignItems:'center', gap:'.65rem',
-                    padding:'.65rem .8rem', borderRadius:'11px', border:'none',
-                    background: on ? `${pm.color}14` : 'transparent',
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    width:'44px', height:'44px', borderRadius:'12px', border:'none',
+                    background: on ? `${pm.color}18` : 'transparent',
                     color: on ? pm.color : '#4a4a66',
-                    fontWeight: on ? 700 : 500,
-                    fontSize:'.85rem', cursor:'pointer', fontFamily:'inherit',
-                    textAlign:'left', transition:'background .15s, color .15s',
-                    boxShadow: on ? `inset 2.5px 0 0 ${pm.color}` : 'none',
+                    cursor:'pointer', fontFamily:'inherit',
+                    transition:'background .15s, color .15s',
+                    boxShadow: on ? `0 0 0 1.5px ${pm.color}40` : 'none',
+                    flexShrink: 0,
                   }}>
-                    <Icon size={15} color={on ? pm.color : '#4a4a66'} />
-                    {label}
+                    <Icon size={18} color={on ? pm.color : '#4a4a66'} />
+                    <span className="pf-tooltip">{label}</span>
                   </button>
                 );
               })}
@@ -448,14 +428,14 @@ export default function Profile() {
 
                         {/* CTA */}
                         {active ? (
-                          <div className="pf-activecta-desktop" style={{ ...c.activeCta, color:plan.color, borderColor:plan.color+'28', background:plan.color+'0d' }}>
+                          <div className="pf-activecta-desktop" style={{ ...c.activeCta, color:plan.color, borderColor:plan.color+'28', background:plan.color+'0d', marginTop:'auto' }}>
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                               <path d="M2.5 6l2.5 2.5 4.5-5" stroke={plan.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                             Current plan
                           </div>
                         ) : (
-                          <button className="pf-cta pf-cta-desktop" style={{ ...c.cta, background:plan.ctaBg, boxShadow:plan.ctaShadow }}>
+                          <button className="pf-cta pf-cta-desktop" style={{ ...c.cta, background:plan.ctaBg, boxShadow:plan.ctaShadow, marginTop:'auto' }}>
                             {plan.cta}
                           </button>
                         )}
