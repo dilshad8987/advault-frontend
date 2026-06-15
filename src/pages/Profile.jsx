@@ -98,6 +98,8 @@ export default function Profile() {
   const [name,     setName] = useState(user.name || '');
   const [saving, setSaving] = useState(false);
   const [nameFocus,  setNF] = useState(false);
+  const [poppedCard, setPoppedCard] = useState(null);
+  const [ripples, setRipples] = useState({});
 
   const [usage, setUsage] = useState(() => {
     try {
@@ -157,6 +159,30 @@ export default function Profile() {
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         @keyframes shimmer { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+        @keyframes ripple { 0% { transform:scale(0); opacity:.55; } 100% { transform:scale(4); opacity:0; } }
+        @keyframes cardPop { 0% { transform:scale(1); } 35% { transform:scale(.975); } 65% { transform:scale(1.022); } 100% { transform:scale(1); } }
+
+        /* Mobile heading — always visible, gradient bold */
+        .pf-plan-heading-all {
+          display:block !important;
+          font-size:1.55rem !important;
+          font-weight:900 !important;
+          letter-spacing:-.04em;
+          margin-bottom:.5rem !important;
+          line-height:1.2 !important;
+        }
+
+        /* CTA height fix — both upgrade buttons same padding */
+        .pf-cta { height:48px !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+
+        /* Ripple */
+        .pf-ripple-circle {
+          position:absolute; border-radius:50%;
+          width:100px; height:100px;
+          margin-top:-50px; margin-left:-50px;
+          pointer-events:none;
+          animation:ripple .6s ease-out forwards;
+        }
 
         .pf-back:hover  { background:rgba(255,255,255,.07) !important; border-color:rgba(255,255,255,.15) !important; color:#a0a0c0 !important; }
         .pf-cta:hover   { filter:brightness(1.12); transform:translateY(-1px); box-shadow:0 10px 32px rgba(0,0,0,.4) !important; }
@@ -178,7 +204,7 @@ export default function Profile() {
         /* Tabs — always visible, mobile & desktop */
         .pf-tabs     { display:flex; gap:.5rem; margin-bottom:1.5rem; }
         .pf-tab      { flex:1; text-align:center; }
-        .pf-plan-heading-desktop, .pf-plan-subheading-desktop { display:none; margin:0; padding:0; font-family:inherit; }
+        .pf-plan-eyebrow-desktop, .pf-plan-subheading-desktop { display:none; margin:0; padding:0; font-family:inherit; }
         .pf-cta-spacer-desktop { display:none; }
 
         .pf-plancard { padding:1.2rem; }
@@ -331,12 +357,14 @@ export default function Profile() {
             {tab === 'plans' && (
               <div style={{ animation:'rise .22s ease' }}>
                 <div className="pf-plan-eyebrow-desktop" style={c.eyebrow}>Plans &amp; Pricing</div>
-                <h2 className="pf-plan-heading-desktop" style={{ position:'relative', display:'inline-block' }}>
+                <h2 className="pf-plan-heading-desktop pf-plan-heading-all" style={{ position:'relative', display:'block' }}>
                   <span style={{
                     background: 'linear-gradient(135deg, #f4f4fc 30%, #a78bfa 70%, #7c5cff 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
+                    fontWeight: 900,
+                    display: 'block',
                   }}>
                     Spy Smarter. Scale Faster.
                   </span>
@@ -356,6 +384,12 @@ export default function Profile() {
                       <div
                         key={plan.id}
                         className={`pf-card pf-plancard${plan.id === 'pro' ? ' pf-plan-featured' : ''}`}
+                        onClick={() => {
+                          if (plan.id !== 'free') {
+                            setPoppedCard(plan.id);
+                            setTimeout(() => setPoppedCard(null), 500);
+                          }
+                        }}
                         style={{
                           ...c.planCard,
                           borderColor: active
@@ -369,7 +403,8 @@ export default function Profile() {
                             : plan.id === 'pro'
                               ? 'linear-gradient(160deg,rgba(124,92,255,.06) 0%,#0d0d1e 60%)'
                               : '#0d0d1e',
-                          transition: 'transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease',
+                          animation: poppedCard === plan.id ? 'cardPop .45s cubic-bezier(.34,1.56,.64,1) forwards' : undefined,
+                          transition: poppedCard === plan.id ? 'none' : 'transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease',
                         }}
                       >
                         {/* Active top glow line */}
@@ -476,8 +511,20 @@ export default function Profile() {
                             Current plan
                           </div>
                         ) : (
-                          <button className="pf-cta pf-cta-desktop" style={{ ...c.cta, background:plan.ctaBg, boxShadow:plan.ctaShadow, marginTop:'auto' }}>
+                          <button className="pf-cta pf-cta-desktop" style={{ ...c.cta, background:plan.ctaBg, boxShadow:plan.ctaShadow, marginTop:'auto', position:'relative', overflow:'hidden' }}
+                            onClick={e => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const x = e.clientX - rect.left;
+                              const y = e.clientY - rect.top;
+                              const id = Date.now();
+                              setRipples(r => ({ ...r, [plan.id]: { x, y, id } }));
+                              setTimeout(() => setRipples(r => { const n = {...r}; delete n[plan.id]; return n; }), 650);
+                            }}
+                          >
                             {plan.cta}
+                            {ripples[plan.id] && (
+                              <span key={ripples[plan.id].id} className="pf-ripple-circle" style={{ left: ripples[plan.id].x, top: ripples[plan.id].y, background: 'rgba(255,255,255,0.25)' }} />
+                            )}
                           </button>
                         )}
                       </div>
