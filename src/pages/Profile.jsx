@@ -159,7 +159,6 @@ export default function Profile() {
         @keyframes shimmer { 0%,100% { opacity:.6; } 50% { opacity:1; } }
 
         .pf-back:hover  { background:rgba(255,255,255,.07) !important; border-color:rgba(255,255,255,.15) !important; color:#a0a0c0 !important; }
-        .pf-sidenav-item:hover { background:rgba(255,255,255,.05) !important; color:#c0c0e0 !important; }
         .pf-cta:hover   { filter:brightness(1.12); transform:translateY(-1px); box-shadow:0 10px 32px rgba(0,0,0,.4) !important; }
         .pf-save:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); }
 
@@ -176,15 +175,14 @@ export default function Profile() {
         .pf-main     { width:100%; }
         .pf-idcard   { padding:.9rem 1.1rem; }
 
-        /* Mobile tabs: icon + label */
+        /* Tabs — always visible, mobile & desktop */
         .pf-tabs     { display:flex; gap:.5rem; margin-bottom:1.5rem; }
         .pf-tab      { flex:1; text-align:center; }
-        .pf-sidenav-label { display:none; }
+        .pf-plan-heading-desktop, .pf-plan-subheading-desktop { display:none; margin:0; padding:0; font-family:inherit; }
         .pf-cta-spacer-desktop { display:none; }
 
         .pf-plancard { padding:1.2rem; }
         .pf-feats    { grid-template-columns:1fr 1fr; }
-        .pf-plan-heading-desktop, .pf-plan-subheading-desktop { display:none; margin:0; padding:0; font-family:inherit; }
 
         /* ── Tablet 640px+ ── */
         @media(min-width:640px) {
@@ -195,23 +193,17 @@ export default function Profile() {
         /* ── Desktop 900px+ ── */
         @media(min-width:900px) {
           .pf-outer   { max-width:1180px; padding:84px 2rem 5rem; }
-          .pf-layout  { display:grid; grid-template-columns:172px 1fr; gap:2.25rem; align-items:start; }
-          .pf-sidebar { display:flex; flex-direction:column; gap:.5rem; position:sticky; top:88px; align-items:stretch;
-            background:#0d0d1e; border:1px solid rgba(255,255,255,.07); border-radius:18px; padding:.6rem; }
-          .pf-tabs    { display:none; }
-          .pf-sidenav-desktop { gap:.25rem !important; }
-          /* Sidebar items become labeled pills on desktop */
-          .pf-sidenav-item {
-            position:relative; width:100% !important; height:auto !important;
-            justify-content:flex-start !important; gap:.7rem; padding:.7rem .8rem !important;
-            border-radius:11px !important; font-size:.85rem; font-weight:700;
-          }
-          .pf-sidenav-item .pf-tooltip { display:none !important; }
-          .pf-sidenav-label { display:inline-block; }
+          /* No sidebar — layout is single column */
+          .pf-layout  { display:block; }
+          .pf-sidebar { display:none !important; }
+
+          /* Tabs same as mobile but wider */
+          .pf-tabs { max-width:320px; margin-bottom:2rem; }
+
           .pf-back    { margin-bottom:1.5rem; }
           .pf-feats   { grid-template-columns:1fr !important; gap:.65rem !important; }
 
-          /* Plan cards */
+          /* Plan cards grid */
           .pf-plancard {
             padding:2.9rem 1.85rem 2rem; border-radius:24px; gap:1.3rem;
             backdrop-filter:blur(6px);
@@ -237,19 +229,22 @@ export default function Profile() {
           .pf-plan-heading-desktop { display:block !important; font-size:2rem !important; font-weight:800 !important; color:#f4f4fc !important; letter-spacing:-.03em; margin-bottom:.4rem !important; }
           .pf-plan-subheading-desktop { display:block !important; font-size:.92rem !important; color:#56567a !important; margin-bottom:2.5rem !important; }
 
-          /* Card internals */
-          .pf-plan-name-desktop  { font-size:1.3rem !important; font-weight:800 !important; }
-          .pf-plan-price-desktop { font-size:2.6rem !important; }
+          /* Card internals — SAME font for all plan names */
+          .pf-plan-name-desktop  { font-size:1.3rem !important; font-weight:800 !important; letter-spacing:-.02em !important; }
+          .pf-plan-price-desktop { font-size:2.6rem !important; font-weight:900 !important; letter-spacing:-.04em !important; }
           .pf-feat-item-desktop  { font-size:.86rem !important; gap:.5rem !important; }
           .pf-cta-desktop        { padding:1rem !important; font-size:.96rem !important; border-radius:14px !important; letter-spacing:.01em !important; }
           .pf-activecta-desktop  { padding:.92rem !important; font-size:.92rem !important; border-radius:14px !important; }
+          .pf-period-desktop     { font-size:.78rem !important; }
 
-          /* Align price/name row across all cards regardless of badge presence */
+          /* Price row — same min-height across all cards */
           .pf-planheader-desktop {
             min-height:3.4rem !important;
             align-items:center !important;
           }
-          .pf-period-desktop { font-size:.78rem !important; }
+
+          /* Spacer for non-free cards to align CTA with free card's usage box */
+          .pf-cta-spacer-desktop { display:block !important; height:2.9rem !important; }
 
           /* Ribbon badge */
           .pf-ribbon-desktop {
@@ -259,11 +254,9 @@ export default function Profile() {
             padding:.4rem 1rem !important; border-radius:999px !important; border:none !important;
             box-shadow:0 6px 18px rgba(0,0,0,.45); text-transform:uppercase;
           }
-
           .pf-badge-mobile { display:none !important; }
           .pf-billing-note-desktop { font-size:.8rem !important; margin-top:2.25rem !important; letter-spacing:.02em !important; }
           .pf-plan-icon-desktop { display:flex !important; width:46px !important; height:46px !important; border-radius:14px !important; }
-          .pf-cta-spacer-desktop { display:block !important; height:2.9rem !important; }
         }
 
         /* ── Large desktop 1200px+ ── */
@@ -291,38 +284,14 @@ export default function Profile() {
 
         <div className="pf-layout">
 
-          {/* ── SIDEBAR (desktop only) ── */}
-          <aside className="pf-sidebar">
-
-            {/* Icon + label nav — desktop */}
-            <nav className="pf-sidenav-desktop" style={{ display:'flex', flexDirection:'column', gap:'.4rem', width:'100%' }}>
-              {NAV_ITEMS.map(({ id, label, Icon }) => {
-                const on = tab === id;
-                return (
-                  <button key={id} className="pf-sidenav-item" onClick={() => setTab(id)} style={{
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    width:'44px', height:'44px', borderRadius:'12px', border:'none',
-                    background: on ? `${pm.color}18` : 'transparent',
-                    color: on ? pm.color : '#4a4a66',
-                    cursor:'pointer', fontFamily:'inherit',
-                    transition:'background .15s, color .15s',
-                    boxShadow: on ? `0 0 0 1.5px ${pm.color}40` : 'none',
-                    flexShrink: 0,
-                  }}>
-                    <Icon size={18} color={on ? pm.color : '#4a4a66'} />
-                    <span className="pf-tooltip">{label}</span>
-                    <span className="pf-sidenav-label">{label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
+          {/* Sidebar desktop only — hidden via CSS, kept for structure */}
+          <aside className="pf-sidebar" style={{ display:'none' }} />
 
           {/* ── MAIN CONTENT ── */}
           <div className="pf-main">
 
-            {/* Identity card — mobile only */}
-            <div className="pf-idcard pf-mobile-id" style={{ ...c.idCard, marginBottom:'1rem' }}>
+            {/* Identity card — mobile + desktop */}
+            <div className="pf-idcard" style={{ ...c.idCard, marginBottom:'1rem' }}>
               <div style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3.5px ${pm.color}66` }}>
                 {(user.name || 'U').charAt(0).toUpperCase()}
               </div>
@@ -557,12 +526,6 @@ export default function Profile() {
         </div>{/* /pf-layout */}
       </div>{/* /pf-outer */}
 
-      {/* Hide mobile id card on desktop */}
-      <style>{`
-        @media(min-width:900px) {
-          .pf-mobile-id { display:none !important; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -596,7 +559,7 @@ const c = {
   planStack: { display:'flex', flexDirection:'column', gap:'.65rem' },
   planCard:  { padding:'1.2rem', border:'1px solid', borderRadius:'20px', display:'flex', flexDirection:'column', gap:'.85rem', position:'relative', overflow:'hidden' },
   planHeader:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' },
-  planName:  { fontSize:'.98rem', fontWeight:800, letterSpacing:'-.02em', transition:'color .2s' },
+  planName:  { fontSize:'.98rem', fontWeight:800, letterSpacing:'-.02em', fontFamily:'inherit', transition:'color .2s' },
 
   feats:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.4rem .65rem' },
   featItem: { display:'flex', alignItems:'center', gap:'.38rem', fontSize:'.74rem', color:'#6a6a8a', lineHeight:1.35 },
