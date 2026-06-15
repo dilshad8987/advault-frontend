@@ -167,8 +167,8 @@ export default function Profile() {
 
         /* ── Desktop 900px+ ── */
         @media(min-width:900px) {
-          .pf-outer   { max-width:1120px; padding:80px 2rem 5rem; }
-          .pf-layout  { display:grid; grid-template-columns:68px 1fr; gap:2rem; align-items:start; }
+          .pf-outer   { max-width:1180px; padding:84px 2rem 5rem; }
+          .pf-layout  { display:grid; grid-template-columns:68px 1fr; gap:2.25rem; align-items:start; }
           .pf-sidebar { display:flex; flex-direction:column; gap:.4rem; position:sticky; top:88px; align-items:center; }
           .pf-tabs    { display:none; }
           /* Sidebar icon-only items */
@@ -182,34 +182,54 @@ export default function Profile() {
           }
           .pf-sidenav-item:hover .pf-tooltip { display:block; }
           .pf-back    { margin-bottom:1.5rem; }
-          .pf-feats   { grid-template-columns:1fr !important; gap:.6rem !important; }
-          .pf-plancard { padding:2rem 1.75rem 1.75rem; border-radius:22px; gap:1.2rem; }
+          .pf-feats   { grid-template-columns:1fr !important; gap:.65rem !important; }
+
+          /* Plan cards */
+          .pf-plancard {
+            padding:2.25rem 1.85rem 2rem; border-radius:24px; gap:1.3rem;
+            backdrop-filter:blur(6px);
+            transition:transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .28s ease, border-color .28s ease;
+          }
           .pf-plan-grid {
             display:grid !important;
-            grid-template-columns:1fr 1.06fr 1fr !important;
-            gap:1.5rem !important;
+            grid-template-columns:1fr 1.08fr 1fr !important;
+            gap:1.75rem !important;
             align-items:stretch !important;
           }
-          .pf-plancard.pf-plan-featured { transform:scale(1.03); z-index:1; }
-          .pf-plan-eyebrow-desktop { font-size:.75rem !important; letter-spacing:.2em !important; margin-bottom:.4rem !important; }
-          .pf-plan-heading-desktop { display:block !important; font-size:1.75rem !important; font-weight:800 !important; color:#ededf8 !important; letter-spacing:-.025em; margin-bottom:.35rem !important; }
-          .pf-plan-subheading-desktop { display:block !important; font-size:.88rem !important; color:#4a4a68 !important; margin-bottom:2rem !important; }
-          .pf-plan-name-desktop  { font-size:1.2rem !important; }
-          .pf-plan-price-desktop { font-size:2.4rem !important; }
-          .pf-feat-item-desktop  { font-size:.84rem !important; }
-          .pf-cta-desktop        { padding:.95rem !important; font-size:.95rem !important; border-radius:14px !important; }
-          .pf-activecta-desktop  { padding:.88rem !important; font-size:.9rem !important; border-radius:14px !important; }
+          .pf-plancard.pf-plan-featured { transform:scale(1.04); z-index:1; }
+          .pf-plancard.pf-card:hover {
+            box-shadow:0 18px 46px rgba(0,0,0,.45) !important;
+            border-color:rgba(255,255,255,.16) !important;
+          }
+          .pf-plancard.pf-plan-featured.pf-card:hover {
+            box-shadow:0 22px 56px rgba(108,71,255,.28) !important;
+          }
+
+          /* Headings */
+          .pf-plan-eyebrow-desktop { font-size:.78rem !important; letter-spacing:.24em !important; margin-bottom:.5rem !important; color:#7c5cff !important; }
+          .pf-plan-heading-desktop { display:block !important; font-size:2rem !important; font-weight:800 !important; color:#f4f4fc !important; letter-spacing:-.03em; margin-bottom:.4rem !important; }
+          .pf-plan-subheading-desktop { display:block !important; font-size:.92rem !important; color:#56567a !important; margin-bottom:2.5rem !important; }
+
+          /* Card internals */
+          .pf-plan-name-desktop  { font-size:1.3rem !important; }
+          .pf-plan-price-desktop { font-size:2.6rem !important; }
+          .pf-feat-item-desktop  { font-size:.86rem !important; gap:.5rem !important; }
+          .pf-cta-desktop        { padding:1rem !important; font-size:.96rem !important; border-radius:14px !important; letter-spacing:.01em !important; }
+          .pf-activecta-desktop  { padding:.92rem !important; font-size:.92rem !important; border-radius:14px !important; }
+
+          /* Ribbon badge */
           .pf-ribbon-desktop {
             display:inline-flex !important;
-            position:absolute; top:1.25rem; right:1.6rem;
-            font-size:.62rem !important; font-weight:800 !important; letter-spacing:.1em !important;
-            padding:.34rem .9rem !important; border-radius:999px !important; border:none !important;
-            box-shadow:0 4px 14px rgba(0,0,0,.4); text-transform:uppercase;
+            position:absolute; top:1.4rem; right:1.75rem;
+            font-size:.64rem !important; font-weight:800 !important; letter-spacing:.12em !important;
+            padding:.4rem 1rem !important; border-radius:999px !important; border:none !important;
+            box-shadow:0 6px 18px rgba(0,0,0,.45); text-transform:uppercase;
           }
+
           .pf-badge-mobile { display:none !important; }
-          .pf-planheader-badged { padding-top:2.2rem !important; }
-          .pf-billing-note-desktop { font-size:.78rem !important; margin-top:1.75rem !important; }
-          .pf-plan-icon-desktop { display:flex !important; }
+          .pf-planheader-badged { padding-top:2.4rem !important; }
+          .pf-billing-note-desktop { font-size:.8rem !important; margin-top:2.25rem !important; letter-spacing:.02em !important; }
+          .pf-plan-icon-desktop { display:flex !important; width:46px !important; height:46px !important; border-radius:14px !important; }
         }
 
         /* ── Large desktop 1200px+ ── */
@@ -306,7 +326,7 @@ export default function Profile() {
             {/* ── PLANS ── */}
             {tab === 'plans' && (
               <div style={{ animation:'rise .22s ease' }}>
-                <div className="pf-plan-eyebrow-desktop" style={c.eyebrow}>Choose a plan</div>
+                <div className="pf-plan-eyebrow-desktop" style={c.eyebrow}>Plans &amp; Pricing</div>
                 <h2 className="pf-plan-heading-desktop">Pick the plan that fits your workflow</h2>
                 <p className="pf-plan-subheading-desktop">Upgrade anytime, downgrade anytime — no long-term lock-in.</p>
 
