@@ -9,7 +9,7 @@ const CREDITS_CACHE_KEY = 'advault_credits_cache';
 const PLANS = [
   {
     id: 'free', name: 'Free', price: '$0', period: 'forever',
-    color: '#6e6e8a', border: 'rgba(255,255,255,.08)', glow: 'none',
+    color: '#6e6e8a', border: 'rgba(255,255,255,.08)', glow: '0 0 40px rgba(110,110,138,.18)',
     accentGrad: 'linear-gradient(135deg,#3a3a5c,#6e6e8a)',
     features: ['200 credits / month','TikTok Ads — limited','3 saved collections','Basic search filters','Standard support','Web access'],
   },
@@ -23,7 +23,7 @@ const PLANS = [
   },
   {
     id: 'elite', name: 'Elite', price: '$79', period: '/ month',
-    color: '#f5a623', border: 'rgba(245,166,35,.4)', glow: '0 0 40px rgba(245,166,35,.15)',
+    color: '#f5a623', border: 'rgba(245,166,35,.4)', glow: '0 0 40px rgba(245,166,35,.18)',
     badge: 'Best Value', badgeBg: 'linear-gradient(135deg,#c47d0a,#f5a623)',
     accentGrad: 'linear-gradient(135deg,#c47d0a,#f5a623)',
     features: ['Everything in Pro','Team access — 5 seats','API access','Custom exports','Dedicated manager','White-label reports'],
@@ -160,10 +160,10 @@ export default function Profile() {
 
         .pf-back:hover  { background:rgba(255,255,255,.07) !important; border-color:rgba(255,255,255,.15) !important; color:#a0a0c0 !important; }
         .pf-cta:hover   { filter:brightness(1.12); transform:translateY(-1px); box-shadow:0 10px 32px rgba(0,0,0,.4) !important; }
+        .pf-cta:active  { transform:scale(.97) translateY(0); filter:brightness(1.05); }
         .pf-save:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); }
 
-        /* plan card hover/tap */
-        .pf-plancard.pf-card:active { transform:scale(1.015) translateY(-3px); }
+        /* plan card hover — desktop only */
         @media(min-width:900px) {
           .pf-plancard.pf-card:hover { transform:translateY(-5px) !important; }
           .pf-plancard.pf-plan-featured.pf-card:hover { transform:scale(1.025) translateY(-5px) !important; }
@@ -373,9 +373,7 @@ export default function Profile() {
                         style={{
                           ...c.planCard,
                           borderColor: active ? plan.border : `${plan.color}38`,
-                          boxShadow: active
-                            ? plan.glow
-                            : (plan.glow && plan.glow !== 'none' ? plan.glow : `0 0 32px ${plan.color}14`),
+                          boxShadow: plan.glow,
                           background: active
                             ? `linear-gradient(160deg,${plan.color}10 0%,#0d0d1e 55%)`
                             : `linear-gradient(160deg,${plan.color}10 0%,#0d0d1e 60%)`,
