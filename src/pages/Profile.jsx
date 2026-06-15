@@ -106,6 +106,11 @@ export default function Profile() {
         .pf-save:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); }
         .pf-sidenav-item:hover { background:rgba(255,255,255,.05) !important; color:#c0c0e0 !important; }
 
+        @media(min-width:900px) {
+          .pf-plancard.pf-card:hover { transform:translateY(-4px) !important; box-shadow:0 12px 40px rgba(0,0,0,.45) !important; }
+          .pf-plancard.pf-plan-featured.pf-card:hover { transform:scale(1.02) translateY(-4px) !important; }
+        }
+
         /* ── Mobile (default) ── */
         .pf-outer    { padding:68px 1rem 5rem; max-width:520px; margin:0 auto; }
         .pf-layout   { display:block; }
@@ -117,6 +122,7 @@ export default function Profile() {
         .pf-plancard { padding:1.15rem; }
         .pf-feats    { grid-template-columns:1fr 1fr; }
         .pf-back     { display:inline-flex; }
+        .pf-plan-heading-desktop, .pf-plan-subheading-desktop { display:none; margin:0; padding:0; font-family:inherit; }
 
         /* ── Tablet 640px+ ── */
         @media(min-width:640px) {
@@ -131,10 +137,30 @@ export default function Profile() {
           .pf-sidebar { display:flex; flex-direction:column; gap:.5rem; position:sticky; top:88px; }
           .pf-tabs    { display:none; }
           .pf-back    { margin-bottom:1.5rem; }
-          .pf-idcard  { padding:1.1rem 1.25rem; }
-          .pf-feats   { grid-template-columns:1fr 1fr 1fr; }
-          .pf-plancard { padding:1.4rem; }
-          .pf-plan-grid { display:grid !important; grid-template-columns:1fr 1fr 1fr !important; gap:1rem !important; }
+          .pf-idcard  { padding:1.25rem 1.4rem; border-radius:18px; }
+          .pf-idavatar-desktop { width:52px !important; height:52px !important; font-size:1.3rem !important; }
+          .pf-feats   { grid-template-columns:1fr 1fr; gap:.5rem .85rem !important; }
+          .pf-plancard { padding:1.75rem 1.6rem 1.6rem; border-radius:20px; gap:1.1rem; }
+          .pf-plan-grid { display:grid !important; grid-template-columns:1fr 1.06fr 1fr !important; gap:1.25rem !important; align-items:stretch !important; }
+          .pf-plancard.pf-plan-featured { transform:scale(1.02); z-index:1; }
+          .pf-plan-eyebrow-desktop { font-size:.78rem !important; letter-spacing:.18em !important; margin-bottom:.35rem !important; }
+          .pf-plan-heading-desktop { display:block !important; font-size:1.6rem !important; font-weight:800 !important; color:#ededf8 !important; letter-spacing:-.02em; margin-bottom:.3rem !important; }
+          .pf-plan-subheading-desktop { display:block !important; font-size:.85rem !important; color:#5a5a78 !important; margin-bottom:1.8rem !important; }
+          .pf-plan-name-desktop { font-size:1.15rem !important; }
+          .pf-plan-price-desktop { font-size:2rem !important; }
+          .pf-feat-item-desktop { font-size:.82rem !important; }
+          .pf-cta-desktop { padding:.85rem !important; font-size:.92rem !important; border-radius:12px !important; }
+          .pf-activecta-desktop { padding:.8rem !important; font-size:.88rem !important; border-radius:12px !important; }
+          .pf-ribbon-desktop {
+            display:inline-flex !important;
+            position:absolute; top:1.1rem; right:1.6rem;
+            font-size:.62rem !important; font-weight:800 !important; letter-spacing:.08em !important;
+            padding:.32rem .85rem !important; border-radius:999px !important; border:none !important;
+            box-shadow:0 4px 14px rgba(0,0,0,.35); text-transform:uppercase;
+          }
+          .pf-badge-mobile { display:none !important; }
+          .pf-planheader-badged { padding-top:2rem !important; }
+          .pf-billing-note-desktop { font-size:.78rem !important; margin-top:1.5rem !important; }
         }
 
         /* ── Large desktop 1200px+ ── */
@@ -166,7 +192,7 @@ export default function Profile() {
 
             {/* Identity card */}
             <div className="pf-idcard" style={c.idCard}>
-              <div style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3px ${pm.color}55` }}>
+              <div className="pf-idavatar-desktop" style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3px ${pm.color}55` }}>
                 {(user.name || 'U').charAt(0).toUpperCase()}
               </div>
               <div style={c.idBody}>
@@ -261,7 +287,9 @@ export default function Profile() {
             {/* ── PLANS ── */}
             {tab === 'plans' && (
               <div style={{ animation:'rise .2s ease' }}>
-                <div style={c.eyebrow}>Choose a plan</div>
+                <div className="pf-plan-eyebrow-desktop" style={c.eyebrow}>Choose a plan</div>
+                <h2 className="pf-plan-heading-desktop">Pick the plan that fits your workflow</h2>
+                <p className="pf-plan-subheading-desktop">Upgrade anytime, downgrade anytime — no long-term lock-in.</p>
 
                 <div className="pf-plan-grid" style={c.planStack}>
                   {PLANS.map(plan => {
@@ -272,9 +300,9 @@ export default function Profile() {
                     const pClr       = plan.id === 'free' ? fClr : null;
 
                     return (
-                      <div key={plan.id} className="pf-card pf-plancard" style={{
+                      <div key={plan.id} className={`pf-card pf-plancard${plan.id === 'pro' ? ' pf-plan-featured' : ''}`} style={{
                         ...c.planCard,
-                        borderColor: active ? plan.border : 'rgba(255,255,255,.06)',
+                        borderColor: active ? plan.border : (plan.id === 'pro' ? 'rgba(124,92,255,.28)' : 'rgba(255,255,255,.06)'),
                         boxShadow:   active ? plan.glow   : 'none',
                         background:  active
                           ? `linear-gradient(155deg,${plan.color}0d 0%,#0d0d1e 60%)`
@@ -283,18 +311,25 @@ export default function Profile() {
                         {active && <div style={{ position:'absolute', top:0, left:'10%', right:'10%', height:'1px', background:`linear-gradient(90deg,transparent,${plan.color}70,transparent)` }} />}
                         {active && <div style={{ position:'absolute', left:0, top:'20%', bottom:'20%', width:'2.5px', background:`linear-gradient(180deg,transparent,${plan.color}bb,transparent)`, borderRadius:'0 3px 3px 0' }} />}
 
+                        {/* Desktop ribbon badge */}
+                        {plan.badge && (
+                          <span className="pf-ribbon-desktop" style={{ display:'none', color:'#fff', background: plan.ctaBg || `linear-gradient(135deg,${plan.color},${plan.color})` }}>
+                            {plan.badge}
+                          </span>
+                        )}
+
                         {/* Header */}
-                        <div style={c.planHeader}>
+                        <div className={plan.badge ? 'pf-planheader-badged' : ''} style={c.planHeader}>
                           <div style={{ display:'flex', alignItems:'center', gap:'.45rem', flexWrap:'wrap' }}>
-                            <span style={{ ...c.planName, color: active ? plan.color : '#c8c8e0' }}>{plan.name}</span>
+                            <span className="pf-plan-name-desktop" style={{ ...c.planName, color: active ? plan.color : '#c8c8e0' }}>{plan.name}</span>
                             {plan.badge && (
-                              <span style={{ fontSize:'.57rem', fontWeight:700, padding:'.15rem .48rem', borderRadius:'99px', border:`1px solid ${plan.color}45`, color:plan.color, background:plan.color+'12', textTransform:'uppercase', letterSpacing:'.04em' }}>
+                              <span className="pf-badge-mobile" style={{ fontSize:'.57rem', fontWeight:700, padding:'.15rem .48rem', borderRadius:'99px', border:`1px solid ${plan.color}45`, color:plan.color, background:plan.color+'12', textTransform:'uppercase', letterSpacing:'.04em' }}>
                                 {plan.badge}
                               </span>
                             )}
                           </div>
                           <div style={{ display:'flex', alignItems:'baseline', gap:'.18rem', flexShrink:0 }}>
-                            <span style={{ fontSize:'1.5rem', fontWeight:900, letterSpacing:'-.04em', color: active ? plan.color : '#e0e0f0' }}>{plan.price}</span>
+                            <span className="pf-plan-price-desktop" style={{ fontSize:'1.5rem', fontWeight:900, letterSpacing:'-.04em', color: active ? plan.color : '#e0e0f0' }}>{plan.price}</span>
                             <span style={{ fontSize:'.67rem', color:'#3e3e5a' }}>{plan.period}</span>
                           </div>
                         </div>
@@ -304,7 +339,7 @@ export default function Profile() {
                         {/* Features */}
                         <div className="pf-feats" style={c.feats}>
                           {plan.features.map(f => (
-                            <div key={f} style={c.featItem}>
+                            <div key={f} className="pf-feat-item-desktop" style={c.featItem}>
                               <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink:0 }}>
                                 <circle cx="6.5" cy="6.5" r="6" fill={plan.color+'18'} stroke={plan.color+'35'} strokeWidth=".5"/>
                                 <path d="M4 6.5l2 2L9 4.5" stroke={plan.color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -337,12 +372,12 @@ export default function Profile() {
 
                         {/* CTA */}
                         {active ? (
-                          <div style={{ ...c.activeCta, color:plan.color, borderColor:plan.color+'28', background:plan.color+'0d' }}>
+                          <div className="pf-activecta-desktop" style={{ ...c.activeCta, color:plan.color, borderColor:plan.color+'28', background:plan.color+'0d' }}>
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke={plan.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                             Current plan
                           </div>
                         ) : (
-                          <button className="pf-cta" style={{ ...c.cta, background:plan.ctaBg, boxShadow:plan.ctaShadow }}>
+                          <button className="pf-cta pf-cta-desktop" style={{ ...c.cta, background:plan.ctaBg, boxShadow:plan.ctaShadow }}>
                             {plan.cta}
                           </button>
                         )}
@@ -351,7 +386,7 @@ export default function Profile() {
                   })}
                 </div>
 
-                <p style={c.billingNote}>Billed monthly · Secure checkout via Stripe</p>
+                <p className="pf-billing-note-desktop" style={c.billingNote}>Billed monthly · Secure checkout via Stripe</p>
               </div>
             )}
 
