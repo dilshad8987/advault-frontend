@@ -17,7 +17,7 @@
     <style>
       *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
       html, body { margin: 0; padding: 0; background: #08080f; color: #f0f0f8; font-family: system-ui, -apple-system, sans-serif; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
-      img { -webkit-user-drag: none; user-select: none; display: block; }
+      img { -webkit-user-drag: none; user-select: none; display: block; pointer-events: none; }
       @keyframes spin { to { transform: rotate(360deg); } }
       @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
       @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:.8} }
@@ -26,12 +26,34 @@
       ::-webkit-scrollbar-thumb { background: rgba(108,71,255,.3); border-radius: 3px; }
       body { touch-action: manipulation; }
       * { touch-action: manipulation; }
+
+      /* ── Disable text selection everywhere ── */
+      * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+      }
+      /* Allow selection only in input/textarea fields */
+      input, textarea {
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        user-select: text !important;
+      }
+
+      /* ── Screenshot / screen capture visual overlay ── */
+      @media print {
+        body { display: none !important; }
+      }
     </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script>
+      // ── Zoom disable ──
       window.addEventListener('wheel', function(e) {
         if (e.ctrlKey) { e.preventDefault(); }
       }, { passive: false });
@@ -41,7 +63,46 @@
           e.key === '_' || e.key === '0' ||
           e.keyCode === 187 || e.keyCode === 189 || e.keyCode === 48
         )) { e.preventDefault(); }
+
+        // ── Block Ctrl+C, Ctrl+X, Ctrl+A, Ctrl+U (view source), Ctrl+S ──
+        if (e.ctrlKey && ['c','x','a','u','s','p'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+          return false;
+        }
+
+        // ── Block PrintScreen ──
+        if (e.key === 'PrintScreen' || e.keyCode === 44) {
+          e.preventDefault();
+          // Momentarily blackout the screen
+          document.body.style.opacity = '0';
+          setTimeout(() => { document.body.style.opacity = '1'; }, 300);
+          return false;
+        }
+
+        // ── Block F12 (DevTools) ──
+        if (e.key === 'F12' || e.keyCode === 123) {
+          e.preventDefault();
+          return false;
+        }
       });
+
+      // ── Block right-click context menu ──
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+      });
+
+      // ── Block copy/cut events ──
+      document.addEventListener('copy',  function(e) { e.preventDefault(); return false; });
+      document.addEventListener('cut',   function(e) { e.preventDefault(); return false; });
+
+      // ── Block drag ──
+      document.addEventListener('dragstart', function(e) { e.preventDefault(); return false; });
+
+      // ── Block long-press callout on mobile ──
+      document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) e.preventDefault();
+      }, { passive: false });
     </script>
   </body>
 </html>
