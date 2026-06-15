@@ -225,9 +225,9 @@ export default function Profile() {
           }
 
           /* Headings */
-          .pf-plan-eyebrow-desktop { font-size:.78rem !important; letter-spacing:.24em !important; margin-bottom:.5rem !important; color:#7c5cff !important; }
-          .pf-plan-heading-desktop { display:block !important; font-size:2rem !important; font-weight:800 !important; color:#f4f4fc !important; letter-spacing:-.03em; margin-bottom:.4rem !important; }
-          .pf-plan-subheading-desktop { display:block !important; font-size:.92rem !important; color:#56567a !important; margin-bottom:2.5rem !important; }
+          .pf-plan-eyebrow-desktop { font-size:.78rem !important; letter-spacing:.28em !important; margin-bottom:.75rem !important; color:#7c5cff !important; text-transform:uppercase; font-weight:700 !important; }
+          .pf-plan-heading-desktop { display:block !important; font-size:2.2rem !important; font-weight:900 !important; color:#f4f4fc !important; letter-spacing:-.04em; margin-bottom:.6rem !important; line-height:1.15 !important; }
+          .pf-plan-subheading-desktop { display:block !important; font-size:.97rem !important; color:#8888aa !important; margin-bottom:2.8rem !important; line-height:1.6 !important; }
 
           /* Card internals — SAME font for all plan names */
           .pf-plan-name-desktop  { font-size:1.3rem !important; font-weight:800 !important; letter-spacing:-.02em !important; }
@@ -331,8 +331,19 @@ export default function Profile() {
             {tab === 'plans' && (
               <div style={{ animation:'rise .22s ease' }}>
                 <div className="pf-plan-eyebrow-desktop" style={c.eyebrow}>Plans &amp; Pricing</div>
-                <h2 className="pf-plan-heading-desktop">Pick the plan that fits your workflow</h2>
-                <p className="pf-plan-subheading-desktop">Upgrade anytime, downgrade anytime — no long-term lock-in.</p>
+                <h2 className="pf-plan-heading-desktop" style={{ position:'relative', display:'inline-block' }}>
+                  <span style={{
+                    background: 'linear-gradient(135deg, #f4f4fc 30%, #a78bfa 70%, #7c5cff 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}>
+                    Spy Smarter. Scale Faster.
+                  </span>
+                </h2>
+                <p className="pf-plan-subheading-desktop" style={{ color:'#8888aa', lineHeight:'1.6' }}>
+                  Find winning ads before your competitors even know they exist.
+                </p>
 
                 <div className="pf-plan-grid" style={c.planStack}>
                   {PLANS.map(plan => {
