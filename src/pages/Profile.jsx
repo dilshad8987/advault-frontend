@@ -139,7 +139,7 @@ export default function Profile() {
           .pf-back    { margin-bottom:1.5rem; }
           .pf-idcard  { padding:1.25rem 1.4rem; border-radius:18px; }
           .pf-idavatar-desktop { width:52px !important; height:52px !important; font-size:1.3rem !important; }
-          .pf-feats   { grid-template-columns:1fr 1fr; gap:.5rem .85rem !important; }
+          .pf-feats   { grid-template-columns:1fr !important; gap:.55rem !important; }
           .pf-plancard { padding:1.75rem 1.6rem 1.6rem; border-radius:20px; gap:1.1rem; }
           .pf-plan-grid { display:grid !important; grid-template-columns:1fr 1.06fr 1fr !important; gap:1.25rem !important; align-items:stretch !important; }
           .pf-plancard.pf-plan-featured { transform:scale(1.02); z-index:1; }
