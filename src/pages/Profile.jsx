@@ -19,7 +19,7 @@ const PLANS = [
     badge: 'Most Popular', badgeBg: 'linear-gradient(135deg,#5535e0,#7c5cff)',
     accentGrad: 'linear-gradient(135deg,#5535e0,#7c5cff)',
     features: ['Unlimited credits','TikTok + Facebook + Instagram','Unlimited collections','Advanced filters','Priority support'],
-    cta: 'Get Started', ctaBg: 'linear-gradient(135deg,#5535e0,#7c5cff)', ctaShadow: '0 6px 24px rgba(108,71,255,.4)',
+    cta: 'Upgrade', ctaBg: 'linear-gradient(135deg,#5535e0,#7c5cff)', ctaShadow: '0 6px 24px rgba(108,71,255,.4)',
   },
   {
     id: 'elite', name: 'Elite', price: '$79', period: '/ month',
@@ -27,7 +27,7 @@ const PLANS = [
     badge: 'Best Value', badgeBg: 'linear-gradient(135deg,#c47d0a,#f5a623)',
     accentGrad: 'linear-gradient(135deg,#c47d0a,#f5a623)',
     features: ['Everything in Pro','Team access — 5 seats','API access','Custom exports','Dedicated manager','White-label reports'],
-    cta: 'Get Started', ctaBg: 'linear-gradient(135deg,#c47d0a,#f5a623)', ctaShadow: '0 6px 24px rgba(245,166,35,.35)',
+    cta: 'Upgrade', ctaBg: 'linear-gradient(135deg,#c47d0a,#f5a623)', ctaShadow: '0 6px 24px rgba(245,166,35,.35)',
   },
 ];
 
@@ -180,6 +180,7 @@ export default function Profile() {
         .pf-tabs     { display:flex; gap:.5rem; margin-bottom:1.5rem; }
         .pf-tab      { flex:1; text-align:center; }
         .pf-sidenav-label { display:none; }
+        .pf-cta-spacer-desktop { display:none; }
 
         .pf-plancard { padding:1.2rem; }
         .pf-feats    { grid-template-columns:1fr 1fr; }
@@ -262,6 +263,7 @@ export default function Profile() {
           .pf-badge-mobile { display:none !important; }
           .pf-billing-note-desktop { font-size:.8rem !important; margin-top:2.25rem !important; letter-spacing:.02em !important; }
           .pf-plan-icon-desktop { display:flex !important; width:46px !important; height:46px !important; border-radius:14px !important; }
+          .pf-cta-spacer-desktop { display:block !important; height:2.9rem !important; }
         }
 
         /* ── Large desktop 1200px+ ── */
@@ -478,6 +480,12 @@ export default function Profile() {
                             )}
                           </div>
                         )}
+
+                        {/* Desktop-only spacer to align CTA row with Free card's usage box */}
+                        {plan.id !== 'free' && (
+                          <div className="pf-cta-spacer-desktop" aria-hidden="true" />
+                        )}
+
 
                         {/* CTA */}
                         {active ? (
