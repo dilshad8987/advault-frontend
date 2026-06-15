@@ -63,6 +63,31 @@ const IconStar = ({ color }) => (
   </svg>
 );
 
+/* Plan-specific icons — desktop plan cards */
+const IconFreePlan = ({ color }) => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <rect x="2.5" y="2.5" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4"/>
+    <rect x="9.5" y="2.5" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" opacity=".45"/>
+    <rect x="2.5" y="9.5" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" opacity=".45"/>
+    <rect x="9.5" y="9.5" width="6" height="6" rx="1.5" stroke={color} strokeWidth="1.4" opacity=".25"/>
+  </svg>
+);
+const IconProPlan = ({ color }) => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M10.2 1.5L3.8 9.8h3.6L7 16.5l6.4-8.3H9.8L10.2 1.5z" fill={color} opacity=".9" stroke={color} strokeWidth=".4" strokeLinejoin="round"/>
+  </svg>
+);
+const IconElitePlan = ({ color }) => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M2 6.2l2.6 1.8L9 3l4.4 5 2.6-1.8-1.1 7.3H3.1L2 6.2z" fill={color} opacity=".9" stroke={color} strokeWidth=".5" strokeLinejoin="round"/>
+    <circle cx="9" cy="3" r="1.1" fill={color}/>
+    <circle cx="2.4" cy="6.2" r="1" fill={color} opacity=".8"/>
+    <circle cx="15.6" cy="6.2" r="1" fill={color} opacity=".8"/>
+    <path d="M3.6 13.8h10.8" stroke={color} strokeWidth="1.3" strokeLinecap="round" opacity=".7"/>
+  </svg>
+);
+const PLAN_ICONS = { free: IconFreePlan, pro: IconProPlan, elite: IconElitePlan };
+
 export default function Profile() {
   const navigate    = useNavigate();
   const user        = JSON.parse(localStorage.getItem('user') || '{}');
@@ -154,6 +179,7 @@ export default function Profile() {
         /* Mobile tabs: icon + label */
         .pf-tabs     { display:flex; gap:.5rem; margin-bottom:1.5rem; }
         .pf-tab      { flex:1; text-align:center; }
+        .pf-sidenav-label { display:none; }
 
         .pf-plancard { padding:1.2rem; }
         .pf-feats    { grid-template-columns:1fr 1fr; }
@@ -168,25 +194,25 @@ export default function Profile() {
         /* ── Desktop 900px+ ── */
         @media(min-width:900px) {
           .pf-outer   { max-width:1180px; padding:84px 2rem 5rem; }
-          .pf-layout  { display:grid; grid-template-columns:68px 1fr; gap:2.25rem; align-items:start; }
-          .pf-sidebar { display:flex; flex-direction:column; gap:.4rem; position:sticky; top:88px; align-items:center; }
+          .pf-layout  { display:grid; grid-template-columns:172px 1fr; gap:2.25rem; align-items:start; }
+          .pf-sidebar { display:flex; flex-direction:column; gap:.5rem; position:sticky; top:88px; align-items:stretch;
+            background:#0d0d1e; border:1px solid rgba(255,255,255,.07); border-radius:18px; padding:.6rem; }
           .pf-tabs    { display:none; }
-          /* Sidebar icon-only items */
-          .pf-sidenav-item { position:relative; }
-          .pf-sidenav-item .pf-tooltip {
-            display:none; position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%);
-            background:#1a1a2e; border:1px solid rgba(255,255,255,.1); color:#c0c0e0;
-            font-size:.75rem; font-weight:600; white-space:nowrap;
-            padding:.3rem .65rem; border-radius:7px; pointer-events:none;
-            box-shadow:0 4px 16px rgba(0,0,0,.4);
+          .pf-sidenav-desktop { gap:.25rem !important; }
+          /* Sidebar items become labeled pills on desktop */
+          .pf-sidenav-item {
+            position:relative; width:100% !important; height:auto !important;
+            justify-content:flex-start !important; gap:.7rem; padding:.7rem .8rem !important;
+            border-radius:11px !important; font-size:.85rem; font-weight:700;
           }
-          .pf-sidenav-item:hover .pf-tooltip { display:block; }
+          .pf-sidenav-item .pf-tooltip { display:none !important; }
+          .pf-sidenav-label { display:inline-block; }
           .pf-back    { margin-bottom:1.5rem; }
           .pf-feats   { grid-template-columns:1fr !important; gap:.65rem !important; }
 
           /* Plan cards */
           .pf-plancard {
-            padding:2.25rem 1.85rem 2rem; border-radius:24px; gap:1.3rem;
+            padding:2.9rem 1.85rem 2rem; border-radius:24px; gap:1.3rem;
             backdrop-filter:blur(6px);
             transition:transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .28s ease, border-color .28s ease;
           }
@@ -196,7 +222,7 @@ export default function Profile() {
             gap:1.75rem !important;
             align-items:stretch !important;
           }
-          .pf-plancard.pf-plan-featured { transform:scale(1.04); z-index:1; }
+          .pf-plancard.pf-plan-featured { z-index:1; }
           .pf-plancard.pf-card:hover {
             box-shadow:0 18px 46px rgba(0,0,0,.45) !important;
             border-color:rgba(255,255,255,.16) !important;
@@ -211,23 +237,29 @@ export default function Profile() {
           .pf-plan-subheading-desktop { display:block !important; font-size:.92rem !important; color:#56567a !important; margin-bottom:2.5rem !important; }
 
           /* Card internals */
-          .pf-plan-name-desktop  { font-size:1.3rem !important; }
+          .pf-plan-name-desktop  { font-size:1.3rem !important; font-weight:800 !important; }
           .pf-plan-price-desktop { font-size:2.6rem !important; }
           .pf-feat-item-desktop  { font-size:.86rem !important; gap:.5rem !important; }
           .pf-cta-desktop        { padding:1rem !important; font-size:.96rem !important; border-radius:14px !important; letter-spacing:.01em !important; }
           .pf-activecta-desktop  { padding:.92rem !important; font-size:.92rem !important; border-radius:14px !important; }
 
+          /* Align price/name row across all cards regardless of badge presence */
+          .pf-planheader-desktop {
+            min-height:3.4rem !important;
+            align-items:center !important;
+          }
+          .pf-period-desktop { font-size:.78rem !important; }
+
           /* Ribbon badge */
           .pf-ribbon-desktop {
             display:inline-flex !important;
-            position:absolute; top:1.4rem; right:1.75rem;
+            position:absolute; top:1.15rem; right:1.75rem;
             font-size:.64rem !important; font-weight:800 !important; letter-spacing:.12em !important;
             padding:.4rem 1rem !important; border-radius:999px !important; border:none !important;
             box-shadow:0 6px 18px rgba(0,0,0,.45); text-transform:uppercase;
           }
 
           .pf-badge-mobile { display:none !important; }
-          .pf-planheader-badged { padding-top:2.4rem !important; }
           .pf-billing-note-desktop { font-size:.8rem !important; margin-top:2.25rem !important; letter-spacing:.02em !important; }
           .pf-plan-icon-desktop { display:flex !important; width:46px !important; height:46px !important; border-radius:14px !important; }
         }
@@ -260,8 +292,8 @@ export default function Profile() {
           {/* ── SIDEBAR (desktop only) ── */}
           <aside className="pf-sidebar">
 
-            {/* Icon-only nav — desktop */}
-            <nav style={{ display:'flex', flexDirection:'column', gap:'.3rem', width:'100%', alignItems:'center' }}>
+            {/* Icon + label nav — desktop */}
+            <nav className="pf-sidenav-desktop" style={{ display:'flex', flexDirection:'column', gap:'.4rem', width:'100%' }}>
               {NAV_ITEMS.map(({ id, label, Icon }) => {
                 const on = tab === id;
                 return (
@@ -277,6 +309,7 @@ export default function Profile() {
                   }}>
                     <Icon size={18} color={on ? pm.color : '#4a4a66'} />
                     <span className="pf-tooltip">{label}</span>
+                    <span className="pf-sidenav-label">{label}</span>
                   </button>
                 );
               })}
@@ -375,11 +408,11 @@ export default function Profile() {
 
                         {/* Plan icon — desktop only */}
                         <div className="pf-plan-icon-desktop" style={{ display:'none', width:'38px', height:'38px', borderRadius:'12px', background:`${plan.color}16`, border:`1px solid ${plan.color}28`, alignItems:'center', justifyContent:'center', marginBottom:'.1rem' }}>
-                          <IconStar color={plan.color} />
+                          {React.createElement(PLAN_ICONS[plan.id] || IconStar, { color: plan.color })}
                         </div>
 
                         {/* Header */}
-                        <div className={plan.badge ? 'pf-planheader-badged' : ''} style={c.planHeader}>
+                        <div className="pf-planheader-desktop" style={c.planHeader}>
                           <div style={{ display:'flex', alignItems:'center', gap:'.45rem', flexWrap:'wrap' }}>
                             <span
                               className="pf-plan-name-desktop"
@@ -405,7 +438,7 @@ export default function Profile() {
                             >
                               {plan.price}
                             </span>
-                            <span style={{ fontSize:'.67rem', color:'#3e3e5a' }}>{plan.period}</span>
+                            <span className="pf-period-desktop" style={{ fontSize:'.67rem', color:'#3e3e5a' }}>{plan.period}</span>
                           </div>
                         </div>
 
