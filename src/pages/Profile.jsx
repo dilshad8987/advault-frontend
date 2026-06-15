@@ -10,21 +10,24 @@ const PLANS = [
   {
     id: 'free', name: 'Free', price: '$0', period: 'forever',
     color: '#6e6e8a', border: 'rgba(255,255,255,.08)', glow: 'none',
+    accentGrad: 'linear-gradient(135deg,#3a3a5c,#6e6e8a)',
     features: ['200 credits / month','TikTok Ads — limited','3 saved collections','Basic search filters','Standard support','Web access'],
   },
   {
     id: 'pro', name: 'Pro', price: '$29', period: '/ month',
-    color: '#7c5cff', border: 'rgba(124,92,255,.4)', glow: '0 0 40px rgba(108,71,255,.12)',
-    badge: 'Most Popular',
+    color: '#7c5cff', border: 'rgba(124,92,255,.4)', glow: '0 0 40px rgba(108,71,255,.18)',
+    badge: 'Most Popular', badgeBg: 'linear-gradient(135deg,#5535e0,#7c5cff)',
+    accentGrad: 'linear-gradient(135deg,#5535e0,#7c5cff)',
     features: ['Unlimited credits','TikTok + Facebook + Instagram','Unlimited collections','Advanced filters','Priority support'],
-    cta: 'Upgrade to Pro', ctaBg: 'linear-gradient(135deg,#5535e0,#7c5cff)', ctaShadow: '0 6px 20px rgba(108,71,255,.35)',
+    cta: 'Upgrade to Pro', ctaBg: 'linear-gradient(135deg,#5535e0,#7c5cff)', ctaShadow: '0 6px 24px rgba(108,71,255,.4)',
   },
   {
     id: 'elite', name: 'Elite', price: '$79', period: '/ month',
-    color: '#f5a623', border: 'rgba(245,166,35,.35)', glow: '0 0 40px rgba(245,166,35,.1)',
-    badge: 'Best Value',
+    color: '#f5a623', border: 'rgba(245,166,35,.4)', glow: '0 0 40px rgba(245,166,35,.15)',
+    badge: 'Best Value', badgeBg: 'linear-gradient(135deg,#c47d0a,#f5a623)',
+    accentGrad: 'linear-gradient(135deg,#c47d0a,#f5a623)',
     features: ['Everything in Pro','Team access — 5 seats','API access','Custom exports','Dedicated manager','White-label reports'],
-    cta: 'Get Elite', ctaBg: 'linear-gradient(135deg,#c47d0a,#f5a623)', ctaShadow: '0 6px 20px rgba(245,166,35,.28)',
+    cta: 'Get Elite', ctaBg: 'linear-gradient(135deg,#c47d0a,#f5a623)', ctaShadow: '0 6px 24px rgba(245,166,35,.35)',
   },
 ];
 
@@ -33,6 +36,32 @@ const PLAN_META = {
   pro:   { label: 'Pro',   color: '#7c5cff' },
   elite: { label: 'Elite', color: '#f5a623' },
 };
+
+/* ── Icons ── */
+const IconPlans = ({ size = 14, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+    <rect x="1" y="2" width="12" height="10" rx="2" stroke={color} strokeWidth="1.3"/>
+    <path d="M1 5h12" stroke={color} strokeWidth="1.3"/>
+    <path d="M4 8.5h3M4 10.5h2" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+);
+const IconProfile = ({ size = 14, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+    <circle cx="7" cy="5" r="2.5" stroke={color} strokeWidth="1.3"/>
+    <path d="M2 12c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+  </svg>
+);
+const IconCheck = ({ color }) => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink:0 }}>
+    <circle cx="6.5" cy="6.5" r="6" fill={color+'18'} stroke={color+'35'} strokeWidth=".5"/>
+    <path d="M4 6.5l2 2L9 4.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const IconStar = ({ color }) => (
+  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+    <path d="M5.5 1l1.2 2.6H9.5L7.2 5.4l.9 2.8L5.5 6.7l-2.6 1.5.9-2.8L1.5 3.6h2.8L5.5 1z" fill={color} opacity=".85"/>
+  </svg>
+);
 
 export default function Profile() {
   const navigate    = useNavigate();
@@ -86,29 +115,33 @@ export default function Profile() {
     setSaving(false);
   };
 
-  /* ── Credits calc ── */
   const fLimit     = usage?.creditsLimit     || 200;
   const fRemaining = usage?.creditsRemaining ?? fLimit;
   const fUsed      = fLimit - fRemaining;
   const fPct       = Math.min(100, Math.round((fUsed / fLimit) * 100));
   const fClr       = fPct >= 80 ? '#ff4f87' : fPct >= 50 ? '#ffb700' : '#4caf7d';
 
+  const NAV_ITEMS = [
+    { id: 'plans',   label: 'Plans',   Icon: IconPlans },
+    { id: 'profile', label: 'Profile', Icon: IconProfile },
+  ];
+
   return (
     <div style={{ minHeight:'100vh', background:'#08080f' }}>
       <style>{`
         @keyframes spin { to { transform:rotate(360deg); } }
-        @keyframes rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes shimmer { 0%,100% { opacity:.6; } 50% { opacity:1; } }
 
-        .pf-back:hover  { background:rgba(255,255,255,.07) !important; border-color:rgba(255,255,255,.15) !important; }
-        .pf-tab:hover   { color:#c0c0e0 !important; }
-        .pf-card:hover  { transform:translateY(-2px) !important; box-shadow:0 8px 32px rgba(0,0,0,.4) !important; }
-        .pf-cta:hover   { filter:brightness(1.1); transform:translateY(-1px); }
-        .pf-save:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); }
+        .pf-back:hover  { background:rgba(255,255,255,.07) !important; border-color:rgba(255,255,255,.15) !important; color:#a0a0c0 !important; }
         .pf-sidenav-item:hover { background:rgba(255,255,255,.05) !important; color:#c0c0e0 !important; }
+        .pf-cta:hover   { filter:brightness(1.12); transform:translateY(-1px); box-shadow:0 10px 32px rgba(0,0,0,.4) !important; }
+        .pf-save:hover:not(:disabled) { filter:brightness(1.1); transform:translateY(-1px); }
 
+        /* plan card hover */
         @media(min-width:900px) {
-          .pf-plancard.pf-card:hover { transform:translateY(-4px) !important; box-shadow:0 12px 40px rgba(0,0,0,.45) !important; }
-          .pf-plancard.pf-plan-featured.pf-card:hover { transform:scale(1.02) translateY(-4px) !important; }
+          .pf-plancard.pf-card:hover { transform:translateY(-5px) !important; }
+          .pf-plancard.pf-plan-featured.pf-card:hover { transform:scale(1.025) translateY(-5px) !important; }
         }
 
         /* ── Mobile (default) ── */
@@ -117,11 +150,13 @@ export default function Profile() {
         .pf-sidebar  { display:none; }
         .pf-main     { width:100%; }
         .pf-idcard   { padding:.9rem 1.1rem; }
+
+        /* Mobile tabs: icon + label */
         .pf-tabs     { display:flex; gap:.5rem; margin-bottom:1.5rem; }
         .pf-tab      { flex:1; text-align:center; }
-        .pf-plancard { padding:1.15rem; }
+
+        .pf-plancard { padding:1.2rem; }
         .pf-feats    { grid-template-columns:1fr 1fr; }
-        .pf-back     { display:inline-flex; }
         .pf-plan-heading-desktop, .pf-plan-subheading-desktop { display:none; margin:0; padding:0; font-family:inherit; }
 
         /* ── Tablet 640px+ ── */
@@ -132,35 +167,41 @@ export default function Profile() {
 
         /* ── Desktop 900px+ ── */
         @media(min-width:900px) {
-          .pf-outer   { max-width:1080px; padding:80px 2rem 5rem; }
+          .pf-outer   { max-width:1120px; padding:80px 2rem 5rem; }
           .pf-layout  { display:grid; grid-template-columns:240px 1fr; gap:2rem; align-items:start; }
           .pf-sidebar { display:flex; flex-direction:column; gap:.5rem; position:sticky; top:88px; }
           .pf-tabs    { display:none; }
           .pf-back    { margin-bottom:1.5rem; }
           .pf-idcard  { padding:1.25rem 1.4rem; border-radius:18px; }
           .pf-idavatar-desktop { width:52px !important; height:52px !important; font-size:1.3rem !important; }
-          .pf-feats   { grid-template-columns:1fr !important; gap:.55rem !important; }
-          .pf-plancard { padding:1.75rem 1.6rem 1.6rem; border-radius:20px; gap:1.1rem; }
-          .pf-plan-grid { display:grid !important; grid-template-columns:1fr 1.06fr 1fr !important; gap:1.25rem !important; align-items:stretch !important; }
-          .pf-plancard.pf-plan-featured { transform:scale(1.02); z-index:1; }
-          .pf-plan-eyebrow-desktop { font-size:.78rem !important; letter-spacing:.18em !important; margin-bottom:.35rem !important; }
-          .pf-plan-heading-desktop { display:block !important; font-size:1.6rem !important; font-weight:800 !important; color:#ededf8 !important; letter-spacing:-.02em; margin-bottom:.3rem !important; }
-          .pf-plan-subheading-desktop { display:block !important; font-size:.85rem !important; color:#5a5a78 !important; margin-bottom:1.8rem !important; }
-          .pf-plan-name-desktop { font-size:1.15rem !important; }
-          .pf-plan-price-desktop { font-size:2rem !important; }
-          .pf-feat-item-desktop { font-size:.82rem !important; }
-          .pf-cta-desktop { padding:.85rem !important; font-size:.92rem !important; border-radius:12px !important; }
-          .pf-activecta-desktop { padding:.8rem !important; font-size:.88rem !important; border-radius:12px !important; }
+          .pf-feats   { grid-template-columns:1fr !important; gap:.6rem !important; }
+          .pf-plancard { padding:2rem 1.75rem 1.75rem; border-radius:22px; gap:1.2rem; }
+          .pf-plan-grid {
+            display:grid !important;
+            grid-template-columns:1fr 1.06fr 1fr !important;
+            gap:1.5rem !important;
+            align-items:stretch !important;
+          }
+          .pf-plancard.pf-plan-featured { transform:scale(1.03); z-index:1; }
+          .pf-plan-eyebrow-desktop { font-size:.75rem !important; letter-spacing:.2em !important; margin-bottom:.4rem !important; }
+          .pf-plan-heading-desktop { display:block !important; font-size:1.75rem !important; font-weight:800 !important; color:#ededf8 !important; letter-spacing:-.025em; margin-bottom:.35rem !important; }
+          .pf-plan-subheading-desktop { display:block !important; font-size:.88rem !important; color:#4a4a68 !important; margin-bottom:2rem !important; }
+          .pf-plan-name-desktop  { font-size:1.2rem !important; }
+          .pf-plan-price-desktop { font-size:2.4rem !important; }
+          .pf-feat-item-desktop  { font-size:.84rem !important; }
+          .pf-cta-desktop        { padding:.95rem !important; font-size:.95rem !important; border-radius:14px !important; }
+          .pf-activecta-desktop  { padding:.88rem !important; font-size:.9rem !important; border-radius:14px !important; }
           .pf-ribbon-desktop {
             display:inline-flex !important;
-            position:absolute; top:1.1rem; right:1.6rem;
-            font-size:.62rem !important; font-weight:800 !important; letter-spacing:.08em !important;
-            padding:.32rem .85rem !important; border-radius:999px !important; border:none !important;
-            box-shadow:0 4px 14px rgba(0,0,0,.35); text-transform:uppercase;
+            position:absolute; top:1.25rem; right:1.6rem;
+            font-size:.62rem !important; font-weight:800 !important; letter-spacing:.1em !important;
+            padding:.34rem .9rem !important; border-radius:999px !important; border:none !important;
+            box-shadow:0 4px 14px rgba(0,0,0,.4); text-transform:uppercase;
           }
           .pf-badge-mobile { display:none !important; }
-          .pf-planheader-badged { padding-top:2rem !important; }
-          .pf-billing-note-desktop { font-size:.78rem !important; margin-top:1.5rem !important; }
+          .pf-planheader-badged { padding-top:2.2rem !important; }
+          .pf-billing-note-desktop { font-size:.78rem !important; margin-top:1.75rem !important; }
+          .pf-plan-icon-desktop { display:flex !important; }
         }
 
         /* ── Large desktop 1200px+ ── */
@@ -170,7 +211,7 @@ export default function Profile() {
 
         /* ── Small mobile ── */
         @media(max-width:400px) {
-          .pf-feats  { grid-template-columns:1fr !important; }
+          .pf-feats   { grid-template-columns:1fr !important; }
           .pf-savebtn { width:100% !important; justify-content:center !important; }
         }
       `}</style>
@@ -180,11 +221,12 @@ export default function Profile() {
 
         {/* Back */}
         <button className="pf-back" onClick={() => navigate(-1)} style={c.back}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 11.5L4 7l4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M8.5 11.5L4 7l4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
           Back
         </button>
 
-        {/* Desktop: sidebar + main | Mobile: stacked */}
         <div className="pf-layout">
 
           {/* ── SIDEBAR (desktop only) ── */}
@@ -192,7 +234,7 @@ export default function Profile() {
 
             {/* Identity card */}
             <div className="pf-idcard" style={c.idCard}>
-              <div className="pf-idavatar-desktop" style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3px ${pm.color}55` }}>
+              <div className="pf-idavatar-desktop" style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3.5px ${pm.color}66` }}>
                 {(user.name || 'U').charAt(0).toUpperCase()}
               </div>
               <div style={c.idBody}>
@@ -204,9 +246,9 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Credits mini card — desktop sidebar */}
+            {/* Credits mini card */}
             <div style={c.sideCredits}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.5rem' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.55rem' }}>
                 <span style={c.sideCreditsLabel}>Credits</span>
                 <span style={{ fontSize:'.82rem', fontWeight:800, color:fClr, fontVariantNumeric:'tabular-nums' }}>
                   {fRemaining}<span style={{ color:'#3a3a52', fontWeight:500 }}>/{fLimit}</span>
@@ -215,33 +257,26 @@ export default function Profile() {
               <div style={c.sideBar}>
                 <div style={{ height:'100%', width:`${fPct}%`, background:`linear-gradient(90deg,${fClr}70,${fClr})`, borderRadius:'3px', transition:'width .6s ease' }} />
               </div>
-              <div style={{ fontSize:'.65rem', color:'#3a3a52', marginTop:'.35rem' }}>{fUsed} used this month</div>
+              <div style={{ fontSize:'.65rem', color:'#3a3a52', marginTop:'.38rem' }}>{fUsed} used this month</div>
             </div>
 
-            {/* Sidebar nav */}
+            {/* Nav items — icons + labels on desktop */}
             <nav style={{ display:'flex', flexDirection:'column', gap:'.25rem', marginTop:'.25rem' }}>
-              {[
-                { id:'plans', label:'Plans & Billing', icon:(
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/><path d="M1 5h12" stroke="currentColor" strokeWidth="1.3"/><path d="M4 8.5h3M4 10.5h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                )},
-                { id:'profile', label:'My Profile', icon:(
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3"/><path d="M2 12c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-                )},
-              ].map(item => {
-                const on = tab === item.id;
+              {NAV_ITEMS.map(({ id, label, Icon }) => {
+                const on = tab === id;
                 return (
-                  <button key={item.id} className="pf-sidenav-item" onClick={() => setTab(item.id)} style={{
-                    display:'flex', alignItems:'center', gap:'.6rem',
-                    padding:'.6rem .75rem', borderRadius:'10px', border:'none',
+                  <button key={id} className="pf-sidenav-item" onClick={() => setTab(id)} style={{
+                    display:'flex', alignItems:'center', gap:'.65rem',
+                    padding:'.65rem .8rem', borderRadius:'11px', border:'none',
                     background: on ? `${pm.color}14` : 'transparent',
                     color: on ? pm.color : '#4a4a66',
                     fontWeight: on ? 700 : 500,
-                    fontSize:'.84rem', cursor:'pointer', fontFamily:'inherit',
+                    fontSize:'.85rem', cursor:'pointer', fontFamily:'inherit',
                     textAlign:'left', transition:'background .15s, color .15s',
-                    boxShadow: on ? `inset 2px 0 0 ${pm.color}` : 'none',
+                    boxShadow: on ? `inset 2.5px 0 0 ${pm.color}` : 'none',
                   }}>
-                    {item.icon}
-                    {item.label}
+                    <Icon size={15} color={on ? pm.color : '#4a4a66'} />
+                    {label}
                   </button>
                 );
               })}
@@ -251,9 +286,9 @@ export default function Profile() {
           {/* ── MAIN CONTENT ── */}
           <div className="pf-main">
 
-            {/* Identity card — mobile only (hidden on desktop via sidebar) */}
+            {/* Identity card — mobile only */}
             <div className="pf-idcard pf-mobile-id" style={{ ...c.idCard, marginBottom:'1rem' }}>
-              <div style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3px ${pm.color}55` }}>
+              <div style={{ ...c.idAvatar, boxShadow:`0 0 0 2px #08080f, 0 0 0 3.5px ${pm.color}66` }}>
                 {(user.name || 'U').charAt(0).toUpperCase()}
               </div>
               <div style={c.idBody}>
@@ -265,12 +300,12 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Tabs — mobile only */}
+            {/* Mobile Tabs — icon + label */}
             <div className="pf-tabs" style={c.tabs}>
-              {[{ id:'plans', label:'Plans & Billing' }, { id:'profile', label:'My Profile' }].map(t => {
-                const on = tab === t.id;
+              {NAV_ITEMS.map(({ id, label, Icon }) => {
+                const on = tab === id;
                 return (
-                  <button key={t.id} className="pf-tab" onClick={() => setTab(t.id)} style={{
+                  <button key={id} className="pf-tab" onClick={() => setTab(id)} style={{
                     ...c.tab,
                     background:  on ? '#14142a' : 'transparent',
                     color:       on ? '#e0e0f8' : '#3e3e5a',
@@ -278,7 +313,11 @@ export default function Profile() {
                     borderColor: on ? 'rgba(124,92,255,.4)' : 'rgba(255,255,255,.06)',
                     boxShadow:   on ? '0 0 20px rgba(108,71,255,.1)' : 'none',
                   }}>
-                    {t.label}
+                    {/* Icon in tab */}
+                    <span style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'.4rem' }}>
+                      <Icon size={14} color={on ? '#e0e0f8' : '#3e3e5a'} />
+                      {label}
+                    </span>
                   </button>
                 );
               })}
@@ -286,64 +325,98 @@ export default function Profile() {
 
             {/* ── PLANS ── */}
             {tab === 'plans' && (
-              <div style={{ animation:'rise .2s ease' }}>
+              <div style={{ animation:'rise .22s ease' }}>
                 <div className="pf-plan-eyebrow-desktop" style={c.eyebrow}>Choose a plan</div>
                 <h2 className="pf-plan-heading-desktop">Pick the plan that fits your workflow</h2>
                 <p className="pf-plan-subheading-desktop">Upgrade anytime, downgrade anytime — no long-term lock-in.</p>
 
                 <div className="pf-plan-grid" style={c.planStack}>
                   {PLANS.map(plan => {
-                    const active = currentPlan === plan.id;
-                    const pLimit     = plan.id === 'free' ? fLimit : null;
+                    const active     = currentPlan === plan.id;
                     const pRemaining = plan.id === 'free' ? fRemaining : null;
                     const pPct       = plan.id === 'free' ? fPct : null;
                     const pClr       = plan.id === 'free' ? fClr : null;
 
                     return (
-                      <div key={plan.id} className={`pf-card pf-plancard${plan.id === 'pro' ? ' pf-plan-featured' : ''}`} style={{
-                        ...c.planCard,
-                        borderColor: active ? plan.border : (plan.id === 'pro' ? 'rgba(124,92,255,.28)' : 'rgba(255,255,255,.06)'),
-                        boxShadow:   active ? plan.glow   : 'none',
-                        background:  active
-                          ? `linear-gradient(155deg,${plan.color}0d 0%,#0d0d1e 60%)`
-                          : '#0d0d1e',
-                      }}>
-                        {active && <div style={{ position:'absolute', top:0, left:'10%', right:'10%', height:'1px', background:`linear-gradient(90deg,transparent,${plan.color}70,transparent)` }} />}
-                        {active && <div style={{ position:'absolute', left:0, top:'20%', bottom:'20%', width:'2.5px', background:`linear-gradient(180deg,transparent,${plan.color}bb,transparent)`, borderRadius:'0 3px 3px 0' }} />}
+                      <div
+                        key={plan.id}
+                        className={`pf-card pf-plancard${plan.id === 'pro' ? ' pf-plan-featured' : ''}`}
+                        style={{
+                          ...c.planCard,
+                          borderColor: active
+                            ? plan.border
+                            : plan.id === 'pro'
+                              ? 'rgba(124,92,255,.22)'
+                              : 'rgba(255,255,255,.06)',
+                          boxShadow: active ? plan.glow : 'none',
+                          background: active
+                            ? `linear-gradient(160deg,${plan.color}10 0%,#0d0d1e 55%)`
+                            : plan.id === 'pro'
+                              ? 'linear-gradient(160deg,rgba(124,92,255,.06) 0%,#0d0d1e 60%)'
+                              : '#0d0d1e',
+                          transition: 'transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease',
+                        }}
+                      >
+                        {/* Active top glow line */}
+                        {active && (
+                          <div style={{ position:'absolute', top:0, left:'8%', right:'8%', height:'1px', background:`linear-gradient(90deg,transparent,${plan.color}80,transparent)` }} />
+                        )}
+                        {/* Active left accent */}
+                        {active && (
+                          <div style={{ position:'absolute', left:0, top:'15%', bottom:'15%', width:'2.5px', background:`linear-gradient(180deg,transparent,${plan.color}cc,transparent)`, borderRadius:'0 3px 3px 0' }} />
+                        )}
 
                         {/* Desktop ribbon badge */}
                         {plan.badge && (
-                          <span className="pf-ribbon-desktop" style={{ display:'none', color:'#fff', background: plan.ctaBg || `linear-gradient(135deg,${plan.color},${plan.color})` }}>
+                          <span className="pf-ribbon-desktop" style={{ display:'none', color:'#fff', background: plan.badgeBg }}>
                             {plan.badge}
                           </span>
                         )}
 
+                        {/* Plan icon — desktop only */}
+                        <div className="pf-plan-icon-desktop" style={{ display:'none', width:'38px', height:'38px', borderRadius:'12px', background:`${plan.color}16`, border:`1px solid ${plan.color}28`, alignItems:'center', justifyContent:'center', marginBottom:'.1rem' }}>
+                          <IconStar color={plan.color} />
+                        </div>
+
                         {/* Header */}
                         <div className={plan.badge ? 'pf-planheader-badged' : ''} style={c.planHeader}>
                           <div style={{ display:'flex', alignItems:'center', gap:'.45rem', flexWrap:'wrap' }}>
-                            <span className="pf-plan-name-desktop" style={{ ...c.planName, color: active ? plan.color : '#c8c8e0' }}>{plan.name}</span>
+                            <span
+                              className="pf-plan-name-desktop"
+                              style={{ ...c.planName, color: active ? plan.color : plan.id === 'pro' ? '#c8c8e0' : '#9090b0' }}
+                            >
+                              {plan.name}
+                            </span>
                             {plan.badge && (
-                              <span className="pf-badge-mobile" style={{ fontSize:'.57rem', fontWeight:700, padding:'.15rem .48rem', borderRadius:'99px', border:`1px solid ${plan.color}45`, color:plan.color, background:plan.color+'12', textTransform:'uppercase', letterSpacing:'.04em' }}>
+                              <span className="pf-badge-mobile" style={{
+                                fontSize:'.57rem', fontWeight:700, padding:'.15rem .48rem',
+                                borderRadius:'99px', border:`1px solid ${plan.color}45`,
+                                color:plan.color, background:plan.color+'12',
+                                textTransform:'uppercase', letterSpacing:'.04em',
+                              }}>
                                 {plan.badge}
                               </span>
                             )}
                           </div>
                           <div style={{ display:'flex', alignItems:'baseline', gap:'.18rem', flexShrink:0 }}>
-                            <span className="pf-plan-price-desktop" style={{ fontSize:'1.5rem', fontWeight:900, letterSpacing:'-.04em', color: active ? plan.color : '#e0e0f0' }}>{plan.price}</span>
+                            <span
+                              className="pf-plan-price-desktop"
+                              style={{ fontSize:'1.6rem', fontWeight:900, letterSpacing:'-.04em', color: active ? plan.color : '#e0e0f0' }}
+                            >
+                              {plan.price}
+                            </span>
                             <span style={{ fontSize:'.67rem', color:'#3e3e5a' }}>{plan.period}</span>
                           </div>
                         </div>
 
-                        <div style={c.divLine} />
+                        {/* Divider */}
+                        <div style={{ height:'1px', background: active ? `linear-gradient(90deg,${plan.color}30,transparent)` : 'rgba(255,255,255,.05)' }} />
 
                         {/* Features */}
                         <div className="pf-feats" style={c.feats}>
                           {plan.features.map(f => (
                             <div key={f} className="pf-feat-item-desktop" style={c.featItem}>
-                              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink:0 }}>
-                                <circle cx="6.5" cy="6.5" r="6" fill={plan.color+'18'} stroke={plan.color+'35'} strokeWidth=".5"/>
-                                <path d="M4 6.5l2 2L9 4.5" stroke={plan.color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <IconCheck color={plan.color} />
                               <span>{f}</span>
                             </div>
                           ))}
@@ -352,18 +425,21 @@ export default function Profile() {
                         {/* Credits bar — free only */}
                         {plan.id === 'free' && (
                           <div style={c.usageBox}>
-                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.4rem' }}>
+                            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.45rem' }}>
                               <span style={c.usageLabel}>Credits used</span>
                               <span style={{ fontSize:'.76rem', fontWeight:800, color:pClr, fontVariantNumeric:'tabular-nums' }}>
-                                {pRemaining}<span style={{ color:'#3a3a52', fontWeight:500 }}> / {pLimit}</span>
+                                {pRemaining}<span style={{ color:'#3a3a52', fontWeight:500 }}> / {fLimit}</span>
                               </span>
                             </div>
                             <div style={c.usageTrack}>
                               <div style={{ height:'100%', width:`${pPct}%`, background:`linear-gradient(90deg,${pClr}80,${pClr})`, borderRadius:'4px', transition:'width .6s ease' }} />
                             </div>
                             {fRemaining <= 20 && (
-                              <div style={{ fontSize:'.64rem', color:'#ff4f87', fontWeight:600, marginTop:'.3rem', display:'flex', alignItems:'center', gap:'.25rem' }}>
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1L9.5 9H.5L5 1z" stroke="#ff4f87" strokeWidth="1.1" strokeLinejoin="round"/><path d="M5 4v2" stroke="#ff4f87" strokeWidth="1.1" strokeLinecap="round"/></svg>
+                              <div style={{ fontSize:'.64rem', color:'#ff4f87', fontWeight:600, marginTop:'.35rem', display:'flex', alignItems:'center', gap:'.25rem' }}>
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                  <path d="M5 1L9.5 9H.5L5 1z" stroke="#ff4f87" strokeWidth="1.1" strokeLinejoin="round"/>
+                                  <path d="M5 4v2" stroke="#ff4f87" strokeWidth="1.1" strokeLinecap="round"/>
+                                </svg>
                                 {fRemaining <= 0 ? 'Credits khatam ho gaye!' : 'Credits khatam hone wale hain!'}
                               </div>
                             )}
@@ -373,7 +449,9 @@ export default function Profile() {
                         {/* CTA */}
                         {active ? (
                           <div className="pf-activecta-desktop" style={{ ...c.activeCta, color:plan.color, borderColor:plan.color+'28', background:plan.color+'0d' }}>
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6l2.5 2.5 4.5-5" stroke={plan.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M2.5 6l2.5 2.5 4.5-5" stroke={plan.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
                             Current plan
                           </div>
                         ) : (
@@ -392,7 +470,7 @@ export default function Profile() {
 
             {/* ── PROFILE ── */}
             {tab === 'profile' && (
-              <div style={{ animation:'rise .2s ease' }}>
+              <div style={{ animation:'rise .22s ease' }}>
                 <div style={c.eyebrow}>Account Details</div>
 
                 <div style={c.formCard}>
@@ -414,7 +492,10 @@ export default function Profile() {
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                       <label style={c.label}>Email</label>
                       <span style={c.lockedTag}>
-                        <svg width="9" height="10" viewBox="0 0 9 10" fill="none"><rect x="1" y="4.5" width="7" height="5" rx="1.2" stroke="#3e3e5a" strokeWidth="1"/><path d="M2.5 4.5V3a2 2 0 014 0v1.5" stroke="#3e3e5a" strokeWidth="1"/></svg>
+                        <svg width="9" height="10" viewBox="0 0 9 10" fill="none">
+                          <rect x="1" y="4.5" width="7" height="5" rx="1.2" stroke="#3e3e5a" strokeWidth="1"/>
+                          <path d="M2.5 4.5V3a2 2 0 014 0v1.5" stroke="#3e3e5a" strokeWidth="1"/>
+                        </svg>
                         Locked
                       </span>
                     </div>
@@ -446,7 +527,14 @@ export default function Profile() {
 }
 
 const c = {
-  back: { display:'inline-flex', alignItems:'center', gap:'.38rem', padding:'.4rem .8rem .4rem .6rem', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)', borderRadius:'9px', cursor:'pointer', color:'#4e4e6a', fontSize:'.78rem', fontWeight:600, fontFamily:'inherit', marginBottom:'1.2rem', transition:'background .15s, border-color .15s' },
+  back: {
+    display:'inline-flex', alignItems:'center', gap:'.38rem',
+    padding:'.42rem .85rem .42rem .65rem',
+    background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.07)',
+    borderRadius:'10px', cursor:'pointer', color:'#4e4e6a',
+    fontSize:'.78rem', fontWeight:600, fontFamily:'inherit',
+    marginBottom:'1.2rem', transition:'background .15s, border-color .15s, color .15s',
+  },
 
   idCard:  { display:'flex', alignItems:'center', gap:'.9rem', padding:'.9rem 1.1rem', background:'#0d0d1e', border:'1px solid rgba(255,255,255,.07)', borderRadius:'16px', overflow:'hidden', position:'relative' },
   idAvatar:{ width:'44px', height:'44px', borderRadius:'50%', background:'linear-gradient(135deg,#3a20b8,#7c5cff)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:800, fontSize:'1.1rem', flexShrink:0 },
@@ -455,31 +543,29 @@ const c = {
   idEmail: { fontSize:'.72rem', color:'#3e3e5a', marginTop:'.1rem', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' },
   idBadge: { flexShrink:0, fontSize:'.65rem', fontWeight:700, padding:'.22rem .65rem', borderRadius:'99px', border:'1px solid', letterSpacing:'.025em' },
 
-  /* Sidebar credits */
-  sideCredits:      { background:'#0d0d1e', border:'1px solid rgba(255,255,255,.07)', borderRadius:'14px', padding:'.85rem 1rem' },
+  sideCredits:      { background:'#0d0d1e', border:'1px solid rgba(255,255,255,.07)', borderRadius:'14px', padding:'.9rem 1rem' },
   sideCreditsLabel: { fontSize:'.6rem', fontWeight:700, color:'#3e3e5a', textTransform:'uppercase', letterSpacing:'.07em' },
   sideBar:          { height:'4px', background:'rgba(255,255,255,.06)', borderRadius:'3px', overflow:'hidden' },
 
   tabs: { marginBottom:'1.5rem' },
-  tab:  { padding:'.5rem 1rem', borderRadius:'10px', border:'1px solid', fontSize:'.82rem', cursor:'pointer', fontFamily:'inherit', letterSpacing:'-.01em', transition:'background .15s, color .15s, border-color .15s, box-shadow .15s' },
+  tab:  { padding:'.52rem 1rem', borderRadius:'10px', border:'1px solid', fontSize:'.82rem', cursor:'pointer', fontFamily:'inherit', letterSpacing:'-.01em', transition:'background .15s, color .15s, border-color .15s, box-shadow .15s' },
 
   eyebrow: { fontSize:'.62rem', fontWeight:700, color:'#3e3e5a', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:'.85rem' },
 
-  planStack:  { display:'flex', flexDirection:'column', gap:'.6rem' },
-  planCard:   { padding:'1.15rem', border:'1px solid', borderRadius:'18px', display:'flex', flexDirection:'column', gap:'.8rem', position:'relative', overflow:'hidden', transition:'transform .2s, box-shadow .2s' },
-  planHeader: { display:'flex', justifyContent:'space-between', alignItems:'flex-start' },
-  planName:   { fontSize:'.98rem', fontWeight:800, letterSpacing:'-.02em', transition:'color .2s' },
-  divLine:    { height:'1px', background:'rgba(255,255,255,.05)' },
+  planStack: { display:'flex', flexDirection:'column', gap:'.65rem' },
+  planCard:  { padding:'1.2rem', border:'1px solid', borderRadius:'20px', display:'flex', flexDirection:'column', gap:'.85rem', position:'relative', overflow:'hidden' },
+  planHeader:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' },
+  planName:  { fontSize:'.98rem', fontWeight:800, letterSpacing:'-.02em', transition:'color .2s' },
 
-  feats:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.35rem .6rem' },
-  featItem: { display:'flex', alignItems:'center', gap:'.35rem', fontSize:'.73rem', color:'#6a6a8a', lineHeight:1.35 },
+  feats:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.4rem .65rem' },
+  featItem: { display:'flex', alignItems:'center', gap:'.38rem', fontSize:'.74rem', color:'#6a6a8a', lineHeight:1.35 },
 
-  usageBox:   { background:'rgba(255,255,255,.025)', border:'1px solid rgba(255,255,255,.06)', borderRadius:'10px', padding:'.6rem .65rem' },
+  usageBox:   { background:'rgba(255,255,255,.03)', border:'1px solid rgba(255,255,255,.06)', borderRadius:'11px', padding:'.65rem .7rem' },
   usageLabel: { fontSize:'.6rem', fontWeight:700, color:'#3e3e5a', textTransform:'uppercase', letterSpacing:'.07em' },
-  usageTrack: { height:'4px', background:'rgba(255,255,255,.06)', borderRadius:'4px', overflow:'hidden' },
+  usageTrack: { height:'5px', background:'rgba(255,255,255,.06)', borderRadius:'4px', overflow:'hidden' },
 
-  activeCta: { display:'flex', alignItems:'center', justifyContent:'center', gap:'.38rem', padding:'.68rem', borderRadius:'11px', border:'1px solid', fontSize:'.81rem', fontWeight:600, letterSpacing:'-.01em' },
-  cta:       { width:'100%', padding:'.72rem', border:'none', borderRadius:'11px', color:'#fff', fontWeight:700, fontSize:'.86rem', cursor:'pointer', fontFamily:'inherit', letterSpacing:'-.01em', transition:'filter .15s, transform .12s' },
+  activeCta: { display:'flex', alignItems:'center', justifyContent:'center', gap:'.38rem', padding:'.72rem', borderRadius:'12px', border:'1px solid', fontSize:'.82rem', fontWeight:600, letterSpacing:'-.01em' },
+  cta:       { width:'100%', padding:'.78rem', border:'none', borderRadius:'12px', color:'#fff', fontWeight:700, fontSize:'.88rem', cursor:'pointer', fontFamily:'inherit', letterSpacing:'-.01em', transition:'filter .15s, transform .12s, box-shadow .15s' },
 
   billingNote: { textAlign:'center', color:'#252538', fontSize:'.68rem', marginTop:'.9rem' },
 
