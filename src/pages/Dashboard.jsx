@@ -121,8 +121,18 @@ export default function Dashboard() {
         ])).values()];
         setAds(deduped);
         sessionStorage.setItem(key, JSON.stringify(deduped));
+        // ✅ Credits update karo (backend ne deduct kiya)
+        if (res.data?.creditsRemaining !== undefined) {
+          setUserCredits(prev => ({ ...prev, remaining: res.data.creditsRemaining }));
+          window.dispatchEvent(new Event('credits-updated'));
+        }
       }
-    } catch (err) { console.error(err); setAds([]); }
+    } catch (err) {
+      if (err.response?.status === 429 && err.response?.data?.upgrade) {
+        setUserCredits(prev => ({ ...prev, remaining: 0 }));
+      }
+      console.error(err); setAds([]);
+    }
     setLoading(false);
   }, [tab, country, period, orderBy, metaKeyword, metaStatus]);
 
