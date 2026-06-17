@@ -751,19 +751,33 @@ export default function AdDetail() {
 
   const fetchDetail = async (backgroundOnly = false) => {
     if (!backgroundOnly) setLoading(true);
+
+    // Meta ya TikTok detect karo
+    const isMeta = !!(passedAd?.page_name || passedAd?.library_id || passedAd?.snapshot_url || passedAd?._source === 'mongodb_scraped');
+    const metaLibraryId = passedAd?.library_id || passedAd?.id || adId;
+
     try {
-      const res  = await api.get(`/ads/tiktok/${adId}`);
+      let res;
+      if (isMeta) {
+        // Meta: GET /ads/meta/:id — credit deduct hoga (TikTok jaisi)
+        res = await api.get(`/ads/meta/${metaLibraryId}`);
+      } else {
+        // TikTok: GET /ads/tiktok/:adId
+        res = await api.get(`/ads/tiktok/${adId}`);
+      }
+
       const data = res.data?.data?.data || res.data?.data || res.data || {};
       if (!backgroundOnly) setDetail(data);
-      // Agar pehli baar dekha to credit deduct hua — Navbar update karo
+
+      // Credit deduct hua — Navbar update karo
       if (res.data?.creditDeducted) {
         window.dispatchEvent(new Event('credits-updated'));
       }
-      const isMetaAd = !!(data?.page_name || data?.library_id || data?.snapshot_url || data?._source === 'mongodb_scraped');
+
       if (!backgroundOnly) {
-        if (isMetaAd) {
-          const brandName = data?.page_name || data?.brand;
-          if (brandName) fetchMetaBrandAds(brandName, data?.id || data?.library_id);
+        if (isMeta) {
+          const brandName = data?.page_name || data?.brand || passedAd?.page_name;
+          if (brandName) fetchMetaBrandAds(brandName, metaLibraryId);
         } else {
           const advId = data.advertiser_id || data.brand_id || passedAd?.advertiser_id;
           if (advId) { fetchBrandAds(advId); fetchPageDetails(advId); }
@@ -773,8 +787,13 @@ export default function AdDetail() {
     } catch {
       if (!backgroundOnly && passedAd) {
         setDetail(passedAd);
-        const advId = passedAd?.advertiser_id || passedAd?.brand_id;
-        if (advId) fetchPageDetails(advId);
+        if (isMeta) {
+          const brandName = passedAd?.page_name || passedAd?.brand;
+          if (brandName) fetchMetaBrandAds(brandName, metaLibraryId);
+        } else {
+          const advId = passedAd?.advertiser_id || passedAd?.brand_id;
+          if (advId) fetchPageDetails(advId);
+        }
         fetchRelatedAds(passedAd);
       }
     }
@@ -857,7 +876,7 @@ export default function AdDetail() {
 
   useEffect(() => {
     if (isMeta && ad.library_id) {
-      api.post('/ads/meta/' + ad.library_id + '/view').catch(() => {});
+      // Meta view: GET /ads/meta/:id route mein already handle ho raha hai
     }
   }, [ad.library_id]); // eslint-disable-line
 
