@@ -16,6 +16,8 @@ export default function Search() {
     }).catch(() => {});
   }, []);
   const noCredits  = userCredits !== null && userCredits.remaining <= 0;
+  const LOCK_THRESHOLD = 20;
+  const lockActive = userCredits !== null && userCredits.remaining <= LOCK_THRESHOLD;
   const searchCost = userCredits?.costs?.search ?? 10;
   const canSearch  = !noCredits && (userCredits === null || userCredits.remaining >= searchCost);
   const [platform, setPlatform] = useState(() => sessionStorage.getItem('search_platform') || 'tiktok');
@@ -91,6 +93,13 @@ export default function Search() {
 
         <h1 style={styles.h1}>🔍 Search Ads</h1>
         <p style={styles.sub}>Keyword se winning ads dhundo</p>
+
+        {lockActive && !noCredits && (
+          <div style={{ ...styles.noCreditBanner, background: 'rgba(251,191,36,.07)', borderColor: 'rgba(251,191,36,.25)', color: '#fbbf24' }}>
+            <span>⚠️ Sirf {userCredits.remaining} credits bache — ab sirf pahle dekhe hue ads open honge</span>
+            <a href="/profile" style={{ ...styles.upgradeLink, color: '#fbbf24' }}>Upgrade karo →</a>
+          </div>
+        )}
 
         {noCredits && (
           <div style={styles.noCreditBanner}>
