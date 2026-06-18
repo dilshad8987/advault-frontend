@@ -66,7 +66,9 @@ export default function Dashboard() {
       if (u) setUserCredits({ remaining: u.creditsRemaining });
     }).catch(() => {});
   }, []);
-  const noCredits = userCredits !== null && userCredits.remaining <= 0;
+  const LOCK_THRESHOLD = 20;
+  const noCredits   = userCredits !== null && userCredits.remaining <= 0;
+  const lockActive  = userCredits !== null && userCredits.remaining <= LOCK_THRESHOLD;
 
   const countries = ['US','DE','GB','FR','IT','ES','NL','PL','AT','BE','SE','NO','DK','FI'];
   const periods   = [{ v: '7', l: '7 Days' },{ v: '30', l: '30 Days' },{ v: '90', l: '90 Days' },{ v: '180', l: '180 Days' }];
@@ -125,8 +127,7 @@ export default function Dashboard() {
         if (res.data?.creditsRemaining !== undefined) {
           setUserCredits(prev => ({ ...prev, remaining: res.data.creditsRemaining }));
           window.dispatchEvent(new Event('credits-updated'));
-        }
-      }
+        }      }
     } catch (err) {
       if (err.response?.status === 429 && err.response?.data?.upgrade) {
         setUserCredits(prev => ({ ...prev, remaining: 0 }));
@@ -151,10 +152,18 @@ export default function Dashboard() {
           <p style={s.sub}>🔥 Last 7 days ke sabse trending product ads</p>
         </div>
 
+        {/* Lock Threshold Banner */}
+        {lockActive && !noCredits && (
+          <div style={{ ...s.noCreditBanner, background: 'rgba(251,191,36,.07)', borderColor: 'rgba(251,191,36,.25)', color: '#fbbf24' }}>
+            <span>⚠️ Sirf {userCredits.remaining} credits bache — ab sirf pahle dekhe hue ads open honge</span>
+            <a href="/profile" style={{ ...s.upgradeLink, color: '#fbbf24' }}>Upgrade karo →</a>
+          </div>
+        )}
+
         {/* No Credits Banner */}
         {noCredits && (
           <div style={s.noCreditBanner}>
-            <span>🔒 Credits khatam ho gaye — premium features band hain.</span>
+            <span>🔒 Credits khatam ho gaye — sirf pahle dekhe hue ads accessible hain.</span>
             <a href="/profile" style={s.upgradeLink}>Upgrade karo →</a>
           </div>
         )}
