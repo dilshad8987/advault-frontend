@@ -397,10 +397,65 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     }
   };
 
+  const isLocked = ad.isLocked === true;
+
   const openDetail = (e) => {
     e.stopPropagation();
+    if (isLocked) {
+      toast.error('🔒 Credits khatam — upgrade karo ya reset ka wait karo');
+      return;
+    }
     navigate('/ad/' + adId, { state: { ad } });
   };
+
+  // ── Locked Card ────────────────────────────────────────────────────────────
+  if (isLocked) {
+    const thumbSrc = isMeta
+      ? (ad.image || ad.ad_snapshot_url || '')
+      : (ad.video_info?.cover || ad.cover || '');
+
+    return (
+      <div style={{ ...s.card, cursor: 'default', position: 'relative', overflow: 'hidden' }}
+        onClick={() => toast.error('🔒 Credits khatam — upgrade karo ya reset ka wait karo')}
+      >
+        {/* Blurred thumbnail */}
+        {thumbSrc && (
+          <img
+            src={thumbSrc}
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(12px) brightness(0.35)', transform: 'scale(1.08)' }}
+          />
+        )}
+        {/* Lock overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 2,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: '10px', padding: '1rem', textAlign: 'center',
+          background: 'rgba(8,8,15,0.55)',
+        }}>
+          <div style={{ fontSize: '2rem', lineHeight: 1 }}>🔒</div>
+          <p style={{ color: '#e0e0ff', fontSize: '.82rem', fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
+            Credits khatam<br />
+            <span style={{ color: '#8888aa', fontWeight: 400, fontSize: '.76rem' }}>
+              Yeh ad pahle nahi dekha tha
+            </span>
+          </p>
+          <a
+            href="/profile"
+            onClick={e => e.stopPropagation()}
+            style={{
+              padding: '.4rem 1rem', borderRadius: '8px',
+              background: 'linear-gradient(135deg,#6c47ff,#a855f7)',
+              color: '#fff', fontSize: '.78rem', fontWeight: 700,
+              textDecoration: 'none', marginTop: '4px',
+            }}
+          >
+            Upgrade karo ↗
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
