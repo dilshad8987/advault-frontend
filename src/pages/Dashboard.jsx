@@ -112,6 +112,11 @@ export default function Dashboard() {
         });
         setAds(result);
         sessionStorage.setItem(key, JSON.stringify(result));
+        // ✅ Credits update karo TikTok response se bhi
+        if (d?.creditsRemaining !== undefined) {
+          setUserCredits(prev => ({ ...prev, remaining: d.creditsRemaining }));
+          window.dispatchEvent(new Event('credits-updated'));
+        }
 
       } else if (tab === 'meta') {
         const res = await api.get('/ads/meta', { params: { keyword: metaKeyword, country: 'ALL', activeStatus: metaStatus } });
