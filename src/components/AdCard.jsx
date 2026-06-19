@@ -382,10 +382,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   const saveAd = async (e) => {
     e.stopPropagation();
     if (isLocked) return; // Locked hone par kuch bhi nahi hoga — silent
-    if (!canSave) {
-      toast.error('Credits khatam! Upgrade karo premium features ke liye.');
-      return;
-    }
+    if (!canSave) return; // Credits khatam — silent, no toast, no navigation
     try {
       const res = await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
       setSaved(true);
@@ -403,6 +400,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
   const openDetail = (e) => {
     e.stopPropagation();
+    if (isLocked || !canSave) return; // Credits khatam — silent, page open nahi hoga
     navigate('/ad/' + adId, { state: { ad } });
   };
 
@@ -496,16 +494,12 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             style={{
               ...s.saveBtn,
               ...(saved ? s.savedBtn : {}),
-              ...((!canSave || isLocked) && !saved ? s.lockedBtn : {}),
             }}
             onClick={saveAd}
-            disabled={saved || isLocked}
-            title={(!canSave || isLocked) && !saved ? 'Credits khatam – upgrade karo' : ''}
+            disabled={saved}
           >
             {saved ? (
               <>✅ Saved</>
-            ) : (!canSave || isLocked) ? (
-              <>🔒 Save</>
             ) : (
               <>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ verticalAlign: '-2px', marginRight: '5px' }}>
@@ -516,11 +510,10 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             )}
           </button>
           <button
-            style={{ ...s.detailBtn, ...(isLocked ? s.lockedBtn : {}) }}
+            style={s.detailBtn}
             onClick={openDetail}
-            title={isLocked ? 'Credits khatam – upgrade karo' : ''}
           >
-            {isLocked ? '🔒 Detail' : '🔍 Detail'}
+            🔍 Detail
           </button>
         </div>
       </div>
