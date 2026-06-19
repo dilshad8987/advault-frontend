@@ -381,10 +381,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
   const saveAd = async (e) => {
     e.stopPropagation();
-    if (isLocked) {
-      toast.error('🔒 Credits khatam — upgrade karo ya reset ka wait karo');
-      return;
-    }
+    if (isLocked) return; // Locked hone par kuch bhi nahi hoga — silent
     if (!canSave) {
       toast.error('Credits khatam! Upgrade karo premium features ke liye.');
       return;
@@ -406,10 +403,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
   const openDetail = (e) => {
     e.stopPropagation();
-    if (isLocked) {
-      toast.error('🔒 Credits khatam — upgrade karo ya reset ka wait karo');
-      return;
-    }
     navigate('/ad/' + adId, { state: { ad } });
   };
 
@@ -506,7 +499,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
               ...((!canSave || isLocked) && !saved ? s.lockedBtn : {}),
             }}
             onClick={saveAd}
-            disabled={saved}
+            disabled={saved || isLocked}
             title={(!canSave || isLocked) && !saved ? 'Credits khatam – upgrade karo' : ''}
           >
             {saved ? (
