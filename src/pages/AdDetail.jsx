@@ -728,8 +728,15 @@ export default function AdDetail() {
   const canSave   = !noCredits && (userCredits === null || userCredits.remaining >= saveCost);
 
   const passedAd = location.state?.ad || null;
+  const [isCreditLocked, setIsCreditLocked] = useState(passedAd?.isLocked === true);
 
   useEffect(() => {
+    // Agar card se hi locked flag aaya tha — seedha lock screen dikhao, API call mat karo
+    if (passedAd?.isLocked === true) {
+      setIsCreditLocked(true);
+      setLoading(false);
+      return;
+    }
     if (passedAd) {
       setDetail(passedAd);
       const isMetaAd = !!(passedAd?.page_name || passedAd?.library_id || passedAd?.snapshot_url || passedAd?._source === 'mongodb_scraped');
@@ -784,7 +791,16 @@ export default function AdDetail() {
         }
         fetchRelatedAds(data);
       }
-    } catch {
+    } catch (err) {
+      // Credits khatam — lock screen dikhao
+      if (err?.response?.status === 402 || err?.response?.data?.locked) {
+        setIsCreditLocked(true);
+        if (err?.response?.data?.creditsRemaining !== undefined) {
+          window.dispatchEvent(new Event('credits-updated'));
+        }
+        if (!backgroundOnly) setLoading(false);
+        return;
+      }
       if (!backgroundOnly && passedAd) {
         setDetail(passedAd);
         if (isMeta) {
@@ -942,6 +958,20 @@ export default function AdDetail() {
     <div style={{minHeight:'100vh',background:'#08080f',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'1rem'}}>
       <div style={S.spinner}></div>
       <p style={{color:'#8888aa'}}>Ad detail load ho raha hai...</p>
+    </div>
+  );
+
+  if (isCreditLocked) return (
+    <div style={{minHeight:'100vh',background:'#08080f',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:'1.1rem',padding:'1.5rem',textAlign:'center'}}>
+      <div style={{fontSize:'3rem',lineHeight:1}}>🔒</div>
+      <h2 style={{color:'#f0f0f8',fontSize:'1.2rem',fontWeight:800,margin:0}}>Credits khatam ho gaye</h2>
+      <p style={{color:'#8888aa',fontSize:'.9rem',maxWidth:'320px',margin:0,lineHeight:1.5}}>
+        Yeh ad dekhne ke liye upgrade karo ya agle reset ka wait karo.
+      </p>
+      <div style={{display:'flex',gap:'.75rem',marginTop:'.5rem'}}>
+        <button onClick={()=>navigate(-1)} style={{padding:'.6rem 1.2rem',borderRadius:'9px',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',color:'#e0e0ff',fontWeight:700,fontSize:'.85rem',cursor:'pointer'}}>← Wapas jao</button>
+        <a href="/profile" style={{padding:'.6rem 1.2rem',borderRadius:'9px',background:'linear-gradient(135deg,#6c47ff,#a855f7)',color:'#fff',fontWeight:700,fontSize:'.85rem',textDecoration:'none'}}>Upgrade karo →</a>
+      </div>
     </div>
   );
 
