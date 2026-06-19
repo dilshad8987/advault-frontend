@@ -377,8 +377,14 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     }).catch(() => {});
   };
 
+  const isLocked = ad.isLocked === true;
+
   const saveAd = async (e) => {
     e.stopPropagation();
+    if (isLocked) {
+      toast.error('🔒 Credits khatam — upgrade karo ya reset ka wait karo');
+      return;
+    }
     if (!canSave) {
       toast.error('Credits khatam! Upgrade karo premium features ke liye.');
       return;
@@ -397,7 +403,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     }
   };
 
-  const isLocked = ad.isLocked === true;
 
   const openDetail = (e) => {
     e.stopPropagation();
@@ -407,55 +412,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     }
     navigate('/ad/' + adId, { state: { ad } });
   };
-
-  // ── Locked Card ────────────────────────────────────────────────────────────
-  if (isLocked) {
-    const thumbSrc = isMeta
-      ? (ad.image || ad.ad_snapshot_url || '')
-      : (ad.video_info?.cover || ad.cover || '');
-
-    return (
-      <div style={{ ...s.card, cursor: 'default', position: 'relative', overflow: 'hidden' }}
-        onClick={() => toast.error('🔒 Credits khatam — upgrade karo ya reset ka wait karo')}
-      >
-        {/* Blurred thumbnail */}
-        {thumbSrc && (
-          <img
-            src={thumbSrc}
-            alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(12px) brightness(0.35)', transform: 'scale(1.08)' }}
-          />
-        )}
-        {/* Lock overlay */}
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 2,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: '10px', padding: '1rem', textAlign: 'center',
-          background: 'rgba(8,8,15,0.55)',
-        }}>
-          <div style={{ fontSize: '2rem', lineHeight: 1 }}>🔒</div>
-          <p style={{ color: '#e0e0ff', fontSize: '.82rem', fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
-            Credits khatam<br />
-            <span style={{ color: '#8888aa', fontWeight: 400, fontSize: '.76rem' }}>
-              Yeh ad pahle nahi dekha tha
-            </span>
-          </p>
-          <a
-            href="/profile"
-            onClick={e => e.stopPropagation()}
-            style={{
-              padding: '.4rem 1rem', borderRadius: '8px',
-              background: 'linear-gradient(135deg,#6c47ff,#a855f7)',
-              color: '#fff', fontSize: '.78rem', fontWeight: 700,
-              textDecoration: 'none', marginTop: '4px',
-            }}
-          >
-            Upgrade karo ↗
-          </a>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -547,16 +503,31 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             style={{
               ...s.saveBtn,
               ...(saved ? s.savedBtn : {}),
-              ...(!canSave && !saved ? s.lockedBtn : {}),
+              ...((!canSave || isLocked) && !saved ? s.lockedBtn : {}),
             }}
             onClick={saveAd}
             disabled={saved}
-            title={!canSave && !saved ? 'Credits khatam – upgrade karo' : ''}
+            title={(!canSave || isLocked) && !saved ? 'Credits khatam – upgrade karo' : ''}
           >
-            {saved ? '✅ Saved' : !canSave ? '🔒 Save' : '💾 Save'}
+            {saved ? (
+              <>✅ Saved</>
+            ) : (!canSave || isLocked) ? (
+              <>🔒 Save</>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ verticalAlign: '-2px', marginRight: '5px' }}>
+                  <path d="M6 2a2 2 0 0 0-2 2v17a1 1 0 0 0 1.6.8L12 17l6.4 4.8A1 1 0 0 0 20 21V4a2 2 0 0 0-2-2H6Z" />
+                </svg>
+                Save
+              </>
+            )}
           </button>
-          <button style={s.detailBtn} onClick={openDetail}>
-            🔍 Detail
+          <button
+            style={{ ...s.detailBtn, ...(isLocked ? s.lockedBtn : {}) }}
+            onClick={openDetail}
+            title={isLocked ? 'Credits khatam – upgrade karo' : ''}
+          >
+            {isLocked ? '🔒 Detail' : '🔍 Detail'}
           </button>
         </div>
       </div>
