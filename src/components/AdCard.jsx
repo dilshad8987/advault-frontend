@@ -38,16 +38,9 @@ function TikTokBadge() {
 
 function MetaBadge() {
   return (
-    <span style={{ ...s.platformBadge, background: 'rgba(24,119,242,.12)', color: '#1877F2' }}>
-      <svg width="16" height="9" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-        <defs>
-          <linearGradient id="metaBadgeGrad" x1="0" y1="8" x2="16" y2="8" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#0064E0" />
-            <stop offset="60%" stopColor="#0082FB" />
-            <stop offset="100%" stopColor="#00C6FF" />
-          </linearGradient>
-        </defs>
-        <path fillRule="evenodd" fill="url(#metaBadgeGrad)" d="M8.217 5.243C9.145 3.988 10.171 3 11.483 3C13.96 3 16 6.153 16.001 9.907c0 2.29-.986 3.725-2.757 3.725-1.543 0-2.395-.866-3.924-3.424l-.667-1.123-.118-.197a55 55 0 0 0-.53-.877l-1.178 2.08c-1.673 2.925-2.615 3.541-3.923 3.541C1.086 13.632 0 12.217 0 9.973C0 6.388 1.995 3 4.598 3q.477-.001.924.122c.31.086.611.22.913.407c.577.359 1.154.915 1.782 1.714m1.516 2.224q-.378-.615-.727-1.133L9 6.326c.845-1.305 1.543-1.954 2.372-1.954c1.723 0 3.102 2.537 3.102 5.653c0 1.188-.39 1.877-1.195 1.877-.773 0-1.142-.51-2.61-2.87zM4.846 4.756c.725.1 1.385.634 2.34 2.001A212 212 0 0 0 5.551 9.3c-1.357 2.126-1.826 2.603-2.581 2.603-.777 0-1.24-.682-1.24-1.9c0-2.602 1.298-5.264 2.846-5.264q.137 0 .27.018"/>
+    <span style={s.platformBadge}>
+      <svg width="16" height="9" viewBox="0 0 16 16" fill="#ccc" style={{ flexShrink: 0 }}>
+        <path fillRule="evenodd" d="M8.217 5.243C9.145 3.988 10.171 3 11.483 3C13.96 3 16 6.153 16.001 9.907c0 2.29-.986 3.725-2.757 3.725-1.543 0-2.395-.866-3.924-3.424l-.667-1.123-.118-.197a55 55 0 0 0-.53-.877l-1.178 2.08c-1.673 2.925-2.615 3.541-3.923 3.541C1.086 13.632 0 12.217 0 9.973C0 6.388 1.995 3 4.598 3q.477-.001.924.122c.31.086.611.22.913.407c.577.359 1.154.915 1.782 1.714m1.516 2.224q-.378-.615-.727-1.133L9 6.326c.845-1.305 1.543-1.954 2.372-1.954c1.723 0 3.102 2.537 3.102 5.653c0 1.188-.39 1.877-1.195 1.877-.773 0-1.142-.51-2.61-2.87zM4.846 4.756c.725.1 1.385.634 2.34 2.001A212 212 0 0 0 5.551 9.3c-1.357 2.126-1.826 2.603-2.581 2.603-.777 0-1.24-.682-1.24-1.9c0-2.602 1.298-5.264 2.846-5.264q.137 0 .27.018"/>
       </svg>
       META
     </span>
@@ -286,7 +279,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     return '—';
   })();
 
-  // ── Relative Time (24h / 2 days / 1 week / 1 month) ───────────────────────
+  // ── Relative Time (16H / 6D / 3W / 9M / 1Y) ────────────────────────────────
   function getRelativeTime(dateStr) {
     if (!dateStr) return '—';
     let date;
@@ -296,15 +289,21 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     const now = Date.now();
     const diffMs = now - date.getTime();
     if (diffMs < 0) return '—';
+
     const diffH = diffMs / (1000 * 60 * 60);
-    const diffD = diffMs / (1000 * 60 * 60 * 24);
-    const diffW = diffD / 7;
-    const diffM = diffD / 30;
-    if (diffH < 24) return Math.round(diffH) + 'h ago';
-    if (diffD < 7)  return Math.round(diffD) + ' day' + (Math.round(diffD) !== 1 ? 's' : '') + ' ago';
-    if (diffW < 4)  return Math.round(diffW) + ' week' + (Math.round(diffW) !== 1 ? 's' : '') + ' ago';
-    if (diffM < 12) return Math.round(diffM) + ' month' + (Math.round(diffM) !== 1 ? 's' : '') + ' ago';
-    return Math.round(diffM / 12) + ' year' + (Math.round(diffM / 12) !== 1 ? 's' : '') + ' ago';
+    if (diffH < 24) return Math.round(diffH) + 'H';
+
+    let diffD = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    if (diffD < 7) return diffD + 'D';
+
+    let diffW = Math.round(diffD / 7);
+    if (diffW < 4) return diffW + 'W';
+
+    let diffM = Math.round(diffD / 30);
+    if (diffM < 12) return diffM + 'M';
+
+    let diffY = Math.round(diffM / 12);
+    return diffY + 'Y';
   }
 
   const mtStartDate = getRelativeTime(
@@ -322,7 +321,9 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   };
   const countryCode = ad.country || ad._raw?.country || 'US';
   const countryFlag = COUNTRY_FLAGS[countryCode] || '🌐';
-  const countryLabel = countryCode.length === 2 ? countryCode : countryCode.slice(0, 2).toUpperCase();
+  const rawCountryLabel = countryCode.length === 2 ? countryCode : countryCode.slice(0, 2).toUpperCase();
+  const SHOWN_COUNTRIES = ['US', 'GB', 'UK', 'CA'];
+  const countryLabel = SHOWN_COUNTRIES.includes(rawCountryLabel) ? (rawCountryLabel === 'GB' ? 'UK' : rawCountryLabel) : '';
   const mtAdId = ad.id || ad.ad_archive_id || ad._raw?.library_id || String(Math.random());
 
   const title     = isMeta ? mtTitle  : ttTitle;
@@ -494,24 +495,24 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
           {isMeta ? (
             <>
               <div style={s.stat}><span style={s.statIcon}>👁</span><span style={s.statVal}>{mtImpressions}</span><span style={s.statKey}>Impressions</span></div>
-              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{mtSpend}</span><span style={s.statKey}>Est. Spend</span></div>
+              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{mtSpend}</span><span style={s.statKey}>Spend</span></div>
               <div style={s.stat}>
-                <span style={{ ...s.statIcon, color: '#ffb454' }}>🕐</span>
-                <span style={{ ...s.statVal, color: '#ffb454' }}>{mtStartDate}</span>
+                <span style={s.statIcon}>🕐</span>
+                <span style={s.statVal}>{mtStartDate}</span>
                 <span style={s.statKey}>Started</span>
               </div>
-              <div style={s.stat}><span style={s.statIcon}>{countryFlag}</span><span style={s.statVal}>{countryLabel}</span><span style={s.statKey}>Country</span></div>
+              <div style={s.stat}><span style={s.statIcon}>{countryFlag}</span><span style={s.statVal}>{countryLabel}</span></div>
             </>
           ) : (
             <>
-              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttEstSpend}</span><span style={s.statKey}>Est. Spend</span></div>
+              <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttEstSpend}</span><span style={s.statKey}>Spend</span></div>
               <div style={s.stat}><span style={s.statIcon}>👁</span><span style={s.statVal}>{ttReach}</span><span style={s.statKey}>Reach</span></div>
               <div style={s.stat}>
-                <span style={{ ...s.statIcon, color: '#ffb454' }}>🕐</span>
-                <span style={{ ...s.statVal, color: '#ffb454' }}>{ttDaysDisplay}</span>
+                <span style={s.statIcon}>🕐</span>
+                <span style={s.statVal}>{ttDaysDisplay}</span>
                 <span style={s.statKey}>Duration</span>
               </div>
-              <div style={s.stat}><span style={s.statIcon}>{COUNTRY_FLAGS[ttCountryCode] || '🌐'}</span><span style={s.statVal}>{ttCountryCode.slice(0,2)}</span><span style={s.statKey}>Country</span></div>
+              <div style={s.stat}><span style={s.statIcon}>{COUNTRY_FLAGS[ttCountryCode] || '🌐'}</span><span style={s.statVal}>{SHOWN_COUNTRIES.includes(ttCountryCode) ? (ttCountryCode === 'GB' ? 'UK' : ttCountryCode) : ''}</span></div>
             </>
           )}
         </div>
