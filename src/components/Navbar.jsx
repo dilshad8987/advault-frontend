@@ -66,9 +66,7 @@ export default function Navbar() {
     <>
       <style>{`
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-        .nav-upgrade:hover { filter: brightness(1.08); }
-        .nav-collection:hover { background: rgba(108,71,255,.1) !important; border-color: rgba(108,71,255,.3) !important; }
-        .nav-logout:hover  { background: rgba(120,0,30,.5) !important; }
+        .nav-row:hover { background: rgba(255,255,255,.05) !important; }
         .nav-modal-cancel:hover  { background: rgba(255,255,255,.08) !important; }
         .nav-modal-confirm:hover { background: rgba(255,79,135,.2) !important; }
       `}</style>
@@ -109,39 +107,30 @@ export default function Navbar() {
 
                   <div style={s.divider} />
 
-                  {/* Credits */}
-                  <div style={s.creditsCard}>
-                    <div style={s.creditsRow}>
-                      <span style={s.creditsLabel}>Credits</span>
-                      <span style={{ ...s.creditsCount, color: barColor }}>
-                        {credits ? credits.remaining.toLocaleString() : '—'}
-                        <span style={s.creditsTotal}> / {credits ? credits.limit.toLocaleString() : '—'}</span>
-                      </span>
-                    </div>
-                    <div style={s.barBg}>
-                      <div style={{ ...s.barFill, width: `${Math.min(creditPct, 100)}%`, background: barColor }} />
-                    </div>
-                    {isLow && <div style={s.lowWarn}>⚠ Credits khatam hone wale hain!</div>}
-                  </div>
-
                   {/* Upgrade */}
-                  <Link to="/upgrade" className="nav-upgrade" style={s.upgradeBtn} onClick={closeMenu}>
-                    <span style={s.menuIcon}>⚡</span> Upgrade
+                  <Link to="/upgrade" className="nav-row" style={s.menuRow} onClick={closeMenu}>
+                    <span style={{ ...s.menuChip, ...s.chipUpgrade }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-13h-7l1-7Z" /></svg>
+                    </span>
+                    <span style={s.menuLabel}>Upgrade</span>
                   </Link>
 
-                  {/* Ad Collection */}
-                  <Link to="/collection" className="nav-collection" style={s.collectionBtn} onClick={closeMenu}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-                      <path d="M6 2a2 2 0 0 0-2 2v17a1 1 0 0 0 1.6.8L12 17l6.4 4.8A1 1 0 0 0 20 21V4a2 2 0 0 0-2-2H6Z" />
-                    </svg>
-                    Ad Collection
+                  {/* Collections */}
+                  <Link to="/collection" className="nav-row" style={s.menuRow} onClick={closeMenu}>
+                    <span style={{ ...s.menuChip, ...s.chipCollection }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2a2 2 0 0 0-2 2v17a1 1 0 0 0 1.6.8L12 17l6.4 4.8A1 1 0 0 0 20 21V4a2 2 0 0 0-2-2H6Z" /></svg>
+                    </span>
+                    <span style={s.menuLabel}>Collections</span>
                   </Link>
 
                   <div style={s.divider} />
 
                   {/* Logout */}
-                  <button className="nav-logout" style={s.logoutBtn} onClick={confirmLogout}>
-                    🚪 Logout
+                  <button className="nav-row" style={{ ...s.menuRow, ...s.menuRowBtn }} onClick={confirmLogout}>
+                    <span style={{ ...s.menuChip, ...s.chipLogout }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                    </span>
+                    <span style={{ ...s.menuLabel, color: '#ff6b93' }}>Logout</span>
                   </button>
                 </div>
               )}
@@ -195,21 +184,13 @@ const s = {
 
   divider:   { height:'1px', background:'rgba(255,255,255,.07)', margin:'.6rem 0' },
 
-  creditsCard:  { background:'rgba(255,255,255,.025)', border:'1px solid rgba(255,255,255,.06)', borderRadius:'10px', padding:'.65rem .7rem', marginBottom:'.55rem' },
-  creditsRow:   { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'.4rem' },
-  creditsLabel: { fontSize:'.75rem', fontWeight:500, color:'#6666aa' },
-  creditsCount: { fontSize:'.88rem', fontWeight:800, fontVariantNumeric:'tabular-nums' },
-  creditsTotal: { fontSize:'.75rem', fontWeight:500, color:'#444460' },
-  barBg:   { height:'5px', background:'rgba(255,255,255,.07)', borderRadius:'3px', overflow:'hidden' },
-  barFill: { height:'100%', borderRadius:'3px', transition:'width .5s ease' },
-  lowWarn: { fontSize:'.69rem', color:'#ff4f87', fontWeight:600, marginTop:'.45rem' },
-
-  menuIcon: { fontSize: '.85rem' },
-  upgradeBtn: { display:'flex', alignItems:'center', justifyContent:'center', gap:'.4rem', padding:'.6rem', background:'linear-gradient(135deg,rgba(108,71,255,.22),rgba(139,107,255,.14))', border:'1px solid rgba(108,71,255,.3)', borderRadius:'9px', color:'#a08bff', fontSize:'.85rem', fontWeight:700, textDecoration:'none', transition:'filter .15s', marginBottom:'.5rem' },
-
-  collectionBtn: { display:'flex', alignItems:'center', gap:'.55rem', padding:'.6rem .65rem', background:'transparent', border:'1px solid rgba(255,255,255,.08)', borderRadius:'9px', color:'#c0c0d8', fontSize:'.83rem', fontWeight:600, textDecoration:'none', transition:'background .15s, border-color .15s' },
-
-  logoutBtn: { width:'100%', padding:'.6rem', background:'rgba(140,0,30,.35)', border:'1px solid rgba(255,79,135,.2)', borderRadius:'9px', color:'#ff4f87', fontSize:'.85rem', fontWeight:700, cursor:'pointer', fontFamily:'inherit', transition:'background .15s' },
+  menuRow:   { display:'flex', alignItems:'center', gap:'.6rem', padding:'.6rem .3rem', borderRadius:'8px', textDecoration:'none', cursor:'pointer', transition:'background .15s' },
+  menuRowBtn:{ width:'100%', background:'transparent', border:'none', fontFamily:'inherit', textAlign:'left' },
+  menuChip:  { width:'30px', height:'30px', borderRadius:'9px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 },
+  chipUpgrade:    { background:'rgba(108,71,255,.18)', color:'#a08bff' },
+  chipCollection: { background:'rgba(255,255,255,.06)', color:'#c0c0d8' },
+  chipLogout:     { background:'rgba(255,79,135,.12)', color:'#ff4f87' },
+  menuLabel: { fontSize:'.85rem', fontWeight:650, color:'#e0e0f0' },
 
   authBtns:    { display:'flex', gap:'.5rem' },
   loginBtn:    { padding:'.42rem .9rem', background:'transparent', border:'1px solid rgba(255,255,255,.1)', borderRadius:'8px', color:'#c0c0d8', textDecoration:'none', fontSize:'.83rem' },
