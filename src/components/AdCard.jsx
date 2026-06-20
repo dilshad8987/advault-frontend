@@ -229,9 +229,7 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   })();
 
   // ── TikTok: Days Running display ──────────────────────────────────────────
-  const ttDaysDisplay = ttIsActive
-    ? ttDaysRunning + 'd 🟢'
-    : ttDaysRunning + 'd 🔴';
+  const ttDaysDisplay = ttDaysRunning + 'd';
 
   // ── TikTok: Reach estimate (plays + likes multiplier) ─────────────────────
   const ttReach = (() => {
@@ -427,7 +425,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   return (
     <div
       style={s.card}
-      onClick={openDetail}
       onMouseEnter={e => {
         e.currentTarget.style.transform = 'translateY(-3px)';
         e.currentTarget.style.borderColor = isMeta ? 'rgba(24,119,242,.35)' : 'rgba(108,71,255,.35)';
