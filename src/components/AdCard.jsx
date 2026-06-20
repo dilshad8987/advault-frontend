@@ -401,12 +401,13 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
     e.stopPropagation();
     if (isLocked) return; // Locked hone par kuch bhi nahi hoga — silent
     if (!canSave) return; // Credits khatam — silent, no toast, no navigation
+    setSaved(true); // optimistic — turant UI update, network ka wait nahi
     try {
-      const res = await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
-      setSaved(true);
+      await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
       toast.success('Ad save ho gayi!');
       refreshCredits(); // credits update karo after save
     } catch (err) {
+      setSaved(false); // fail hua to wapas rollback karo
       if (err.response?.data?.upgrade) {
         toast.error('Credits khatam! Upgrade karo.');
       } else {
