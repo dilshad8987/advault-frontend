@@ -38,12 +38,16 @@ function TikTokBadge() {
 
 function MetaBadge() {
   return (
-    <span style={{ ...s.platformBadge, background: 'rgba(255,255,255,.06)', color: '#8888aa' }}>
-      <svg width="20" height="9" viewBox="0 0 66 30" fill="none" style={{ flexShrink: 0 }}>
-        <path d="M4 18C4 13 6.5 8 10 8C12.5 8 14.5 10 17 14L20 19C22 22.5 24 25 26.5 25C29.5 25 31.5 21.5 31.5 16.5C31.5 12 29.5 9 27 8" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M4 16C4 10 6.5 5 11 5C13.5 5 16 7 18.5 11L21.5 16C23.5 19.5 26 22.5 28.5 22.5" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M36 18C36 13 38.5 8 42 8C44.5 8 46.5 10 49 14L52 19C54 22.5 56 25 58.5 25C61.5 25 63.5 21.5 63.5 16.5C63.5 12 61.5 9 59 8" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-        <path d="M36 16C36 10 38.5 5 43 5C45.5 5 48 7 50.5 11L53.5 16C55.5 19.5 58 22.5 60.5 22.5" stroke="#8888aa" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+    <span style={{ ...s.platformBadge, background: 'rgba(24,119,242,.12)', color: '#1877F2' }}>
+      <svg width="16" height="9" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+        <defs>
+          <linearGradient id="metaBadgeGrad" x1="0" y1="8" x2="16" y2="8" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#0064E0" />
+            <stop offset="60%" stopColor="#0082FB" />
+            <stop offset="100%" stopColor="#00C6FF" />
+          </linearGradient>
+        </defs>
+        <path fillRule="evenodd" fill="url(#metaBadgeGrad)" d="M8.217 5.243C9.145 3.988 10.171 3 11.483 3C13.96 3 16 6.153 16.001 9.907c0 2.29-.986 3.725-2.757 3.725-1.543 0-2.395-.866-3.924-3.424l-.667-1.123-.118-.197a55 55 0 0 0-.53-.877l-1.178 2.08c-1.673 2.925-2.615 3.541-3.923 3.541C1.086 13.632 0 12.217 0 9.973C0 6.388 1.995 3 4.598 3q.477-.001.924.122c.31.086.611.22.913.407c.577.359 1.154.915 1.782 1.714m1.516 2.224q-.378-.615-.727-1.133L9 6.326c.845-1.305 1.543-1.954 2.372-1.954c1.723 0 3.102 2.537 3.102 5.653c0 1.188-.39 1.877-1.195 1.877-.773 0-1.142-.51-2.61-2.87zM4.846 4.756c.725.1 1.385.634 2.34 2.001A212 212 0 0 0 5.551 9.3c-1.357 2.126-1.826 2.603-2.581 2.603-.777 0-1.24-.682-1.24-1.9c0-2.602 1.298-5.264 2.846-5.264q.137 0 .27.018"/>
       </svg>
       META
     </span>
@@ -63,6 +67,21 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
   const [thumbError, setThumbError] = useState(false);
   const navigate = useNavigate();
   const isMeta   = platform === 'meta';
+
+  // Inject burst-particle keyframes once globally (shared across all AdCard instances)
+  useEffect(() => {
+    if (document.getElementById('advault-save-burst-style')) return;
+    const styleEl = document.createElement('style');
+    styleEl.id = 'advault-save-burst-style';
+    styleEl.textContent = `
+      @keyframes advaultSaveBurst {
+        0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(calc(-50% + var(--bx)), calc(-50% + var(--by))) scale(0); }
+      }
+    `;
+    document.head.appendChild(styleEl);
+  }, []);
+
   const [userCredits, setUserCredits] = useState(null);
   useEffect(() => {
     api.get('/user/profile').then(res => {
@@ -476,14 +495,22 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             <>
               <div style={s.stat}><span style={s.statIcon}>👁</span><span style={s.statVal}>{mtImpressions}</span><span style={s.statKey}>Impressions</span></div>
               <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{mtSpend}</span><span style={s.statKey}>Est. Spend</span></div>
-              <div style={s.stat}><span style={s.statIcon}>📅</span><span style={s.statVal}>{mtStartDate}</span><span style={s.statKey}>Started</span></div>
+              <div style={s.stat}>
+                <span style={{ ...s.statIcon, color: '#ffb454' }}>🕐</span>
+                <span style={{ ...s.statVal, color: '#ffb454' }}>{mtStartDate}</span>
+                <span style={s.statKey}>Started</span>
+              </div>
               <div style={s.stat}><span style={s.statIcon}>{countryFlag}</span><span style={s.statVal}>{countryLabel}</span><span style={s.statKey}>Country</span></div>
             </>
           ) : (
             <>
               <div style={s.stat}><span style={s.statIcon}>💰</span><span style={s.statVal}>{ttEstSpend}</span><span style={s.statKey}>Est. Spend</span></div>
               <div style={s.stat}><span style={s.statIcon}>👁</span><span style={s.statVal}>{ttReach}</span><span style={s.statKey}>Reach</span></div>
-              <div style={s.stat}><span style={s.statIcon}>📅</span><span style={s.statVal}>{ttDaysDisplay}</span><span style={s.statKey}>Duration</span></div>
+              <div style={s.stat}>
+                <span style={{ ...s.statIcon, color: '#ffb454' }}>🕐</span>
+                <span style={{ ...s.statVal, color: '#ffb454' }}>{ttDaysDisplay}</span>
+                <span style={s.statKey}>Duration</span>
+              </div>
               <div style={s.stat}><span style={s.statIcon}>{COUNTRY_FLAGS[ttCountryCode] || '🌐'}</span><span style={s.statVal}>{ttCountryCode.slice(0,2)}</span><span style={s.statKey}>Country</span></div>
             </>
           )}
@@ -497,16 +524,34 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
             }}
             onClick={saveAd}
             disabled={saved}
+            aria-label={saved ? 'Saved' : 'Save'}
           >
-            {saved ? (
-              <>✅ Saved</>
-            ) : (
-              <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ verticalAlign: '-2px', marginRight: '5px' }}>
-                  <path d="M6 2a2 2 0 0 0-2 2v17a1 1 0 0 0 1.6.8L12 17l6.4 4.8A1 1 0 0 0 20 21V4a2 2 0 0 0-2-2H6Z" />
-                </svg>
-                Save
-              </>
+            <svg
+              width="16" height="16" viewBox="0 0 24 24"
+              fill={saved ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="2"
+              style={{ transition: 'fill .3s ease', display: 'block' }}
+            >
+              <path d="M6 2a2 2 0 0 0-2 2v17a1 1 0 0 0 1.6.8L12 17l6.4 4.8A1 1 0 0 0 20 21V4a2 2 0 0 0-2-2H6Z" />
+            </svg>
+            {saved && (
+              <span style={s.saveBurst}>
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const angle = (i / 8) * 2 * Math.PI;
+                  const dist = 18;
+                  return (
+                    <span
+                      key={i}
+                      style={{
+                        ...s.burstDot,
+                        '--bx': Math.cos(angle) * dist + 'px',
+                        '--by': Math.sin(angle) * dist + 'px',
+                      }}
+                    />
+                  );
+                })}
+              </span>
             )}
           </button>
           <button
@@ -547,8 +592,10 @@ const s = {
   statVal: { fontSize: '.72rem', fontWeight: 700, color: '#f0f0f8' },
   statKey: { fontSize: '.58rem', color: '#8888aa' },
   actions: { display: 'flex', gap: '.5rem' },
-  saveBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(255,255,255,.08)', background: 'transparent', color: '#8888aa', fontSize: '.76rem', cursor: 'pointer' },
-  savedBtn: { background: 'rgba(108,71,255,.2)', color: '#8b6bff', border: '1px solid rgba(108,71,255,.3)' },
+  saveBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(108,71,255,.3)', background: 'rgba(108,71,255,.15)', color: '#8b6bff', fontSize: '.76rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'visible' },
+  savedBtn: { background: 'rgba(108,71,255,.15)', color: '#8b6bff', border: '1px solid rgba(108,71,255,.3)' },
   detailBtn: { flex: 1, padding: '.42rem', borderRadius: '7px', border: '1px solid rgba(108,71,255,.3)', background: 'rgba(108,71,255,.15)', color: '#8b6bff', fontSize: '.76rem', cursor: 'pointer', fontWeight: 700 },
+  saveBurst: { position: 'absolute', inset: 0, pointerEvents: 'none' },
+  burstDot: { position: 'absolute', top: '50%', left: '50%', width: '4px', height: '4px', borderRadius: '50%', background: '#8b6bff', animation: 'advaultSaveBurst .5s ease-out forwards' },
   lockedBtn: { opacity: 0.45, cursor: 'not-allowed', border: '1px solid rgba(255,255,255,.05)' },
 };
