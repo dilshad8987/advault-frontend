@@ -6,6 +6,7 @@ import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import AdDetail from './pages/AdDetail';
 import Profile from './pages/Profile';
+import Collection from './pages/Collection';
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('accessToken');
@@ -86,6 +87,7 @@ function App() {
         <Route path="/ad/:adId" element={<PrivateRoute><AdDetail /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/upgrade" element={<PrivateRoute><Profile /></PrivateRoute>} />
+        <Route path="/collection" element={<PrivateRoute><Collection /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
