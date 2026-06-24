@@ -53,10 +53,26 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script>
-      // ── Zoom disable ──
+      // ── Zoom disable (desktop + mobile) ──
+      // Block Ctrl+scroll wheel zoom
       window.addEventListener('wheel', function(e) {
         if (e.ctrlKey) { e.preventDefault(); }
       }, { passive: false });
+
+      // Block trackpad pinch-to-zoom (Safari/Chrome desktop gestures)
+      window.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+      window.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
+      window.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
+
+      // Reset zoom if browser menu zoom slips through
+      function resetZoom() {
+        var meta = document.querySelector('meta[name="viewport"]');
+        if (meta) {
+          meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+        }
+      }
+      window.addEventListener('resize', resetZoom);
+
       window.addEventListener('keydown', function(e) {
         if (e.ctrlKey && (
           e.key === '+' || e.key === '-' || e.key === '=' ||
