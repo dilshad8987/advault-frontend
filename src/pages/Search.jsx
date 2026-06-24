@@ -22,6 +22,14 @@ export default function Search() {
   const canSearch  = !noCredits && (userCredits === null || userCredits.remaining >= searchCost);
   const [platform, setPlatform] = useState(() => sessionStorage.getItem('search_platform') || 'tiktok');
   const [country, setCountry] = useState(() => sessionStorage.getItem('search_country') || 'US');
+  const [savedIds, setSavedIds] = useState(new Set());
+  useEffect(() => {
+    api.get('/ads/saved').then(res => {
+      const ids = (res.data?.data || []).map(a => a.id);
+      setSavedIds(new Set(ids));
+    }).catch(() => {});
+  }, []);
+
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -168,7 +176,7 @@ export default function Search() {
           <>
             <p style={styles.count}>✅ {total} ads mili</p>
             <div style={styles.grid}>
-              {ads.map((ad, i) => <AdCard key={ad.id || i} ad={ad} />)}
+              {ads.map((ad, i) => <AdCard key={ad.id || i} ad={ad} initialSaved={savedIds.has(ad.id)} />)}
             </div>
           </>
         )}
