@@ -59,6 +59,14 @@ export default function Dashboard() {
   const [metaKeyword, setMetaKeyword] = useState('product');
   const [metaStatus, setMetaStatus]   = useState('ACTIVE');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [savedIds, setSavedIds] = useState(new Set());
+  useEffect(() => {
+    api.get('/ads/saved').then(res => {
+      const ids = (res.data?.data || []).map(a => a.id);
+      setSavedIds(new Set(ids));
+    }).catch(() => {});
+  }, []);
+
   const [userCredits, setUserCredits] = useState(null);
   useEffect(() => {
     api.get('/user/profile').then(res => {
@@ -260,7 +268,7 @@ export default function Dashboard() {
             <div style={s.grid}>
               {/* ✅ Dedup by library_id for meta, id for tiktok */}
               {[...new Map(ads.map((ad,i) => [ad._raw?.library_id || ad.id || i, ad])).values()]
-                .map((ad,i) => <AdCard key={ad._raw?.library_id || ad.id || i} ad={ad} platform={tab} />)
+                .map((ad,i) => <AdCard key={ad._raw?.library_id || ad.id || i} ad={ad} platform={tab} initialSaved={savedIds.has(ad._raw?.library_id || ad.id)} />)
               }
             </div>
           </>
