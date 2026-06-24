@@ -82,6 +82,16 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
       if (u) setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
     }).catch(() => {});
   }, []);
+
+  // Backend se saved state sync karo (refresh pe bhi sahi rahe)
+  useEffect(() => {
+    if (!adId) return;
+    api.get('/ads/saved').then(res => {
+      const savedIds = (res.data?.data || []).map(a => a.id);
+      setSaved(savedIds.includes(adId));
+    }).catch(() => {});
+  }, [adId]);
+
   const noCredits = userCredits !== null && userCredits.remaining <= 0;
   const saveCost  = userCredits?.costs?.save_ad ?? 10;
   const canSave   = !noCredits && (userCredits === null || userCredits.remaining >= saveCost);
@@ -399,7 +409,21 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
 
   const saveAd = async (e) => {
     e.stopPropagation();
-    if (isLocked) return; // Locked hone par kuch bhi nahi hoga — silent
+    if (isLocked) return;
+
+    // Already saved — unsave karo
+    if (saved) {
+      setSaved(false);
+      try {
+        await api.delete('/ads/save/' + adId);
+        toast.success('Collection se hata diya');
+      } catch (err) {
+        setSaved(true); // rollback
+        toast.error('Unsave fail');
+      }
+      return;
+    }
+
     if (!canSave) return; // Credits khatam — silent, no toast, no navigation
     setSaved(true); // optimistic — turant UI update, network ka wait nahi
     try {
@@ -522,7 +546,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
               ...(saved ? s.savedBtn : {}),
             }}
             onClick={saveAd}
-            disabled={saved}
             aria-label={saved ? 'Saved' : 'Save'}
           >
             <svg
