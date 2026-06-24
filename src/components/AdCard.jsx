@@ -55,8 +55,8 @@ function getVideoStreamUrl(videoUrl, authToken) {
   return API_BASE.replace('/api', '') + '/api/ads/video/stream?token=' + encodeURIComponent(authToken) + '&url=' + encodeURIComponent(videoUrl);
 }
 
-export default function AdCard({ ad, platform = 'tiktok' }) {
-  const [saved, setSaved]           = useState(false);
+export default function AdCard({ ad, platform = 'tiktok', initialSaved = false }) {
+  const [saved, setSaved]           = useState(initialSaved);
   const [thumbError, setThumbError] = useState(false);
   const navigate = useNavigate();
   const isMeta   = platform === 'meta';
@@ -82,15 +82,6 @@ export default function AdCard({ ad, platform = 'tiktok' }) {
       if (u) setUserCredits({ remaining: u.creditsRemaining, costs: u.creditCosts || {} });
     }).catch(() => {});
   }, []);
-
-  // Backend se saved state sync karo (refresh pe bhi sahi rahe)
-  useEffect(() => {
-    if (!adId) return;
-    api.get('/ads/saved').then(res => {
-      const savedIds = (res.data?.data || []).map(a => a.id);
-      setSaved(savedIds.includes(adId));
-    }).catch(() => {});
-  }, [adId]);
 
   const noCredits = userCredits !== null && userCredits.remaining <= 0;
   const saveCost  = userCredits?.costs?.save_ad ?? 10;
