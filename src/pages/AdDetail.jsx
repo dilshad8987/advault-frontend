@@ -488,7 +488,7 @@ function VideoPlayer({ videoUrl, tiktokItemUrl, cover, title, adId, isMeta }) {
   };
   const downloadVideo = async () => {
     if (!canDownload) {
-      toast.error('Credits khatam! Upgrade karo.');
+      toast.error('Failed');
       return;
     }
     if (!videoUrl) return toast.error('Video URL nahi mili');
@@ -873,12 +873,12 @@ export default function AdDetail() {
   };
 
   const saveAd = async () => {
-    if (!canSave) { toast.error('Credits khatam! Upgrade karo.'); return; }
+    if (!canSave) { toast.error('Failed'); return; }
     const ad = detail||passedAd; if(!ad) return;
     try {
       await api.post('/ads/save', { adId, adData:{ title:ad.ad_title||ad.title, brand:ad.brand_name||'Unknown', cover:ad.video_info?.cover||'', platform:'tiktok' } });
-      setSaved(true); toast.success('Ad save ho gayi!');
-    } catch(err) { toast.error(err.response?.data?.message||'Save fail'); }
+      setSaved(true); toast.success('Saved!');
+    } catch(err) { toast.error('Failed'); }
   };
 
   const copyTranscript = () => {
