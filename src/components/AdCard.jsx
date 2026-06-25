@@ -3,6 +3,44 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
+const savedToast  = () => toast.custom((t) => (
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: '10px',
+    background: '#1a1a2e', color: '#e0e0f0',
+    border: '1px solid rgba(108,71,255,0.4)',
+    borderRadius: '12px', padding: '12px 16px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+    fontSize: '14px', fontWeight: '500',
+    opacity: t.visible ? 1 : 0,
+    transition: 'opacity 0.2s ease',
+    minWidth: '220px',
+  }}>
+    <span style={{ fontSize: '18px' }}>🔖</span>
+    <div>
+      <div style={{ color: '#b39dff', fontWeight: '600', fontSize: '13px' }}>Saved!</div>
+    </div>
+  </div>
+), { duration: 2500 });
+
+const unsavedToast = () => toast.custom((t) => (
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: '10px',
+    background: '#1a1a2e', color: '#e0e0f0',
+    border: '1px solid rgba(255,80,80,0.3)',
+    borderRadius: '12px', padding: '12px 16px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+    fontSize: '14px', fontWeight: '500',
+    opacity: t.visible ? 1 : 0,
+    transition: 'opacity 0.2s ease',
+    minWidth: '220px',
+  }}>
+    <span style={{ fontSize: '18px' }}>🗑️</span>
+    <div>
+      <div style={{ color: '#ff8080', fontWeight: '600', fontSize: '13px' }}>Removed!</div>
+    </div>
+  </div>
+), { duration: 2000 });
+
 const API_BASE = process.env.REACT_APP_API_URL || 'https://advault-backend-production-c824.up.railway.app/api';
 
 function proxyImageUrl(imageUrl, libraryId) {
@@ -407,10 +445,10 @@ export default function AdCard({ ad, platform = 'tiktok', initialSaved = false }
       setSaved(false);
       try {
         await api.delete('/ads/save/' + adId);
-        toast.success('Removed');
+        unsavedToast();
       } catch (err) {
         setSaved(true); // rollback
-        toast.error('Unsave fail');
+        toast.error('Failed');
       }
       return;
     }
@@ -419,14 +457,14 @@ export default function AdCard({ ad, platform = 'tiktok', initialSaved = false }
     setSaved(true); // optimistic — turant UI update, network ka wait nahi
     try {
       await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
-      toast.success('Saved!');
+      savedToast();
       refreshCredits(); // credits update karo after save
     } catch (err) {
       setSaved(false); // fail hua to wapas rollback karo
       if (err.response?.data?.upgrade) {
-        toast.error('Credits khatam! Upgrade karo.');
+        toast.error('Failed');
       } else {
-        toast.error(err.response?.data?.message || 'Save fail');
+        toast.error('Failed');
       }
     }
   };
@@ -611,6 +649,4 @@ const s = {
   saveBurst: { position: 'absolute', inset: 0, pointerEvents: 'none' },
   burstDot: { position: 'absolute', top: '50%', left: '50%', width: '4px', height: '4px', borderRadius: '50%', background: '#8b6bff', animation: 'advaultSaveBurst .5s ease-out forwards' },
   lockedBtn: { opacity: 0.45, cursor: 'not-allowed', border: '1px solid rgba(255,255,255,.05)' },
-};
-a(255,255,255,.05)' },
 };
