@@ -407,7 +407,7 @@ export default function AdCard({ ad, platform = 'tiktok', initialSaved = false }
       setSaved(false);
       try {
         await api.delete('/ads/save/' + adId);
-        toast.success('Collection se hata diya');
+        toast.success('Removed');
       } catch (err) {
         setSaved(true); // rollback
         toast.error('Unsave fail');
@@ -419,7 +419,7 @@ export default function AdCard({ ad, platform = 'tiktok', initialSaved = false }
     setSaved(true); // optimistic — turant UI update, network ka wait nahi
     try {
       await api.post('/ads/save', { adId, adData: { title, brand, cover: thumbUrl, platform } });
-      toast.success('Ad save ho gayi!');
+      toast.success('Saved!');
       refreshCredits(); // credits update karo after save
     } catch (err) {
       setSaved(false); // fail hua to wapas rollback karo
@@ -611,4 +611,6 @@ const s = {
   saveBurst: { position: 'absolute', inset: 0, pointerEvents: 'none' },
   burstDot: { position: 'absolute', top: '50%', left: '50%', width: '4px', height: '4px', borderRadius: '50%', background: '#8b6bff', animation: 'advaultSaveBurst .5s ease-out forwards' },
   lockedBtn: { opacity: 0.45, cursor: 'not-allowed', border: '1px solid rgba(255,255,255,.05)' },
+};
+a(255,255,255,.05)' },
 };
