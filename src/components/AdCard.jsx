@@ -3,9 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
-const savedToast  = () => toast('Saved!', { duration: 2500, icon: false });
+const savedToast  = () => toast('Saved!', {
+  duration: 2500,
+  icon: false,
+  style: { background: '#161625', color: '#4ade80', border: '1px solid rgba(74,222,128,.2)', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: '600', minWidth: '0', width: '90px', textAlign: 'center' }
+});
 
-const unsavedToast = () => toast('Removed!', { duration: 2000, icon: false });
+const unsavedToast = () => toast('Removed!', {
+  duration: 2000,
+  icon: false,
+  style: { background: '#161625', color: '#f87171', border: '1px solid rgba(248,113,113,.2)', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: '600', minWidth: '0', width: '90px', textAlign: 'center' }
+});
 
 const API_BASE = process.env.REACT_APP_API_URL || 'https://advault-backend-production-c824.up.railway.app/api';
 
