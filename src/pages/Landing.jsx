@@ -214,7 +214,7 @@ export default function Landing() {
         <div style={s.footerBottom}>
           <span>© 2026 AdVault Inc. All rights reserved.</span>
           <div style={{ display: 'flex', gap: '1.25rem' }}>
-            <span style={s.footerLink}>Privacy</span>
+            <Link to="/privacy" style={s.footerLink}>Privacy</Link>
             <span style={s.footerLink}>Terms</span>
             <span style={s.footerLink}>Cookies</span>
           </div>
@@ -282,6 +282,6 @@ const s = {
   footerTop: { display: 'grid', gridTemplateColumns: '2fr repeat(3,1fr)', gap: '2rem', maxWidth: '1100px', margin: '0 auto', flexWrap: 'wrap' },
   footerDesc: { fontSize: '.85rem', color: '#8888aa', marginTop: '.75rem', lineHeight: 1.65, maxWidth: '260px' },
   footerColTitle: { fontSize: '.85rem', fontWeight: 700, marginBottom: '.75rem' },
-  footerLink: { fontSize: '.83rem', color: '#8888aa', marginBottom: '.45rem', cursor: 'pointer' },
+  footerLink: { fontSize: '.83rem', color: '#8888aa', marginBottom: '.45rem', cursor: 'pointer', textDecoration: 'none' },
   footerBottom: { maxWidth: '1100px', margin: '2rem auto 0', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '.75rem', fontSize: '.8rem', color: '#8888aa' },
 };
