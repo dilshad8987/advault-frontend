@@ -8,6 +8,7 @@ import AdDetail from './pages/AdDetail';
 import Profile from './pages/Profile';
 import Collection from './pages/Collection';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('accessToken');
@@ -90,6 +91,7 @@ function App() {
         <Route path="/upgrade" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/collection" element={<PrivateRoute><Collection /></PrivateRoute>} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
