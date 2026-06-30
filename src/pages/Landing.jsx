@@ -215,7 +215,7 @@ export default function Landing() {
           <span>© 2026 AdVault Inc. All rights reserved.</span>
           <div style={{ display: 'flex', gap: '1.25rem' }}>
             <Link to="/privacy" style={s.footerLink}>Privacy</Link>
-            <span style={s.footerLink}>Terms</span>
+            <Link to="/terms" style={s.footerLink}>Terms</Link>
             <span style={s.footerLink}>Cookies</span>
           </div>
         </div>
