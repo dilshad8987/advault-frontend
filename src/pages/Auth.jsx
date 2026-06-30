@@ -357,6 +357,15 @@ export default function Auth() {
           {loading ? isLogin ? 'Signing in...' : 'Creating account...' : isLogin ? 'Login' : '🚀 Create Account'}
         </button>
 
+        {!isLogin && (
+          <p style={{ fontSize: '.78rem', color: '#8888aa', textAlign: 'center', marginTop: '.75rem', lineHeight: 1.5 }}>
+            By clicking continue, you agree to our{' '}
+            <Link to="/terms" style={{ color: '#8b6bff' }}>Terms of Service</Link>
+            {' '}and{' '}
+            <Link to="/privacy" style={{ color: '#8b6bff' }}>Privacy Policy</Link>.
+          </p>
+        )}
+
         {/* ── Divider ── */}
         <div style={s.divider}>
           <div style={s.dividerLine} />
