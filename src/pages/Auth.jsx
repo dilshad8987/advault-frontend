@@ -359,7 +359,7 @@ export default function Auth() {
 
         {!isLogin && (
           <p style={{ fontSize: '.78rem', color: '#8888aa', textAlign: 'center', marginTop: '.75rem', lineHeight: 1.5 }}>
-            By clicking continue, you agree to our{' '}
+            By signing up, you agree to our{' '}
             <Link to="/terms" style={{ color: '#8b6bff' }}>Terms of Service</Link>
             {' '}and{' '}
             <Link to="/privacy" style={{ color: '#8b6bff' }}>Privacy Policy</Link>.
