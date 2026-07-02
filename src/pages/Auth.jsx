@@ -19,6 +19,70 @@ function getPasswordStrength(password) {
 }
 
 
+// ─── Hardware Fingerprint Collector ────────────────────────────────────────────
+// Canvas + WebGL + Screen + Timezone + CPU + Memory + Touch signals
+// Server pe x-fp-* headers me bhejna — maximum device identification
+async function collectHardwareFingerprint() {
+  try {
+    // Canvas 2D hash
+    let canvasHash = '';
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 200; canvas.height = 50;
+      const ctx = canvas.getContext('2d');
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#f60';
+      ctx.fillRect(125, 1, 62, 20);
+      ctx.fillStyle = '#069';
+      ctx.fillText('AdVault_fp_test 🌐', 2, 15);
+      ctx.fillStyle = 'rgba(102,204,0,0.7)';
+      ctx.fillText('AdVault_fp_test 🌐', 4, 17);
+      const raw = canvas.toDataURL();
+      // Simple hash
+      let h = 0;
+      for (let i = 0; i < raw.length; i++) { h = ((h << 5) - h) + raw.charCodeAt(i); h |= 0; }
+      canvasHash = Math.abs(h).toString(36);
+    } catch (_) {}
+
+    // WebGL renderer hash
+    let webglHash = '';
+    try {
+      const gl = document.createElement('canvas').getContext('webgl');
+      if (gl) {
+        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+        const renderer = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+        const vendor   = dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL)   : gl.getParameter(gl.VENDOR);
+        webglHash = btoa(`${renderer}|||${vendor}`).slice(0, 32);
+      }
+    } catch (_) {}
+
+    const screen_  = `${screen.width}x${screen.height}x${screen.colorDepth}`;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const cpu      = String(navigator.hardwareConcurrency || '');
+    const mem      = String(navigator.deviceMemory || '');
+    const touch    = String(navigator.maxTouchPoints || '0');
+
+    return { canvasHash, webglHash, screen_, timezone, cpu, mem, touch };
+  } catch (_) {
+    return {};
+  }
+}
+
+// Device UUID — localStorage me persist karo
+function getOrCreateDeviceId() {
+  let id = localStorage.getItem('_advault_did');
+  if (!id) {
+    id = crypto.randomUUID ? crypto.randomUUID()
+       : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+           const r = Math.random() * 16 | 0;
+           return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+         });
+    localStorage.setItem('_advault_did', id);
+  }
+  return id;
+}
+
 export default function Auth() {
   const location  = useLocation();
   const isLogin   = location.pathname === '/login';
@@ -94,7 +158,21 @@ export default function Auth() {
         ? { email: form.email, password: form.password }
         : { name: form.name, email: form.email, password: form.password };
 
-      const res = await api.post(endpoint, payload);
+      // Hardware fingerprint collect karo (register + login dono pe)
+      const hw = await collectHardwareFingerprint();
+      const deviceId = getOrCreateDeviceId();
+      const fpHeaders = {
+        'x-device-id':  deviceId,
+        'x-fp-canvas':  hw.canvasHash  || '',
+        'x-fp-webgl':   hw.webglHash   || '',
+        'x-fp-screen':  hw.screen_     || '',
+        'x-fp-tz':      hw.timezone    || '',
+        'x-fp-cpu':     hw.cpu         || '',
+        'x-fp-mem':     hw.mem         || '',
+        'x-fp-touch':   hw.touch       || '',
+      };
+
+      const res = await api.post(endpoint, payload, { headers: fpHeaders });
       const { accessToken, refreshToken, user } = res.data;
       if (!accessToken) throw new Error('Authentication failed.');
       localStorage.setItem('accessToken', accessToken);
@@ -117,7 +195,21 @@ export default function Auth() {
       const provider = new GoogleAuthProvider();
       const result   = await signInWithPopup(auth, provider);
       const idToken  = await result.user.getIdToken();
-      const res = await api.post('/auth/google', { idToken });
+
+      const hw = await collectHardwareFingerprint();
+      const deviceId = getOrCreateDeviceId();
+      const fpHeaders = {
+        'x-device-id':  deviceId,
+        'x-fp-canvas':  hw.canvasHash  || '',
+        'x-fp-webgl':   hw.webglHash   || '',
+        'x-fp-screen':  hw.screen_     || '',
+        'x-fp-tz':      hw.timezone    || '',
+        'x-fp-cpu':     hw.cpu         || '',
+        'x-fp-mem':     hw.mem         || '',
+        'x-fp-touch':   hw.touch       || '',
+      };
+
+      const res = await api.post('/auth/google', { idToken }, { headers: fpHeaders });
       const { accessToken, refreshToken, user } = res.data;
       if (!accessToken) throw new Error('Authentication failed.');
       localStorage.setItem('accessToken', accessToken);
@@ -356,15 +448,6 @@ export default function Auth() {
         >
           {loading ? isLogin ? 'Signing in...' : 'Creating account...' : isLogin ? 'Login' : '🚀 Create Account'}
         </button>
-
-        {!isLogin && (
-          <p style={{ fontSize: '.78rem', color: '#8888aa', textAlign: 'center', marginTop: '.75rem', lineHeight: 1.5 }}>
-            By signing up, you agree to our{' '}
-            <Link to="/terms" style={{ color: '#8b6bff' }}>Terms of Service</Link>
-            {' '}and{' '}
-            <Link to="/privacy" style={{ color: '#8b6bff' }}>Privacy Policy</Link>.
-          </p>
-        )}
 
         {/* ── Divider ── */}
         <div style={s.divider}>
